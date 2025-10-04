@@ -4,7 +4,20 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            string currentPrompt = string.Empty;
+
+            while (!currentPrompt.Trim().Equals("quit", StringComparison.InvariantCultureIgnoreCase))
+            {
+                currentPrompt = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(currentPrompt))
+                {
+                    continue;
+                }
+
+                var prompt = new UserPrompt(currentPrompt);
+                Console.WriteLine(prompt.RawTokens);
+            }
         }
     }
 }
