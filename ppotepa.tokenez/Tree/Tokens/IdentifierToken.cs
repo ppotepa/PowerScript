@@ -2,17 +2,18 @@
 
 namespace ppotepa.tokenez.Tree.Tokens
 {
-    internal class IdentifierToken : Token, IValue
+    public class IdentifierToken : Token, IValue
     {
         public IdentifierToken()
         {
+
         }
 
         public IdentifierToken(RawToken rawToken) : base(rawToken)
         {
         }
 
-        public override Token[] Expects => [];
+        public override Type[] Expectations => [];
 
         public string Value { get; }
     }

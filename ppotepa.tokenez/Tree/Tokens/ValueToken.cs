@@ -6,6 +6,6 @@
         {
         }
 
-        public override Token[] Expects => [];
+        public override Type[] Expectations => [];
     }
 }

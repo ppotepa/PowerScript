@@ -2,15 +2,36 @@
 using ppotepa.tokenez.Tree.Tokens;
 using ppotepa.tokenez.Tree.Tokens.Raw;
 using System.Collections;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Net.WebSockets;
+using System.Security.Cryptography;
 
 namespace ppotepa.tokenez.Tree
 {
     public class Scope
     {
         public List<string> Decarations = new();
+
+        private Scope _outerScope;
+
+        public IEnumerator Enumerator { get; set; }
+
         public Scope InnerScope { get; set; }
+
         public string Name { get; }
-        public Scope OuterScope { get; set; }
+
+        public Scope OuterScope
+        {
+            get => _outerScope;
+            set => _outerScope = value;
+        }
+        public Token Token { get; set; }
+        // Add a method to get a ref to the backing field for OuterScope
+        public ref Scope GetOuterScopeRef()
+        {
+            return ref _outerScope;
+        }
     }
 
     public class TokenTree
@@ -40,46 +61,72 @@ namespace ppotepa.tokenez.Tree
         public TokenTree Create(UserPrompt prompt)
         {
             Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select(ToToken)];
-            var iterator = tokens.GetEnumerator();
-            Scope scope = CreateScope(new Scope(), iterator, 0);
+            tokens = [.. tokens.Select((element, index) => Link(element, index, tokens)).ToArray()];
+            Scope scope = CreateScope(tokens[0], new Scope());
 
             return null;
         }
 
-        public Scope CreateScope(Scope scope, IEnumerator enumerator, int depth = 0)
+        public Scope CreateScope(Token currentToken, Scope scope, int depth = 0, int iteration = 0)
         {
-            Console.WriteLine($"Creating scope:DEPTH{depth}");
-
-            while (enumerator.MoveNext())
+            do
             {
-                Console.WriteLine($"Current Expects Token {enumerator.Current}");
-                Token current = enumerator.Current as Token;
+                bool hasExpectations = currentToken.Expectations.Any();
 
-                if (current.Expects.Length != 0)
-                {    
-                    Console.WriteLine($"Current Expects Token {current.Expects[0]}");
-                    var innerScope = new Scope();
-                    innerScope.OuterScope = scope;
-                    return CreateScope(innerScope, current.Expects.GetEnumerator(), depth + 1);
+                if (hasExpectations)
+                {
+                    if (currentToken is FunctionToken)
+                    {
+                        Type targetExpectation = null;
+                        foreach (Type expectation in currentToken.Expectations)
+                        {
+                            if (currentToken.Next.GetType() == expectation)
+                            {
+                                targetExpectation = expectation;
+                                currentToken = currentToken.Next;                               
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Invalid operation. {expectation.Name} expected");
+                            }
+                        }
+                        //if (targetExpectation is null)
+                        //{
+                        //    var expected = string.Join('|', currentToken.Expectations.Select(type => type.Name));
+                        //    throw new InvalidOperationException($"Invalid operation. {expected} expected");
+                        //}
+                    }
                 }
                 else
                 {
-                    if (depth is 0)
-                    {
-                        return scope;
-                    }
-
-                    if (depth > 0)
-                    {
-                        return CreateScope(scope.OuterScope, enumerator, depth - 1);
-                    }
 
                 }
-            }
 
-            return scope;
+                currentToken = currentToken.Next;
+            }
+            while (currentToken is not null);
+
+            return default;
         }
 
+        private Token Link(Token token, int index, Token[] tokens)
+        {
+            if (index is 0)
+            {
+                token.Next = tokens[index + 1];
+            }
+            else if (index < tokens.Length - 1)
+            {
+                token.Next = tokens[index + 1];
+                token.Prev = tokens[index - 1];
+            }
+            else if (tokens.Length - 1 == index)
+            {
+                token.Prev = tokens[index - 1];
+            }
+
+            return token;
+        }
         private Token ToToken(RawToken rawToken, int index)
         {
             Type targetType = default;
@@ -90,7 +137,7 @@ namespace ppotepa.tokenez.Tree
             }
             else
             {
-                targetType = typeof(StringValueToken);
+                targetType = typeof(IdentifierToken);
             }
 
 

@@ -6,6 +6,7 @@
         {
         }
 
-        public override Token[] Expects => [new IdentifierToken()];
+        public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
+      
     }
 }

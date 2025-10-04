@@ -12,6 +12,6 @@ namespace ppotepa.tokenez.Tree.Tokens
         {
         }
 
-        public override Token[] Expects => [new FunctionToken()];
+        public override Type[] Expectations => [typeof(FunctionToken)];
     }
 }

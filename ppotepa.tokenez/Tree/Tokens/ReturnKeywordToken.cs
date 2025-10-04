@@ -6,8 +6,8 @@
         {
         }
 
-        public override Token[] Expects => [new IdentifierToken(), new ValueToken()];
+        public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
 
-        public string Word => "RETURN";
+        public override string Word => "RETURN";
     }
 }

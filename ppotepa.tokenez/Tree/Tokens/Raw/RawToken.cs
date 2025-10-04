@@ -4,7 +4,7 @@
     {    
         private RawToken(string @string) 
         {
-            this.Text = @string.Trim().ToLower();
+            this.Text = @string.Trim().ToUpper();
         }
 
         public string Text { get; }
