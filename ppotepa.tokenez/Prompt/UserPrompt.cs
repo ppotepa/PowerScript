@@ -1,8 +1,10 @@
-﻿namespace ppotepa.tokenez
+﻿using ppotepa.tokenez.Tree.Tokens.Raw;
+
+namespace ppotepa.tokenez.Prompt
 {
     public class UserPrompt
-    {       
-        private RawTokenCollection _tokesn = default;
+    {
+        private RawToken[] _rawTokens = default;
 
         public UserPrompt(string prompt)
         {

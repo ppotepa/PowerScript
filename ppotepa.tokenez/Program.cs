@@ -1,22 +1,25 @@
-﻿namespace ppotepa.tokenez
+﻿using ppotepa.tokenez.Prompt;
+using ppotepa.tokenez.Tree;
+
+namespace ppotepa.tokenez
 {
-    internal class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {
-            string currentPrompt = string.Empty;
+            string currentPrompt = "FUNCTION TEST RETURN 1";
 
             while (!currentPrompt.Trim().Equals("quit", StringComparison.InvariantCultureIgnoreCase))
             {
-                currentPrompt = Console.ReadLine();
+                //currentPrompt = Console.ReadLine();
 
                 if (string.IsNullOrEmpty(currentPrompt))
                 {
                     continue;
                 }
 
-                var prompt = new UserPrompt(currentPrompt);
-                Console.WriteLine(prompt.RawTokens);
+                UserPrompt prompt = new(currentPrompt);
+                TokenTree tree = new TokenTree().Create(prompt);
             }
         }
     }

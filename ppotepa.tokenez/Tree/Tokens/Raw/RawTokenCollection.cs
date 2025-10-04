@@ -1,11 +1,17 @@
 ﻿using System.Collections;
-using System.Collections.Specialized;
 
-namespace ppotepa.tokenez
+namespace ppotepa.tokenez.Tree.Tokens.Raw
 {
     internal class RawTokenCollection : ICollection<RawToken>
     {
         private RawToken[] _tokens = default;
+
+        public RawTokenCollection(RawToken[] tokens)
+        {
+            _tokens = tokens;
+        }
+
+        IEnumerator Enumerator => _tokens.GetEnumerator();
 
         public int Count => _tokens.Length + 1;
 
@@ -33,7 +39,12 @@ namespace ppotepa.tokenez
 
         public IEnumerator<RawToken> GetEnumerator()
         {
-            return (IEnumerator<RawToken>)_tokens.GetEnumerator().Current;
+            return ((IEnumerable<RawToken>)_tokens).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public bool Remove(RawToken item)
@@ -47,11 +58,6 @@ namespace ppotepa.tokenez
             }
 
             return false;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
     }
 }
