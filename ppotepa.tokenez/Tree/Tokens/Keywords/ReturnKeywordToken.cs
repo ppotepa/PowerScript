@@ -13,6 +13,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
 
         public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
 
-        public override string Word => "RETURN";
+        public override string KeyWord => "RETURN";
     }
 }

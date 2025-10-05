@@ -27,6 +27,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
             typeof(ScopeEnd)
         ];
 
-        public override string Word => "FUNCTION";
+        public override string KeyWord => "FUNCTION";
     }
 }

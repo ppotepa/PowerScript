@@ -2,6 +2,6 @@
 {
     internal interface IKeyWordToken
     { 
-        public string Word { get; }
+        public string KeyWord { get; }
     }
 }
