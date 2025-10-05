@@ -7,7 +7,7 @@ namespace ppotepa.tokenez
     {
         static void Main(string[] args)
         {
-            string currentPrompt = "FUNCTION EXAMPLE (INT a, INT b) RETURN a + b";
+            string currentPrompt = "FUNCTION EXAMPLE (INT a, INT b RETURN a + b";
 
             while (!currentPrompt.Trim().Equals("quit", StringComparison.InvariantCultureIgnoreCase))
             {

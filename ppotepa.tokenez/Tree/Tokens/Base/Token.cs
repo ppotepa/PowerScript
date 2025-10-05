@@ -20,6 +20,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Base
         public virtual string Delimiter => "END";
         public RawToken RawToken => _rawToken;
         public TokenTree Tree { get; }
-        public virtual string KeyWord => string.Empty;        
+        public virtual string KeyWord => string.Empty;
     }
 }

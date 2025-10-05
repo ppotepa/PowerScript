@@ -11,6 +11,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Operators
         }
 
         public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
-      
+
     }
 }

@@ -42,13 +42,13 @@ namespace ppotepa.tokenez.Tree
         public TokenTree Create(UserPrompt prompt)
         {
             Console.WriteLine($"Creating TokenTree from prompt: '{prompt.Prompt}'");
-            
+
             Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select(ToToken)];
             Console.WriteLine($"Tokens created: {tokens.Length}");
-            
+
             tokens = [.. tokens.Select((element, index) => Link(element, index, tokens)).ToArray()];
             Console.WriteLine($"Tokens linked");
-            
+
             Scope scope = CreateScope(tokens[0], new Scope("ROOT"));
             Console.WriteLine($"Scope creation complete\n");
 
@@ -83,7 +83,7 @@ namespace ppotepa.tokenez.Tree
             }
             else
             {
-                switch(rawToken.Text.Trim())
+                switch (rawToken.Text.Trim())
                 {
                     case "(":
                         targetType = typeof(ParenthesisOpen);
@@ -91,10 +91,10 @@ namespace ppotepa.tokenez.Tree
                     case ")":
                         targetType = typeof(ParenthesisClosed);
                         break;
+                    default:
+                        targetType = typeof(IdentifierToken);
+                        break;
                 }
-
-                //keywords                
-                targetType = typeof(IdentifierToken);
             }
 
             var token = Activator.CreateInstance(targetType, [rawToken]) as Token;

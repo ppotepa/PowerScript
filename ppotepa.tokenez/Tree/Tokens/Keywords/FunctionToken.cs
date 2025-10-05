@@ -21,7 +21,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         public override Type[] Expectations => [
             typeof(IdentifierToken),
             typeof(ParameterArrayToken),
-            typeof(ScopeStart),            
+            typeof(ScopeStart),
             typeof(Scope),
             typeof(ParenthesisClosed),
             typeof(ScopeEnd)
