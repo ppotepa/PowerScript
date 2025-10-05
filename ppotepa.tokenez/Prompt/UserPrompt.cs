@@ -9,14 +9,23 @@ namespace ppotepa.tokenez.Prompt
         public UserPrompt(string prompt)
         {
             Prompt = prompt;
-        }   
+        }
 
         public string Prompt { get; }
         public RawToken[] RawTokens
         {
             get
             {
-                _rawTokens ??= [.. Prompt.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(RawToken.Create)];
+                string[] split = [.. Prompt
+                    .Trim()
+                    .Replace(")", " ) ")
+                    .Replace("(", " ( ")
+                    .Replace("[", " ] ")
+                    .Replace("]", " [ ")
+                    .Split([' '], StringSplitOptions.RemoveEmptyEntries)];
+
+                _rawTokens ??= split.Select(RawToken.Create).ToArray();
+
                 return _rawTokens;
             }
         }
