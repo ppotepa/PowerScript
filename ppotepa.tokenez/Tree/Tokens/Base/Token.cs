@@ -21,5 +21,29 @@ namespace ppotepa.tokenez.Tree.Tokens.Base
         public RawToken RawToken => _rawToken;
         public TokenTree Tree { get; }
         public virtual string KeyWord => string.Empty;
+
+        public Token[] GetPrevious(int n)
+        {
+            var tokens = new List<Token>();
+            var current = Prev;
+            for (int i = 0; i < n && current != null; i++)
+            {
+                tokens.Add(current);
+                current = current.Prev;
+            }
+            return tokens.ToArray();
+        }
+
+        public Token[] GetNext(int n)
+        {
+            var tokens = new List<Token>();
+            var current = Next;
+            for (int i = 0; i < n && current != null; i++)
+            {
+                tokens.Add(current);
+                current = current.Next;
+            }
+            return tokens.ToArray();
+        }
     }
 }
