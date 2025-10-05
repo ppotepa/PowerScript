@@ -20,6 +20,8 @@ namespace ppotepa.tokenez
 
                 UserPrompt prompt = new(currentPrompt);
                 TokenTree tree = new TokenTree().Create(prompt);
+                Console.WriteLine("Tokens processed. Press any key to continue.");
+                Console.ReadLine();
             }
         }
     }

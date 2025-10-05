@@ -8,12 +8,24 @@
         }
 
         public string Text { get; }
+        public string Processed
+        {
+            get
+            {
+                return Text
+                    .Replace("  ", " ")
+                    .Replace("(", "( ")
+                    .Replace(")", " )")                   
+                    .Replace("[", "[ ")
+                    .Replace("]", " ]")
+                    .Trim();
+            }
+        }
 
         internal static RawToken Create(string @string)
             => new(@string);
 
         public override string ToString() 
             => $"rawToken: {Text}";
-
     }
 }

@@ -2,7 +2,7 @@
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Raw;
 
-namespace ppotepa.tokenez.Tree
+namespace ppotepa.tokenez.Tree.Tokens.Keywords.Types
 {
     internal class IntToken : Token
     {
