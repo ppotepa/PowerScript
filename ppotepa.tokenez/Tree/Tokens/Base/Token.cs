@@ -1,6 +1,6 @@
 ﻿using ppotepa.tokenez.Tree.Tokens.Raw;
 
-namespace ppotepa.tokenez.Tree.Tokens
+namespace ppotepa.tokenez.Tree.Tokens.Base
 {
     public abstract class Token
     {

@@ -1,6 +1,8 @@
-﻿using ppotepa.tokenez.Tree.Tokens.Raw;
+﻿using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Interfaces;
+using ppotepa.tokenez.Tree.Tokens.Raw;
 
-namespace ppotepa.tokenez.Tree.Tokens
+namespace ppotepa.tokenez.Tree.Tokens.Identifiers
 {
     public class IdentifierToken : Token, IValue
     {

@@ -16,7 +16,7 @@ namespace ppotepa.tokenez.Prompt
         {
             get
             {
-                _rawTokens ??= [.. Prompt.Split(" ").Select(RawToken.Create)];
+                _rawTokens ??= [.. Prompt.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(RawToken.Create)];
                 return _rawTokens;
             }
         }

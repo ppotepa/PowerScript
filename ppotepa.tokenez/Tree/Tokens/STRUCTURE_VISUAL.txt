@@ -1,0 +1,90 @@
+┌─────────────────────────────────────────────────────────────────┐
+│            RECOMMENDED TOKEN FOLDER STRUCTURE                    │
+└─────────────────────────────────────────────────────────────────┘
+
+📁 Tokens/
+│
+├── 📂 Base/                          [Foundation]
+│   ├── Token.cs                      ← Abstract base class
+│   └── TokenRoot.cs                  ← Tree root token
+│
+├── 📂 Interfaces/                    [Contracts]
+│   ├── IKeyWordToken.cs              ← Keyword behavior
+│   ├── IValue.cs                     ← Value behavior
+│   ├── IVariable.cs                  ← Variable behavior
+│   └── IScope.cs                     ← Scope behavior
+│
+├── 📂 Keywords/                      [Reserved Words]
+│   ├── ReturnKeywordToken.cs         ← return
+│   └── FunctionToken.cs              ← function
+│   │
+│   └── 💡 Future: IfKeywordToken, WhileKeywordToken, etc.
+│
+├── 📂 Identifiers/                   [Named Elements]
+│   ├── IdentifierToken.cs            ← Generic identifier
+│   └── ParameterArrayToken.cs        ← Parameter arrays
+│   │
+│   └── 💡 Future: VariableNameToken, ClassNameToken, etc.
+│
+├── 📂 Operators/                     [Operations]
+│   └── CommaSeparatorToken.cs        ← Comma ,
+│   │
+│   └── 💡 Future: PlusToken, MinusToken, EqualsToken, etc.
+│
+├── 📂 Delimiters/                    [Structural Markers]
+│   ├── ParenthesisOpen.cs            ← Opening (
+│   └── ParenthesisClosed.cs          ← Closing )
+│   │
+│   └── 💡 Future: BraceOpen, BraceClose, BracketOpen, etc.
+│
+├── 📂 Scoping/                       [Block Management]
+│   ├── ScopeToken.cs                 ← Scope block
+│   └── ScopeEnd.cs                   ← Scope terminator
+│
+├── 📂 Values/                        [Literals]
+│   └── ValueToken.cs                 ← Generic value
+│   │
+│   └── 💡 Future: NumberToken, StringToken, BooleanToken, etc.
+│
+└── 📂 Raw/                           [Preprocessing]
+    ├── RawToken.cs                   ← Unprocessed token
+    └── RawTokenCollection.cs         ← Token collection
+
+┌─────────────────────────────────────────────────────────────────┐
+│                          BENEFITS                                │
+├─────────────────────────────────────────────────────────────────┤
+│ ✅ Clear categorization by token type                           │
+│ ✅ Easy navigation and maintenance                              │
+│ ✅ Scalable for future token additions                          │
+│ ✅ Follows compiler/parser best practices                       │
+│ ✅ Self-documenting code structure                              │
+│ ✅ Easier onboarding for new developers                         │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    ALTERNATIVE OPTIONS                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│ OPTION 2: Minimal (6 folders)                                   │
+│ ────────────────────────────                                    │
+│   Tokens/                                                        │
+│   ├── Base/         (Token, TokenRoot)                          │
+│   ├── Contracts/    (All interfaces)                            │
+│   ├── Keywords/     (Return, Function, etc.)                    │
+│   ├── Symbols/      (Operators + Delimiters)                    │
+│   ├── Identifiers/  (Names, Parameters)                         │
+│   └── Raw/          (RawToken, Collection)                      │
+│                                                                  │
+│ OPTION 3: By Usage (5 folders)                                  │
+│ ──────────────────────────────                                  │
+│   Tokens/                                                        │
+│   ├── Core/         (Base classes + Interfaces)                 │
+│   ├── Syntax/       (Keywords + Operators + Delimiters)         │
+│   ├── Semantic/     (Identifiers + Values)                      │
+│   ├── Structure/    (Scoping + Parentheses)                     │
+│   └── Raw/          (RawToken, Collection)                      │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+RECOMMENDATION: Use the main structure (9 folders) for best clarity
+and scalability as your tokenizer grows.

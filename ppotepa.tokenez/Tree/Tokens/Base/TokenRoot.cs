@@ -1,6 +1,7 @@
 ﻿using ppotepa.tokenez.Tree.Tokens.Raw;
+using ppotepa.tokenez.Tree.Tokens.Keywords;
 
-namespace ppotepa.tokenez.Tree.Tokens
+namespace ppotepa.tokenez.Tree.Tokens.Base
 {
     internal class TokenRoot : Token
     {

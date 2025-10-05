@@ -1,4 +1,4 @@
-﻿namespace ppotepa.tokenez.Tree.Tokens
+﻿namespace ppotepa.tokenez.Tree.Tokens.Interfaces
 {
     internal interface IKeyWordToken
     { 
