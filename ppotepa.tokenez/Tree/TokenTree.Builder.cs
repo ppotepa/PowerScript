@@ -1,4 +1,5 @@
-﻿using ppotepa.tokenez.Tree.Tokens.Base;
+﻿using ppotepa.tokenez.Tree.Exceptions;
+using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Delimiters;
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Interfaces;
@@ -50,7 +51,7 @@ namespace ppotepa.tokenez.Tree
 
                             if (parenthesisDepth > 0)
                             {
-                                throw new InvalidOperationException("Parenthesis not closed.");
+                                throw new UnexpectedTokenException(currentToken, "Parenthesis not closed", typeof(ParenthesisClosed));
                             }
                         }
                     }
@@ -65,7 +66,7 @@ namespace ppotepa.tokenez.Tree
             while (currentToken is not null);
 
             if (depth == 0 && parenthesisDepth > 0)
-                throw new InvalidProgramException("Unmatched parenthesis detected.");
+                throw new UnexpectedTokenException(currentToken, "Unmatched parenthesis detected", typeof(ParenthesisClosed));
 
             Console.WriteLine($"{indent}Scope complete: {scope.ScopeName}");
             return default;
@@ -77,9 +78,9 @@ namespace ppotepa.tokenez.Tree
             {
                 parameters = new();
             }
-            
+
             while (token is not ParenthesisClosed)
-            {                
+            {
                 if (token is ITypeToken)
                 {
                     var type = token;
@@ -87,7 +88,7 @@ namespace ppotepa.tokenez.Tree
 
                     if (expectedIdentifier is not IdentifierToken)
                     {
-                        throw new InvalidOperationException("Identifier Expected.");
+                        throw new UnexpectedTokenException(expectedIdentifier, typeof(IdentifierToken));
                     }
 
                     parameters.Declarations.Add(new ParameterDeclaration(type, expectedIdentifier));
@@ -97,7 +98,7 @@ namespace ppotepa.tokenez.Tree
 
                 if (token.Next is CommaSeparatorToken)
                 {
-                    token = token.Next.Next;                    
+                    token = token.Next.Next;
                     continue;
                 }
 
@@ -106,10 +107,10 @@ namespace ppotepa.tokenez.Tree
                     return (parameters, token.Next.Next);
                 }
 
-                throw new InvalidOperationException($"Unexpected token in parameters list. {token}");
+                throw new UnexpectedTokenException(token, "Unexpected token in parameters list", typeof(ITypeToken), typeof(CommaSeparatorToken), typeof(ParenthesisClosed));
             }
-           
-            throw new InvalidOperationException($"Unexpected token in parameters list. {token}");
+
+            throw new UnexpectedTokenException(token, "Unexpected token in parameters list", typeof(ITypeToken), typeof(CommaSeparatorToken), typeof(ParenthesisClosed));
         }
     }
 }
