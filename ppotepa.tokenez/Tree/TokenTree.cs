@@ -3,8 +3,10 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Delimiters;
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Keywords.Types;
+using ppotepa.tokenez.Tree.Tokens.Operators;
 using ppotepa.tokenez.Tree.Tokens.Raw;
 using System.Collections;
+using System.Data;
 
 namespace ppotepa.tokenez.Tree
 {
@@ -90,6 +92,9 @@ namespace ppotepa.tokenez.Tree
                         break;
                     case ")":
                         targetType = typeof(ParenthesisClosed);
+                        break;
+                    case ",":
+                        targetType = typeof(CommaSeparatorToken);
                         break;
                     default:
                         targetType = typeof(IdentifierToken);

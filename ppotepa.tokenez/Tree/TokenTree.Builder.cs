@@ -1,7 +1,11 @@
 ﻿using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Delimiters;
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
+using ppotepa.tokenez.Tree.Tokens.Interfaces;
 using ppotepa.tokenez.Tree.Tokens.Keywords;
+using ppotepa.tokenez.Tree.Tokens.Keywords.Types;
+using ppotepa.tokenez.Tree.Tokens.Operators;
+using System.Runtime.CompilerServices;
 
 namespace ppotepa.tokenez.Tree
 {
@@ -30,23 +34,21 @@ namespace ppotepa.tokenez.Tree
                         {
                             string functionName = currentToken.Next.RawToken.Text;
                             Console.WriteLine($"{indent}\t\t\tFunction name: {functionName}");
-                            Declaration declaration = new FunctionDeclaration($"{scope}.fn_{functionName}");
+                            Declaration declaration = new FunctionDeclaration(currentToken.Next);
                             scope.Decarations.Add(functionName, declaration);
                             currentToken = currentToken.Next;
 
                             if (currentToken.Next is ParenthesisOpen)
                             {
+                                currentToken = currentToken.Next;
                                 parenthesisDepth++;
                                 Console.WriteLine($"{indent}\t\t\tParameters starting");
-                                //currentToken = currentToken.RawToken;
-                                //if (currentToken.Next is ScopeStart)
-                                //{
-                                //    currentToken = currentToken.Next;
-                                //    functionScope.Token = currentToken;
-                                //    currentToken = CreateScope(currentToken, functionScope, depth + 1, iteration + 1).Next;
-                                //}
+                                var parameters = ProcessFunctionParameters(currentToken.Next);
                             }
-                            if(parenthesisDepth > 0)
+
+                            parenthesisDepth--;
+
+                            if (parenthesisDepth > 0)
                             {
                                 throw new InvalidOperationException("Parenthesis not closed.");
                             }
@@ -62,11 +64,52 @@ namespace ppotepa.tokenez.Tree
             }
             while (currentToken is not null);
 
-            if(depth == 0 && parenthesisDepth > 0)
+            if (depth == 0 && parenthesisDepth > 0)
                 throw new InvalidProgramException("Unmatched parenthesis detected.");
 
             Console.WriteLine($"{indent}Scope complete: {scope.ScopeName}");
             return default;
+        }
+
+        private (FunctionParametersToken, Token) ProcessFunctionParameters(Token token, FunctionParametersToken parameters = default, int index = 0)
+        {
+            if (parameters is null)
+            {
+                parameters = new();
+            }
+            
+            while (token is not ParenthesisClosed)
+            {                
+                if (token is ITypeToken)
+                {
+                    var type = token;
+                    var expectedIdentifier = token.Next;
+
+                    if (expectedIdentifier is not IdentifierToken)
+                    {
+                        throw new InvalidOperationException("Identifier Expected.");
+                    }
+
+                    parameters.Declarations.Add(new ParameterDeclaration(type, expectedIdentifier));
+                    token = token.Next;
+                    continue;
+                }
+
+                if (token.Next is CommaSeparatorToken)
+                {
+                    token = token.Next.Next;                    
+                    continue;
+                }
+
+                if (token.Next is ParenthesisClosed)
+                {
+                    return (parameters, token.Next.Next);
+                }
+
+                throw new InvalidOperationException($"Unexpected token in parameters list. {token}");
+            }
+           
+            throw new InvalidOperationException($"Unexpected token in parameters list. {token}");
         }
     }
 }

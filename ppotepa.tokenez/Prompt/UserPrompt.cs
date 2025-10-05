@@ -22,6 +22,7 @@ namespace ppotepa.tokenez.Prompt
                     .Replace("(", " ( ")
                     .Replace("[", " ] ")
                     .Replace("]", " [ ")
+                    .Replace(",", " , ")
                     .Split([' '], StringSplitOptions.RemoveEmptyEntries)];
 
                 _rawTokens ??= split.Select(RawToken.Create).ToArray();

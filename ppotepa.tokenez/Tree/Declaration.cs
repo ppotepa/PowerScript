@@ -1,17 +1,29 @@
-﻿namespace ppotepa.tokenez.Tree
+﻿using ppotepa.tokenez.Tree.Tokens.Base;
+
+namespace ppotepa.tokenez.Tree
 {
-    public class Declaration
+    public abstract class Declaration
     {
-        public Declaration(string identifier)
+        protected Declaration(Token identifier)
         {
             this.Identifier = identifier;
         }
 
-        public string Identifier { get; set; }
+        public Token Identifier { get; set; }
     }
 
     public class FunctionDeclaration : Declaration
     {
-        public FunctionDeclaration(string identifier) : base(identifier) { }       
+        public FunctionDeclaration(Token identifier) : base(identifier) { }
+    }
+
+    public class ParameterDeclaration : Declaration
+    {
+        public ParameterDeclaration(Token type, Token identifier) : base(identifier)
+        {
+            this.DeclarativeType = type;
+        }
+
+        public Token DeclarativeType { get; }
     }
 }
