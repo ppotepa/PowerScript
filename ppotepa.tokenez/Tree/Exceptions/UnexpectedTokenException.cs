@@ -2,11 +2,22 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 
 namespace ppotepa.tokenez.Tree.Exceptions
 {
+    /// <summary>
+    /// Exception thrown when a token doesn't match expected types during parsing.
+    /// Provides detailed error messages with code context visualization,
+    /// showing the problematic token in context with surrounding tokens.
+    /// </summary>
     public class UnexpectedTokenException : Exception
     {
+        /// <summary>The token that caused the exception</summary>
         public Token Token { get; }
+
+        /// <summary>Array of token types that were expected at this position</summary>
         public Type[] ExpectedTypes { get; }
 
+        /// <summary>
+        /// Creates exception with automatic error message including code view.
+        /// </summary>
         public UnexpectedTokenException(Token token, params Type[] expectedTypes)
             : base(BuildMessage(token, expectedTypes))
         {
@@ -14,6 +25,9 @@ namespace ppotepa.tokenez.Tree.Exceptions
             ExpectedTypes = expectedTypes;
         }
 
+        /// <summary>
+        /// Creates exception with custom message prefix.
+        /// </summary>
         public UnexpectedTokenException(Token token, string customMessage, params Type[] expectedTypes)
             : base($"{customMessage}\n{BuildMessage(token, expectedTypes)}")
         {
@@ -21,6 +35,10 @@ namespace ppotepa.tokenez.Tree.Exceptions
             ExpectedTypes = expectedTypes;
         }
 
+        /// <summary>
+        /// Builds the complete error message with code visualization.
+        /// Format: [code line with context] \n [underline] \n [expected types]
+        /// </summary>
         private static string BuildMessage(Token token, Type[] expectedTypes)
         {
             var codeView = BuildCodeView(token);
@@ -31,6 +49,10 @@ namespace ppotepa.tokenez.Tree.Exceptions
             return $"\n{codeView}\n{expected}";
         }
 
+        /// <summary>
+        /// Formats token type name for display (removes "Token" suffix, lowercases).
+        /// Example: "ReturnKeywordToken" -> "returnkeyword"
+        /// </summary>
         private static string FormatTypeName(string name)
         {
             // Remove "Token" suffix for cleaner output
@@ -54,6 +76,10 @@ namespace ppotepa.tokenez.Tree.Exceptions
             return result;
         }
 
+        /// <summary>
+        /// Builds a single line of code showing the error token with surrounding context.
+        /// Collects 2 tokens before + error token + 2 tokens after.
+        /// </summary>
         private static string BuildCodeLine(Token token)
         {
             var tokens = new List<Token>();
@@ -73,6 +99,10 @@ namespace ppotepa.tokenez.Tree.Exceptions
             return string.Join(" ", tokens.Select(t => t.RawToken?.Text ?? "?"));
         }
 
+        /// <summary>
+        /// Builds an underline (^^^^) pointing to the error token.
+        /// Calculates position based on preceding tokens' lengths.
+        /// </summary>
         private static string BuildUnderline(Token token, string codeLine)
         {
             // Calculate position of error token in the code line

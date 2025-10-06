@@ -4,6 +4,11 @@ using ppotepa.tokenez.Tree.Tokens.Scoping;
 
 namespace ppotepa.tokenez.Tree.Tokens.Delimiters
 {
+    /// <summary>
+    /// Token representing ')' - closing parenthesis.
+    /// Closes function parameter lists.
+    /// Example: "FUNCTION add(a, b)" - the ')' after parameters
+    /// </summary>
     public class ParenthesisClosed : Token
     {
         public ParenthesisClosed()
@@ -14,7 +19,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Delimiters
         {
         }
 
-        // After closing parenthesis - scope start is already provided by UserPrompt wrapping
+        /// <summary>After ')', expect '{' to start function body</summary>
         public override Type[] Expectations => [typeof(ScopeStartToken)];
     }
 }

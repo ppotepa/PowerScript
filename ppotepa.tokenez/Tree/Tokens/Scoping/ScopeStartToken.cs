@@ -4,6 +4,10 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 
 namespace ppotepa.tokenez.Tree.Tokens.Scoping
 {
+    /// <summary>
+    /// Token representing '{' - the start of a scope/block.
+    /// Used to begin function bodies and other code blocks.
+    /// </summary>
     public class ScopeStartToken : Token
     {
         public ScopeStartToken()
@@ -14,6 +18,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Scoping
         {
         }
 
+        /// <summary>After '{', expect RETURN statement (for function scopes)</summary>
         public override Type[] Expectations => [
             typeof(ReturnKeywordToken)
         ];

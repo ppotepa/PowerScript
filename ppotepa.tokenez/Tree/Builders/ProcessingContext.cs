@@ -3,14 +3,24 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Context information passed through token processing pipeline
+    /// Context information passed through the token processing pipeline.
+    /// Maintains state about the current scope, depth, and function context during processing.
     /// </summary>
     internal class ProcessingContext
     {
+        /// <summary>Current scope being built</summary>
         public Scope CurrentScope { get; set; }
+
+        /// <summary>Nesting depth for logging purposes</summary>
         public int Depth { get; set; }
+
+        /// <summary>Stack for managing nested token processing (future use)</summary>
         public Stack<Token> ProcessingStack { get; set; } = new();
+
+        /// <summary>Tracks whether we're currently inside a function scope (for RETURN validation)</summary>
         public bool IsInsideFunction { get; set; }
+
+        /// <summary>Tracks parenthesis depth (future use for complex expressions)</summary>
         public int ParenthesisDepth { get; set; }
 
         public ProcessingContext(Scope currentScope, int depth)
@@ -19,16 +29,26 @@ namespace ppotepa.tokenez.Tree.Builders
             Depth = depth;
         }
 
+        /// <summary>
+        /// Marks that we've entered a function scope.
+        /// This enables RETURN statement validation.
+        /// </summary>
         public void EnterFunction()
         {
             IsInsideFunction = true;
         }
 
+        /// <summary>
+        /// Marks that we've exited a function scope.
+        /// </summary>
         public void ExitFunction()
         {
             IsInsideFunction = false;
         }
 
+        /// <summary>
+        /// Creates a deep copy of the context for nested processing.
+        /// </summary>
         public ProcessingContext Clone()
         {
             return new ProcessingContext(CurrentScope, Depth)

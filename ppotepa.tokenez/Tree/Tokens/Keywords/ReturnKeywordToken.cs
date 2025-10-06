@@ -6,6 +6,11 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
+    /// <summary>
+    /// Token representing the RETURN keyword.
+    /// Used to return a value from a function.
+    /// Example: "RETURN 42" or "RETURN x + y"
+    /// </summary>
     public class ReturnKeywordToken : Token, IKeyWordToken
     {
         public ReturnKeywordToken()
@@ -16,6 +21,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         {
         }
 
+        /// <summary>After RETURN, expect an identifier or value (the expression to return)</summary>
         public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
 
         public override string KeyWord => "RETURN";

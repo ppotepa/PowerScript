@@ -6,6 +6,13 @@ using ppotepa.tokenez.Tree.Tokens.Scoping;
 
 namespace ppotepa.tokenez.Tree.Builders
 {
+    /// <summary>
+    /// Processes scope blocks (code between { and }).
+    /// Responsible for:
+    /// - Processing all tokens within a scope
+    /// - Validating that function scopes contain a RETURN statement
+    /// - Managing function context entry/exit
+    /// </summary>
     internal class ScopeProcessor : ITokenProcessor
     {
         private readonly TokenProcessorRegistry _registry;
@@ -27,6 +34,7 @@ namespace ppotepa.tokenez.Tree.Builders
             var scopeStartToken = token as ScopeStartToken;
             BuilderLogger.LogScopeStart(context.CurrentScope.ScopeName, context.Depth);
 
+            // Mark function context for RETURN validation
             if (context.CurrentScope.Type == ScopeType.Function)
             {
                 context.EnterFunction();
@@ -35,6 +43,7 @@ namespace ppotepa.tokenez.Tree.Builders
             var currentToken = scopeStartToken.Next;
             int scopeDepth = context.Depth + 1;
 
+            // Process all tokens until we hit the scope end token
             while (currentToken != null && currentToken is not ScopeEndToken)
             {
                 BuilderLogger.LogProcessing(
@@ -42,6 +51,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     currentToken.RawToken?.Text,
                     scopeDepth);
 
+                // Delegate token processing to registered processors
                 var processor = _registry.GetProcessor(currentToken);
                 if (processor != null)
                 {
@@ -50,14 +60,17 @@ namespace ppotepa.tokenez.Tree.Builders
                     continue;
                 }
 
+                // No processor found, skip to next token
                 currentToken = currentToken.Next;
             }
 
+            // Enforce language rule: every function must have a RETURN statement
             if (context.CurrentScope.Type == ScopeType.Function && !context.CurrentScope.HasReturn)
             {
                 throw new MissingReturnStatementException(context.CurrentScope);
             }
 
+            // Exit function context
             if (context.CurrentScope.Type == ScopeType.Function)
             {
                 context.ExitFunction();
@@ -65,6 +78,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
             BuilderLogger.LogScopeComplete(context.CurrentScope.ScopeName, context.Depth);
 
+            // Continue from token after scope end
             return TokenProcessingResult.Continue(currentToken?.Next);
         }
     }

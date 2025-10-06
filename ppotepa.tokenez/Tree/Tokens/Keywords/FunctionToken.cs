@@ -5,6 +5,11 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
+    /// <summary>
+    /// Token representing the FUNCTION keyword.
+    /// Starts a function declaration.
+    /// Example: "FUNCTION add(a, b) { ... }"
+    /// </summary>
     public class FunctionToken : Token, IKeyWordToken
     {
         public FunctionToken()
@@ -16,6 +21,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         {
         }
 
+        /// <summary>After FUNCTION, expect an identifier (function name)</summary>
         public override Type[] Expectations => [typeof(IdentifierToken)];
 
         public override string KeyWord => "FUNCTION";

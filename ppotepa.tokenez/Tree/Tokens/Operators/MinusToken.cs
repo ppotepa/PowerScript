@@ -5,6 +5,10 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 
 namespace ppotepa.tokenez.Tree.Tokens.Operators
 {
+    /// <summary>
+    /// Token representing the '-' subtraction operator.
+    /// Used in binary expressions: a - b
+    /// </summary>
     public class MinusToken : Token
     {
         public MinusToken()
@@ -15,6 +19,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Operators
         {
         }
 
+        /// <summary>After '-', expect an identifier or value (right operand)</summary>
         public override Type[] Expectations => [typeof(IdentifierToken), typeof(ValueToken)];
     }
 }
