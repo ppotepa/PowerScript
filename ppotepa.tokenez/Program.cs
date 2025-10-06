@@ -7,21 +7,30 @@ namespace ppotepa.tokenez
     {
         static void Main(string[] args)
         {
-            string currentPrompt = "FUNCTION EXAMPLE (INT a, INT b RETURN a + b";
+            // User just writes their functions - no need to write MAIN
+            string userCode = "FUNCTION EXAMPLE ( INT a , INT b ) { RETURN a + b }";
 
-            while (!currentPrompt.Trim().Equals("quit", StringComparison.InvariantCultureIgnoreCase))
+            Console.WriteLine("=== Function-Based Language ===\n");
+            Console.WriteLine($"User Code:\n{userCode}\n");
+
+            while (!userCode.Trim().Equals("quit", StringComparison.InvariantCultureIgnoreCase))
             {
-                //currentPrompt = Console.ReadLine();
+                //userCode = Console.ReadLine();
 
-                if (string.IsNullOrEmpty(currentPrompt))
+                if (string.IsNullOrEmpty(userCode))
                 {
                     continue;
                 }
 
-                UserPrompt prompt = new(currentPrompt);
+                // UserPrompt automatically wraps code in MAIN function with params
+                UserPrompt prompt = new(userCode, args);
+                Console.WriteLine($"Wrapped in MAIN:\n{prompt.WrappedPrompt}\n");
+
                 TokenTree tree = new TokenTree().Create(prompt);
-                Console.WriteLine("Tokens processed. Press any key to continue.");
+                Console.WriteLine("\n=== Execution Complete ===");
+                Console.WriteLine("Tokens processed successfully!");
                 Console.ReadLine();
+                break;
             }
         }
     }

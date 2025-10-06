@@ -15,9 +15,15 @@ namespace ppotepa.tokenez.Tree
     {
         private static Dictionary<string, Type> _map = new()
         {
-            {
-                "INT", typeof(IntToken)
-            }
+            { "FUNCTION", typeof(Tokens.Keywords.FunctionToken) },
+            { "RETURN", typeof(Tokens.Keywords.ReturnKeywordToken) },
+            { "INT", typeof(IntToken) },
+            { "{", typeof(Tokens.Scoping.ScopeStartToken) },
+            { "}", typeof(Tokens.Scoping.ScopeEndToken) },
+            { "+", typeof(PlusToken) },
+            { "-", typeof(MinusToken) },
+            { "*", typeof(MultiplyToken) },
+            { "/", typeof(DivideToken) }
         };
 
         private Dictionary<string, Type> _tokenTypes = default;
@@ -43,7 +49,8 @@ namespace ppotepa.tokenez.Tree
         }
         public TokenTree Create(UserPrompt prompt)
         {
-            Console.WriteLine($"Creating TokenTree from prompt: '{prompt.Prompt}'");
+            Console.WriteLine($"\n=== Building Token Tree ===");
+            Console.WriteLine($"Processing: '{prompt.WrappedPrompt}'\n");
 
             Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select(ToToken)];
             Console.WriteLine($"Tokens created: {tokens.Length}");
@@ -79,7 +86,11 @@ namespace ppotepa.tokenez.Tree
         {
             Type targetType = default;
 
-            if (TokenTypes.ContainsKey(rawToken.Text))
+            if (_map.ContainsKey(rawToken.Text))
+            {
+                targetType = _map[rawToken.Text];
+            }
+            else if (TokenTypes.ContainsKey(rawToken.Text))
             {
                 targetType = TokenTypes[rawToken.Text];
             }

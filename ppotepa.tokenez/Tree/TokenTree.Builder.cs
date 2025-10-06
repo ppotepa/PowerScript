@@ -3,19 +3,27 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 
 namespace ppotepa.tokenez.Tree
 {
-    /// <summary>
-    /// Partial class responsible for coordinating the token tree building process
-    /// Delegates to specialized processors following Single Responsibility Principle
-    /// </summary>
     public partial class TokenTree
     {
         private readonly ScopeBuilder _scopeBuilder;
+        private readonly TokenProcessorRegistry _registry;
+        private readonly ExpectationValidator _validator;
 
         public TokenTree()
         {
+            _validator = new ExpectationValidator();
+            _registry = new TokenProcessorRegistry();
+
             var parameterProcessor = new ParameterProcessor();
-            var functionProcessor = new FunctionProcessor(parameterProcessor);
-            _scopeBuilder = new ScopeBuilder(functionProcessor);
+            var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
+            var returnProcessor = new ReturnStatementProcessor(_validator);
+            var scopeProcessor = new ScopeProcessor(_registry, _validator);
+
+            _registry.Register(functionProcessor);
+            _registry.Register(returnProcessor);
+            _registry.Register(scopeProcessor);
+
+            _scopeBuilder = new ScopeBuilder(_registry, _validator);
         }
 
         public Scope CreateScope(Token currentToken, Scope scope, int depth = 0, int iteration = 0, int parenthesisDepth = 0)

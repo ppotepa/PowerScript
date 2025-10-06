@@ -1,4 +1,5 @@
 ﻿using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Keywords.Types;
 using ppotepa.tokenez.Tree.Tokens.Raw;
 
 namespace ppotepa.tokenez.Tree.Tokens.Delimiters
@@ -13,6 +14,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Delimiters
         {
         }
 
-        public override Type[] Expectations => [];
+        public override Type[] Expectations => [typeof(ITypeToken), typeof(ParenthesisClosed)];
     }
 }

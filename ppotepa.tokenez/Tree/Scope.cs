@@ -1,12 +1,24 @@
-﻿using ppotepa.tokenez.Tree.Tokens.Base;
+﻿using ppotepa.tokenez.Tree.Statements;
+using ppotepa.tokenez.Tree.Tokens.Base;
 using System.Collections;
 
 namespace ppotepa.tokenez.Tree
 {
+    public enum ScopeType
+    {
+        Root,
+        Function,
+        Block
+    }
+
     public class Scope
     {
         public Scope _outerScope = default;
         public Dictionary<string, Declaration> Decarations = [];
+        public List<Statement> Statements { get; set; } = new();
+        public bool HasReturn { get; set; }
+        public ScopeType Type { get; set; } = ScopeType.Block;
+
         public Scope(string scopeName)
         {
             this.ScopeName = scopeName;
@@ -25,7 +37,7 @@ namespace ppotepa.tokenez.Tree
             set => _outerScope = value;
         }
 
-        public string ScopeName { get; private set; }
+        public string ScopeName { get; set; }
         public Token Token { get; set; }
 
         public override string ToString()
