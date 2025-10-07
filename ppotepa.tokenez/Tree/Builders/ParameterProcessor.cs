@@ -22,10 +22,19 @@ namespace ppotepa.tokenez.Tree.Builders
         {
             var parameters = new FunctionParametersToken();
             var currentToken = startToken;
+            int paramSafetyCounter = 0;
 
             // Process until we hit the closing parenthesis
             while (currentToken is not ParenthesisClosed)
             {
+                paramSafetyCounter++;
+                if (paramSafetyCounter > 100)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"[ERROR] Exceeded 100 iterations in ProcessParameters. Possible endless loop in parameter list.");
+                    Console.ResetColor();
+                    break;
+                }
                 // Try to parse a type-identifier pair (e.g., "INT x")
                 if (TryProcessTypeAndIdentifier(currentToken, parameters, out var nextToken))
                 {
@@ -73,9 +82,22 @@ namespace ppotepa.tokenez.Tree.Builders
         /// </summary>
         private bool TryProcessTypeAndIdentifier(Token token, FunctionParametersToken parameters, out Token nextToken)
         {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
+            Console.ResetColor();
             // First token must be a type (INT, FUNCTION, etc.)
             if (token is not ITypeToken)
             {
+                // If it's an identifier where we expect a type, it's an invalid type name
+                if (token is IdentifierToken)
+                {
+                    throw new UnexpectedTokenException(
+                        token,
+                        $"Invalid parameter type '{token.RawToken.Text}'. Valid types are: INT",
+                        typeof(IntToken)
+                    );
+                }
+
                 nextToken = null;
                 return false;
             }

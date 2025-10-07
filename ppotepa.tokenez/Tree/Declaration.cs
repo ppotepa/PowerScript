@@ -24,6 +24,12 @@ namespace ppotepa.tokenez.Tree
     public class FunctionDeclaration : Declaration
     {
         public FunctionDeclaration(Token identifier) : base(identifier) { }
+
+        /// <summary>List of parameter declarations for this function</summary>
+        public List<Declaration> Parameters { get; set; } = new();
+
+        /// <summary>The scope (body) of this function</summary>
+        public Scope Scope { get; set; }
     }
 
     /// <summary>

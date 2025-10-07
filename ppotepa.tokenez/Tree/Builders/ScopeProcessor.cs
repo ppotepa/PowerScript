@@ -17,11 +17,13 @@ namespace ppotepa.tokenez.Tree.Builders
     {
         private readonly TokenProcessorRegistry _registry;
         private readonly ExpectationValidator _validator;
+        private readonly ScopeBuilder _scopeBuilder;
 
-        public ScopeProcessor(TokenProcessorRegistry registry, ExpectationValidator validator)
+        public ScopeProcessor(TokenProcessorRegistry registry, ExpectationValidator validator, ScopeBuilder scopeBuilder)
         {
             _registry = registry;
             _validator = validator;
+            _scopeBuilder = scopeBuilder;
         }
 
         public bool CanProcess(Token token)
@@ -56,7 +58,38 @@ namespace ppotepa.tokenez.Tree.Builders
                 if (processor != null)
                 {
                     var result = processor.Process(currentToken, context);
-                    currentToken = result.NextToken;
+
+                    // If the processor created a new scope (e.g., FunctionProcessor),
+                    // recursively build that scope
+                    if (result.ModifiedScope != null)
+                    {
+                        // Create a new context for the nested scope
+                        var nestedContext = new ProcessingContext(result.ModifiedScope, scopeDepth);
+
+                        // If the new scope is a function, mark it in the context
+                        if (result.ModifiedScope.Type == ScopeType.Function)
+                        {
+                            nestedContext.EnterFunction();
+                        }
+
+                        // Build the nested scope recursively with the new context
+                        _scopeBuilder.BuildScope(result.NextToken, result.ModifiedScope, scopeDepth);
+
+                        // Find the scope end token to continue after the nested scope
+                        var nestedToken = result.NextToken;
+                        int braceCount = 1;
+                        while (nestedToken != null && braceCount > 0)
+                        {
+                            nestedToken = nestedToken.Next;
+                            if (nestedToken is ScopeStartToken) braceCount++;
+                            if (nestedToken is ScopeEndToken) braceCount--;
+                        }
+                        currentToken = nestedToken?.Next;
+                    }
+                    else
+                    {
+                        currentToken = result.NextToken;
+                    }
                     continue;
                 }
 
@@ -65,7 +98,8 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             // Enforce language rule: every function must have a RETURN statement
-            if (context.CurrentScope.Type == ScopeType.Function && !context.CurrentScope.HasReturn)
+            if (context.CurrentScope.Type == ScopeType.Function &&
+                !context.CurrentScope.HasReturn)
             {
                 throw new MissingReturnStatementException(context.CurrentScope);
             }

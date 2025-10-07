@@ -15,8 +15,9 @@ namespace ppotepa.tokenez.Tree.Builders
     /// Processes RETURN keyword tokens.
     /// Responsible for:
     /// - Validating RETURN is inside a function
-    /// - Parsing the return expression
+    /// - Parsing the return expression (or null for void returns)
     /// - Marking the scope as having a valid RETURN statement
+    /// Supports both value returns (RETURN expr) and void returns (RETURN)
     /// </summary>
     internal class ReturnStatementProcessor : ITokenProcessor
     {
@@ -34,6 +35,9 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.ResetColor();
             // Enforce language rule: RETURN can only appear inside functions
             if (!context.IsInsideFunction)
             {
@@ -48,23 +52,32 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(returnStatement);
             context.CurrentScope.HasReturn = true;  // Mark scope as having RETURN
 
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Registered RETURN statement in scope '{context.CurrentScope.ScopeName}'");
+            Console.ResetColor();
+
             // Find where the expression ends (at scope end)
             var nextToken = FindNextToken(token.Next);
 
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
+            Console.ResetColor();
             return TokenProcessingResult.Continue(nextToken);
         }
 
         /// <summary>
         /// Parses an expression following the RETURN keyword.
         /// Currently supports:
+        /// - Void return (e.g., RETURN) - returns null expression
         /// - Simple identifiers (e.g., RETURN x)
         /// - Literal values (e.g., RETURN 42)
         /// - Binary operations (e.g., RETURN a + b)
         /// </summary>
         private Expression ParseExpression(Token startToken)
         {
-            if (startToken == null)
-                throw new UnexpectedTokenException(startToken, "Expected expression after RETURN");
+            // Allow void return: RETURN with no expression (followed by scope end)
+            if (startToken == null || startToken is ScopeEndToken)
+                return null;
 
             if (startToken is IdentifierToken identToken)
             {
@@ -87,7 +100,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 return new LiteralExpression(valueToken);
             }
 
-            throw new UnexpectedTokenException(startToken, typeof(IdentifierToken), typeof(ValueToken));
+            throw new UnexpectedTokenException(startToken, typeof(IdentifierToken), typeof(ValueToken), typeof(ScopeEndToken));
         }
 
         /// <summary>

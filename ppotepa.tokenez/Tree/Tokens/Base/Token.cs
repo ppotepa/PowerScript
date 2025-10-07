@@ -9,7 +9,20 @@ namespace ppotepa.tokenez.Tree.Tokens.Base
     /// </summary>
     public abstract class Token
     {
+        public Type Type
+        {
+            get
+            {
+                if (_type is null)
+                {
+                    _type = this.GetType();
+                }
+                return _type;
+            }
+        }
+
         private readonly RawToken _rawToken = default;
+        private Type _type;
 
         /// <summary>Position index in the token sequence</summary>
         public int Index { get; set; }

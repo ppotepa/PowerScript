@@ -1,0 +1,226 @@
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                      POWERSCRIPT v1.0                          Γòæ
+Γòæ          A Function-Based Language with Standard Library       Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ              POWERSCRIPT STANDARD LIBRARY                      Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+ΓöîΓöÇ I/O Functions
+Γöé  ΓÇó PRINT(STRING message) ΓåÆ VOID
+Γöé    Outputs a message to the console
+Γöé  ΓÇó PRINTLN(STRING message) ΓåÆ VOID
+Γöé    Outputs a message to the console with a newline
+Γöé  ΓÇó READ() ΓåÆ STRING
+Γöé    Reads a line of input from the console
+Γöé
+ΓöîΓöÇ Math Functions
+Γöé  ΓÇó ADD(INT a, INT b) ΓåÆ INT
+Γöé    Adds two numbers together
+Γöé  ΓÇó DIVIDE(INT a, INT b) ΓåÆ INT
+Γöé    Divides the first number by the second
+Γöé  ΓÇó MOD(INT a, INT b) ΓåÆ INT
+Γöé    Returns the remainder after division
+Γöé  ΓÇó MULTIPLY(INT a, INT b) ΓåÆ INT
+Γöé    Multiplies two numbers together
+Γöé  ΓÇó POW(INT base, INT exponent) ΓåÆ INT
+Γöé    Raises a number to a power
+Γöé  ΓÇó SUBTRACT(INT a, INT b) ΓåÆ INT
+Γöé    Subtracts the second number from the first
+Γöé
+ΓöîΓöÇ String Functions
+Γöé  ΓÇó CONCAT(STRING str1, STRING str2) ΓåÆ STRING
+Γöé    Concatenates two or more strings together
+Γöé  ΓÇó LENGTH(STRING str) ΓåÆ INT
+Γöé    Returns the length of a string
+Γöé  ΓÇó SUBSTRING(STRING str, INT start, INT length) ΓåÆ STRING
+Γöé    Extracts a portion of a string
+Γöé  ΓÇó TOLOWER(STRING str) ΓåÆ STRING
+Γöé    Converts a string to lowercase
+Γöé  ΓÇó TOUPPER(STRING str) ΓåÆ STRING
+Γöé    Converts a string to uppercase
+Γöé  ΓÇó TRIM(STRING str) ΓåÆ STRING
+Γöé    Removes leading and trailing whitespace from a string
+Γöé
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        READING PROGRAM.PS              Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Γ£ô Read program.ps
+
+Code:
+FUNCTION ADD ( INT a , INT b ) { RETURN a + b }
+FUNCTION GETFIVE ( ) { RETURN 5 }
+FUNCTION GREET ( INT x ) { RETURN }
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        BUILDING TOKEN TREE             Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+=== Building Token Tree ===
+Processing: 'FUNCTION ADD ( INT a , INT b ) { RETURN a + b }
+FUNCTION GETFIVE ( ) { RETURN 5 }
+FUNCTION GREET ( INT x ) { RETURN }
+'
+
+	[0] FUNCTION ΓåÆ FunctionToken
+	[1] ADD ΓåÆ IdentifierToken
+	[2] ( ΓåÆ ParenthesisOpen
+	[3] INT ΓåÆ IntToken
+	[4] A ΓåÆ IdentifierToken
+	[5] , ΓåÆ CommaSeparatorToken
+	[6] INT ΓåÆ IntToken
+	[7] B ΓåÆ IdentifierToken
+	[8] ) ΓåÆ ParenthesisClosed
+	[9] { ΓåÆ ScopeStartToken
+	[10] RETURN ΓåÆ ReturnKeywordToken
+	[11] A ΓåÆ IdentifierToken
+	[12] + ΓåÆ PlusToken
+	[13] B ΓåÆ IdentifierToken
+	[14] } ΓåÆ ScopeEndToken
+	[15] FUNCTION ΓåÆ FunctionToken
+	[16] GETFIVE ΓåÆ IdentifierToken
+	[17] ( ΓåÆ ParenthesisOpen
+	[18] ) ΓåÆ ParenthesisClosed
+	[19] { ΓåÆ ScopeStartToken
+	[20] RETURN ΓåÆ ReturnKeywordToken
+	[21] 5 ΓåÆ ValueToken
+	[22] } ΓåÆ ScopeEndToken
+	[23] FUNCTION ΓåÆ FunctionToken
+	[24] GREET ΓåÆ IdentifierToken
+	[25] ( ΓåÆ ParenthesisOpen
+	[26] INT ΓåÆ IntToken
+	[27] X ΓåÆ IdentifierToken
+	[28] ) ΓåÆ ParenthesisClosed
+	[29] { ΓåÆ ScopeStartToken
+	[30] RETURN ΓåÆ ReturnKeywordToken
+	[31] } ΓåÆ ScopeEndToken
+Tokens created: 32
+Tokens linked
+	CreateScope: ROOT (depth=0)
+[DEBUG] Entering BuildScope: ROOT at depth 0 with token FunctionToken 'FUNCTION'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: ADD
+[DEBUG] Registered function 'ADD' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'ADD'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'ADD'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+[DEBUG] Scope modified by processor. New scope: ADD
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+	CreateScope: ADD (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'ADD'
+[DEBUG] Registered RETURN statement in scope 'ADD'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: ADD
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: GETFIVE
+[DEBUG] Registered function 'GETFIVE' in scope 'ADD'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'GETFIVE'
+[DEBUG] Passing control to ScopeProcessor for function 'GETFIVE'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+[DEBUG] Scope modified by processor. New scope: GETFIVE
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+	CreateScope: GETFIVE (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'GETFIVE'
+[DEBUG] Registered RETURN statement in scope 'GETFIVE'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: GETFIVE
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: GREET
+[DEBUG] Registered function 'GREET' in scope 'GETFIVE'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'GREET'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'GREET'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+[DEBUG] Scope modified by processor. New scope: GREET
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+	CreateScope: GREET (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'GREET'
+[DEBUG] Registered RETURN statement in scope 'GREET'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: GREET
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+	Scope complete: ROOT
+[DEBUG] Exiting BuildScope: ROOT at depth 0
+Scope creation complete
+
+Γ£ô Token tree built successfully!
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ       TOKEN TREE VISUALIZATION         Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Γö£ΓöÇ Scope: ROOT (Block)
+Γöé  Declarations:
+Γöé    ΓÇó ADD (FunctionDeclaration)
+    Γö£ΓöÇ Scope: ADD (Function)
+    Γöé  Declarations:
+    Γöé    ΓÇó GETFIVE (FunctionDeclaration)
+        Γö£ΓöÇ Scope: GETFIVE (Function)
+        Γöé  Declarations:
+        Γöé    ΓÇó GREET (FunctionDeclaration)
+            Γö£ΓöÇ Scope: GREET (Function)
+            Γöé  Statements:
+            Γöé    ΓÇó RETURN
+            Γöé      Returns: void
+            Γöé  HasReturn: True
+        Γöé  Statements:
+        Γöé    ΓÇó RETURN
+        Γöé      Returns: Literal
+        Γöé  HasReturn: True
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ     COMPILING & EXECUTING FUNCTIONS    Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+≡ƒôª Compiling function: ADD
+  ΓåÆ Lambda: (A, B) => A + B
+  Γ£ô Compiled and tested: ADD(10, 5) = 15
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        EXECUTION COMPLETE              Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+Press any key to exit...

@@ -31,7 +31,7 @@ namespace ppotepa.tokenez.Tree.Builders
             bool isValid = currentToken.Expectations.Any(expectedType =>
             {
                 // Use IsAssignableFrom to handle both exact types and interface implementations
-                return expectedType.IsAssignableFrom(nextToken.GetType());
+                return expectedType.IsAssignableFrom(nextToken.Type);
             });
 
             if (!isValid)

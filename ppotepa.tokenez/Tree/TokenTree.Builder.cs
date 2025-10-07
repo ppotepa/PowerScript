@@ -23,19 +23,21 @@ namespace ppotepa.tokenez.Tree
             _validator = new ExpectationValidator();
             _registry = new TokenProcessorRegistry();
 
+            // Create the scope builder first (needed by ScopeProcessor)
+            _scopeBuilder = new ScopeBuilder(_registry, _validator);
+
             // Create specialized processors for different token types
             var parameterProcessor = new ParameterProcessor();
             var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
             var returnProcessor = new ReturnStatementProcessor(_validator);
-            var scopeProcessor = new ScopeProcessor(_registry, _validator);
+            // var printProcessor = new PrintStatementProcessor(_validator); // TODO: Re-implement PRINT
+            var scopeProcessor = new ScopeProcessor(_registry, _validator, _scopeBuilder);
 
             // Register all processors with the central registry
             _registry.Register(functionProcessor);
             _registry.Register(returnProcessor);
+            // _registry.Register(printProcessor); // TODO: Re-implement PRINT
             _registry.Register(scopeProcessor);
-
-            // Create the scope builder that orchestrates the processing
-            _scopeBuilder = new ScopeBuilder(_registry, _validator);
         }
 
         /// <summary>

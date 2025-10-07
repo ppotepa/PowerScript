@@ -34,6 +34,9 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] FunctionProcessor: Processing FUNCTION token '{token.RawToken?.Text}' at depth {context.Depth}");
+            Console.ResetColor();
             var functionToken = token as FunctionToken;
             BuilderLogger.LogFunctionFound(context.Depth);
 
@@ -43,6 +46,9 @@ namespace ppotepa.tokenez.Tree.Builders
                 OuterScope = context.CurrentScope,
                 Type = ScopeType.Function  // Mark as function scope to enforce RETURN requirement
             };
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Created new function scope: {functionScope.ScopeName} (Type={functionScope.Type})");
+            Console.ResetColor();
 
             // Function must be followed by an identifier (function name)
             if (functionToken.Next is not IdentifierToken functionNameToken)
@@ -58,6 +64,13 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Decarations.Add(functionName, declaration);
             functionScope.ScopeName = functionName;
 
+            // Link the scope to the declaration so we can visualize it later
+            declaration.Scope = functionScope;
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Registered function '{functionName}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.ResetColor();
+
             Token currentToken = functionNameToken;
 
             // Expect opening parenthesis for parameter list
@@ -70,8 +83,26 @@ namespace ppotepa.tokenez.Tree.Builders
             BuilderLogger.LogParametersStarting(context.Depth);
 
             // Delegate parameter processing to specialized processor
-            var (parameters, nextToken) = _parameterProcessor.ProcessParameters(currentToken.Next);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Delegating parameter processing for function '{functionName}'");
+            Console.ResetColor();
+            var (parametersToken, nextToken) = _parameterProcessor.ProcessParameters(currentToken.Next);
 
+            // Store the parameters in the function declaration
+            declaration.Parameters = parametersToken.Declarations;
+
+            // After parameters, we expect a scope start token ('{')
+            if (nextToken is not Tokens.Scoping.ScopeStartToken)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[ERROR] Expected ScopeStartToken after parameters for function '{functionName}', but got {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
+                Console.ResetColor();
+                throw new UnexpectedTokenException(nextToken, typeof(Tokens.Scoping.ScopeStartToken));
+            }
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Passing control to ScopeProcessor for function '{functionName}'");
+            Console.ResetColor();
             // Return the new function scope for the ScopeProcessor to handle
             return TokenProcessingResult.ContinueWithScope(nextToken, functionScope);
         }

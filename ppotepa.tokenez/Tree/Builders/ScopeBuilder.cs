@@ -27,17 +27,32 @@ namespace ppotepa.tokenez.Tree.Builders
         public Scope BuildScope(Token startToken, Scope scope, int depth = 0)
         {
             BuilderLogger.LogScopeStart(scope.ScopeName, depth);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Entering BuildScope: {scope.ScopeName} at depth {depth} with token {startToken?.GetType().Name} '{startToken?.RawToken?.Text}'");
+            Console.ResetColor();
 
             var context = new ProcessingContext(scope, depth);
             var currentToken = startToken;
 
             // Process all tokens sequentially
+            int safetyCounter = 0;
             while (currentToken is not null)
             {
+                safetyCounter++;
+                if (safetyCounter > 1000)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"[ERROR] Exceeded 1000 iterations in BuildScope for scope {scope.ScopeName} at depth {depth}. Possible endless loop.");
+                    Console.ResetColor();
+                    break;
+                }
                 BuilderLogger.LogProcessing(
                     currentToken.GetType().Name,
                     currentToken.RawToken?.Text,
                     depth);
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[DEBUG] Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {depth}");
+                Console.ResetColor();
 
                 // Only process tokens that have declared expectations
                 if (HasExpectations(currentToken))
@@ -46,18 +61,27 @@ namespace ppotepa.tokenez.Tree.Builders
                     var processor = _registry.GetProcessor(currentToken);
                     if (processor != null)
                     {
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"[DEBUG] Invoking processor {processor.GetType().Name} for token {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
+                        Console.ResetColor();
                         // Process the token and get the next token to continue from
                         var result = processor.Process(currentToken, context);
 
                         // Optionally validate that the next token meets expectations
                         if (result.ShouldValidateExpectations)
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.WriteLine($"[DEBUG] Validating expectations after processing {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
+                            Console.ResetColor();
                             _validator.ValidateNext(currentToken);
                         }
 
                         // Update scope if processor modified it
                         if (result.ModifiedScope != null)
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.WriteLine($"[DEBUG] Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
+                            Console.ResetColor();
                             context.CurrentScope = result.ModifiedScope;
                         }
 
@@ -68,9 +92,15 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // No processor found, move to next token
                 currentToken = currentToken.Next;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[DEBUG] Moving to next token: {currentToken?.GetType().Name} '{currentToken?.RawToken?.Text}'");
+                Console.ResetColor();
             }
 
             BuilderLogger.LogScopeComplete(scope.ScopeName, depth);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[DEBUG] Exiting BuildScope: {scope.ScopeName} at depth {depth}");
+            Console.ResetColor();
 
             return scope;
         }

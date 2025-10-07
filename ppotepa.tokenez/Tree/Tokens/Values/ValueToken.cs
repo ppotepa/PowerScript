@@ -1,4 +1,5 @@
 ﻿using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Raw;
 
 namespace ppotepa.tokenez.Tree.Tokens.Values
 {
@@ -9,6 +10,10 @@ namespace ppotepa.tokenez.Tree.Tokens.Values
     public class ValueToken : Token
     {
         public ValueToken()
+        {
+        }
+
+        public ValueToken(RawToken rawToken) : base(rawToken)
         {
         }
 

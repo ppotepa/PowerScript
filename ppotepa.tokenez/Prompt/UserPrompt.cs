@@ -4,7 +4,7 @@ namespace ppotepa.tokenez.Prompt
 {
     /// <summary>
     /// Represents user input code that will be tokenized.
-    /// Automatically wraps user code in a MAIN function to ensure all code executes in a function context.
+    /// User code defines functions directly at root scope, which serves as a standard library.
     /// </summary>
     public class UserPrompt
     {
@@ -12,63 +12,105 @@ namespace ppotepa.tokenez.Prompt
         private string[] _commandLineArgs;
 
         /// <summary>
-        /// Creates a new user prompt and wraps it in a MAIN function.
+        /// Creates a new user prompt.
         /// </summary>
         /// <param name="prompt">The user's code input</param>
-        /// <param name="commandLineArgs">Command line arguments to pass to MAIN function</param>
+        /// <param name="commandLineArgs">Command line arguments (reserved for future use)</param>
         public UserPrompt(string prompt, string[] commandLineArgs = null)
         {
             Prompt = prompt;
             _commandLineArgs = commandLineArgs ?? Array.Empty<string>();
-            WrappedPrompt = WrapInMainFunction(prompt, _commandLineArgs);
+            WrappedPrompt = prompt; // No wrapping needed - root scope is the standard library
         }
 
         /// <summary>
-        /// The original user code before wrapping
+        /// The original user code
         /// </summary>
         public string Prompt { get; }
 
         /// <summary>
-        /// The user code wrapped in a MAIN function declaration
+        /// The code to process (same as Prompt - no wrapping)
         /// </summary>
         public string WrappedPrompt { get; }
 
         /// <summary>
-        /// Wraps user code in a MAIN function to ensure all code runs in a function scope.
-        /// This enforces the language rule that all executable code must be within a function.
-        /// </summary>
-        private string WrapInMainFunction(string userCode, string[] args)
-        {
-            // Create MAIN function with empty parameter list - args are implicitly available
-            return $"FUNCTION MAIN ( ) {{ {userCode} }}";
-        }
-
-        /// <summary>
         /// Lazily tokenizes the wrapped prompt into raw tokens.
         /// Separates all operators, delimiters, and keywords into individual tokens.
+        /// Preserves string literals as single tokens.
         /// </summary>
         public RawToken[] RawTokens
         {
             get
             {
-                // Add spaces around all delimiters and operators to ensure they're separate tokens
-                string[] split = [.. WrappedPrompt
-                    .Trim()
-                    .Replace("{", " { ")      // Scope start
-                    .Replace("}", " } ")      // Scope end
-                    .Replace(")", " ) ")      // Parenthesis close
-                    .Replace("(", " ( ")      // Parenthesis open
-                    .Replace("[", " ] ")      // Array bracket start (future use)
-                    .Replace("]", " [ ")      // Array bracket end (future use)
-                    .Replace(",", " , ")      // Parameter separator
-                    .Replace("+", " + ")      // Addition operator
-                    .Replace("-", " - ")      // Subtraction operator
-                    .Replace("*", " * ")      // Multiplication operator
-                    .Replace("/", " / ")      // Division operator
-                    .Split([' '], StringSplitOptions.RemoveEmptyEntries)];
+                // First, extract and protect string literals
+                var text = WrappedPrompt.Trim();
+                var tokens = new List<string>();
+                int i = 0;
+
+                while (i < text.Length)
+                {
+                    // Handle string literals
+                    if (text[i] == '"')
+                    {
+                        int startQuote = i;
+                        i++; // Skip opening quote
+                        while (i < text.Length && text[i] != '"')
+                        {
+                            i++;
+                        }
+                        if (i < text.Length)
+                        {
+                            i++; // Include closing quote
+                            tokens.Add(text.Substring(startQuote, i - startQuote));
+                        }
+                    }
+                    // Handle other characters
+                    else if (char.IsWhiteSpace(text[i]))
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        int start = i;
+                        while (i < text.Length && !char.IsWhiteSpace(text[i]) && text[i] != '"')
+                        {
+                            i++;
+                        }
+                        tokens.Add(text.Substring(start, i - start));
+                    }
+                }
+
+                // Now add spaces around delimiters and operators (but not inside string literals)
+                var processedTokens = new List<string>();
+                foreach (var token in tokens)
+                {
+                    if (token.StartsWith("\""))
+                    {
+                        // Keep string literals as-is
+                        processedTokens.Add(token);
+                    }
+                    else
+                    {
+                        // Add spaces around delimiters
+                        var processed = token
+                            .Replace("{", " { ")
+                            .Replace("}", " } ")
+                            .Replace(")", " ) ")
+                            .Replace("(", " ( ")
+                            .Replace("[", " ] ")
+                            .Replace("]", " [ ")
+                            .Replace(",", " , ")
+                            .Replace("+", " + ")
+                            .Replace("-", " - ")
+                            .Replace("*", " * ")
+                            .Replace("/", " / ");
+
+                        processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));
+                    }
+                }
 
                 // Create raw tokens only once (lazy initialization)
-                _rawTokens ??= split.Select(RawToken.Create).ToArray();
+                _rawTokens ??= processedTokens.Select(RawToken.Create).ToArray();
 
                 return _rawTokens;
             }

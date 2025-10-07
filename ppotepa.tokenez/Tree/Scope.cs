@@ -73,5 +73,82 @@ namespace ppotepa.tokenez.Tree
                 return result;
             }
         }
+
+        /// <summary>
+        /// Visualizes the scope tree structure with indentation.
+        /// Shows scope name, type, declarations, statements, and nested scopes.
+        /// </summary>
+        public void Visualize(int depth = 0)
+        {
+            string indent = new string(' ', depth * 2);
+
+            // Scope header
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"{indent}├─ Scope: {ScopeName} ({Type})");
+            Console.ResetColor();
+
+            // Declarations
+            if (Decarations.Count > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"{indent}│  Declarations:");
+                foreach (var decl in Decarations)
+                {
+                    Console.WriteLine($"{indent}│    • {decl.Key} ({decl.Value.GetType().Name})");
+
+                    // If it's a function declaration, visualize its scope
+                    if (decl.Value is FunctionDeclaration funcDecl && funcDecl.Scope != null)
+                    {
+                        funcDecl.Scope.Visualize(depth + 2);
+                    }
+                }
+                Console.ResetColor();
+            }
+
+            // Statements
+            if (Statements.Count > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"{indent}│  Statements:");
+                foreach (var stmt in Statements)
+                {
+                    Console.WriteLine($"{indent}│    • {stmt.StatementType}");
+                    if (stmt is ReturnStatement retStmt)
+                    {
+                        if (retStmt.ReturnValue != null)
+                        {
+                            Console.WriteLine($"{indent}│      Returns: {retStmt.ReturnValue.ExpressionType}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{indent}│      Returns: void");
+                        }
+                    }
+                    // TODO: Re-implement PRINT statement
+                    // else if (stmt is PrintStatement printStmt)
+                    // {
+                    //     if (printStmt.PrintValue != null)
+                    //     {
+                    //         Console.WriteLine($"{indent}│      Prints: {printStmt.PrintValue.ExpressionType}");
+                    //     }
+                    // }
+                }
+                Console.ResetColor();
+            }
+
+            // Return status
+            if (Type == ScopeType.Function)
+            {
+                Console.ForegroundColor = HasReturn ? ConsoleColor.Green : ConsoleColor.Red;
+                Console.WriteLine($"{indent}│  HasReturn: {HasReturn}");
+                Console.ResetColor();
+            }
+
+            // Inner scope (if exists)
+            if (InnerScope != null)
+            {
+                InnerScope.Visualize(depth + 1);
+            }
+        }
     }
 }

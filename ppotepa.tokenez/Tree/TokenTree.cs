@@ -5,6 +5,8 @@ using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Keywords.Types;
 using ppotepa.tokenez.Tree.Tokens.Operators;
 using ppotepa.tokenez.Tree.Tokens.Raw;
+using ppotepa.tokenez.Tree.Tokens.Scoping;
+using ppotepa.tokenez.Tree.Tokens.Values;
 using System.Collections;
 using System.Data;
 
@@ -16,6 +18,12 @@ namespace ppotepa.tokenez.Tree
     /// </summary>
     public partial class TokenTree
     {
+        /// <summary>The root scope containing all top-level declarations</summary>
+        public Scope RootScope { get; private set; }
+
+        /// <summary>All tokens in the tree</summary>
+        public Token[] Tokens { get; private set; }
+
         /// <summary>
         /// Static mapping of exact text strings to their corresponding token types.
         /// This is checked first before the reflection-based TokenTypes dictionary.
@@ -25,6 +33,7 @@ namespace ppotepa.tokenez.Tree
         {
             { "FUNCTION", typeof(Tokens.Keywords.FunctionToken) },   // Function declaration keyword
             { "RETURN", typeof(Tokens.Keywords.ReturnKeywordToken) }, // Return statement keyword
+            { "PRINT", typeof(Tokens.Keywords.PrintKeywordToken) },   // Print statement keyword
             { "INT", typeof(IntToken) },                              // Integer type keyword
             { "{", typeof(Tokens.Scoping.ScopeStartToken) },         // Scope/block start
             { "}", typeof(Tokens.Scoping.ScopeEndToken) },           // Scope/block end
@@ -83,7 +92,37 @@ namespace ppotepa.tokenez.Tree
             Scope scope = CreateScope(tokens[0], new Scope("ROOT"));
             Console.WriteLine($"Scope creation complete\n");
 
-            return null; // TODO: Return the built tree
+            // Store the results
+            this.Tokens = tokens;
+            this.RootScope = scope;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Visualizes the entire token tree structure.
+        /// Shows all scopes, declarations, statements, and their relationships.
+        /// </summary>
+        public void Visualize()
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("\n╔════════════════════════════════════════╗");
+            Console.WriteLine("║       TOKEN TREE VISUALIZATION         ║");
+            Console.WriteLine("╚════════════════════════════════════════╝\n");
+            Console.ResetColor();
+
+            if (RootScope != null)
+            {
+                RootScope.Visualize(0);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No root scope found!");
+                Console.ResetColor();
+            }
+
+            Console.WriteLine();
         }
 
         /// <summary>
@@ -146,9 +185,28 @@ namespace ppotepa.tokenez.Tree
                     case ",":
                         targetType = typeof(CommaSeparatorToken);
                         break;
+                    case "{":
+                        targetType = typeof(ScopeStartToken);
+                        break;
+                    case "}":
+                        targetType = typeof(ScopeEndToken);
+                        break;
                     default:
-                        // If no match found, treat as identifier (variable/function name)
-                        targetType = typeof(IdentifierToken);
+                        // Check if it's a string literal (starts and ends with quotes)
+                        if (IsStringLiteral(rawToken.Text))
+                        {
+                            targetType = typeof(Tokens.Values.StringLiteralToken);
+                        }
+                        // Check if it's a numeric literal
+                        else if (IsNumericLiteral(rawToken.Text))
+                        {
+                            targetType = typeof(ValueToken);
+                        }
+                        else
+                        {
+                            // If no match found, treat as identifier (variable/function name)
+                            targetType = typeof(IdentifierToken);
+                        }
                         break;
                 }
             }
@@ -157,6 +215,22 @@ namespace ppotepa.tokenez.Tree
             var token = Activator.CreateInstance(targetType, [rawToken]) as Token;
             Console.WriteLine($"\t[{index}] {rawToken.Text} → {targetType.Name}");
             return token;
+        }
+
+        /// <summary>
+        /// Checks if a string represents a string literal (enclosed in quotes).
+        /// </summary>
+        private static bool IsStringLiteral(string text)
+        {
+            return text.StartsWith("\"") && text.EndsWith("\"") && text.Length >= 2;
+        }
+
+        /// <summary>
+        /// Checks if a string represents a numeric literal (integer or decimal).
+        /// </summary>
+        private static bool IsNumericLiteral(string text)
+        {
+            return double.TryParse(text, out _);
         }
     }
 }

@@ -18,9 +18,11 @@ namespace ppotepa.tokenez.Tree.Tokens.Scoping
         {
         }
 
-        /// <summary>After '{', expect RETURN statement (for function scopes)</summary>
+        /// <summary>After '{', expect PRINT, RETURN statement, or nested FUNCTION declarations</summary>
         public override Type[] Expectations => [
-            typeof(ReturnKeywordToken)
+            typeof(PrintKeywordToken),
+            typeof(ReturnKeywordToken),
+            typeof(FunctionToken)
         ];
 
         public override string KeyWord => "{";
