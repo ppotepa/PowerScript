@@ -34,13 +34,17 @@ namespace ppotepa.tokenez.Tree
             { "FUNCTION", typeof(Tokens.Keywords.FunctionToken) },   // Function declaration keyword
             { "RETURN", typeof(Tokens.Keywords.ReturnKeywordToken) }, // Return statement keyword
             { "PRINT", typeof(Tokens.Keywords.PrintKeywordToken) },   // Print statement keyword
+            { "EXECUTE", typeof(Tokens.Keywords.ExecuteKeywordToken) }, // Execute script file keyword
+            { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
             { "INT", typeof(IntToken) },                              // Integer type keyword
             { "{", typeof(Tokens.Scoping.ScopeStartToken) },         // Scope/block start
             { "}", typeof(Tokens.Scoping.ScopeEndToken) },           // Scope/block end
             { "+", typeof(PlusToken) },                              // Addition operator
             { "-", typeof(MinusToken) },                             // Subtraction operator
             { "*", typeof(MultiplyToken) },                          // Multiplication operator
-            { "/", typeof(DivideToken) }                             // Division operator
+            { "/", typeof(DivideToken) },                            // Division operator
+            { "::", typeof(Tokens.Operators.NamespaceOperatorToken) }, // Namespace operator
+            { ".", typeof(Tokens.Operators.DotToken) }               // Dot operator for member access
         };
 
         private Dictionary<string, Type> _tokenTypes = default;

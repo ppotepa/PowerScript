@@ -12,6 +12,6 @@ namespace ppotepa.tokenez.Tree.Expressions
         public Token StartToken { get; set; }
 
         /// <summary>String identifier for the expression type</summary>
-        public abstract string ExpressionType { get; }
+        public virtual string ExpressionType { get; set; }
     }
 }

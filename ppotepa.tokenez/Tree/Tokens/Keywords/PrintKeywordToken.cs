@@ -21,8 +21,8 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         {
         }
 
-        /// <summary>After PRINT, expect opening parenthesis for arguments</summary>
-        public override Type[] Expectations => [typeof(ParenthesisOpen)];
+        /// <summary>After PRINT, expect either a string literal or opening parenthesis for arguments</summary>
+        public override Type[] Expectations => [typeof(StringLiteralToken), typeof(ParenthesisOpen)];
 
         public override string KeyWord => "PRINT";
     }

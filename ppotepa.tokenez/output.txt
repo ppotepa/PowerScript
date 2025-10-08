@@ -1,0 +1,676 @@
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                      POWERSCRIPT v1.0                          Γòæ
+Γòæ          A Function-Based Language with Standard Library       Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ              POWERSCRIPT STANDARD LIBRARY                      Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+ΓöîΓöÇ I/O Functions
+Γöé  ΓÇó PRINT(STRING message) ΓåÆ VOID
+Γöé    Outputs a message to the console
+Γöé  ΓÇó PRINTLN(STRING message) ΓåÆ VOID
+Γöé    Outputs a message to the console with a newline
+Γöé  ΓÇó READ() ΓåÆ STRING
+Γöé    Reads a line of input from the console
+Γöé
+ΓöîΓöÇ Math Functions
+Γöé  ΓÇó ADD(INT a, INT b) ΓåÆ INT
+Γöé    Adds two numbers together
+Γöé  ΓÇó DIVIDE(INT a, INT b) ΓåÆ INT
+Γöé    Divides the first number by the second
+Γöé  ΓÇó MOD(INT a, INT b) ΓåÆ INT
+Γöé    Returns the remainder after division
+Γöé  ΓÇó MULTIPLY(INT a, INT b) ΓåÆ INT
+Γöé    Multiplies two numbers together
+Γöé  ΓÇó POW(INT base, INT exponent) ΓåÆ INT
+Γöé    Raises a number to a power
+Γöé  ΓÇó SUBTRACT(INT a, INT b) ΓåÆ INT
+Γöé    Subtracts the second number from the first
+Γöé
+ΓöîΓöÇ String Functions
+Γöé  ΓÇó CONCAT(STRING str1, STRING str2) ΓåÆ STRING
+Γöé    Concatenates two or more strings together
+Γöé  ΓÇó LENGTH(STRING str) ΓåÆ INT
+Γöé    Returns the length of a string
+Γöé  ΓÇó SUBSTRING(STRING str, INT start, INT length) ΓåÆ STRING
+Γöé    Extracts a portion of a string
+Γöé  ΓÇó TOLOWER(STRING str) ΓåÆ STRING
+Γöé    Converts a string to lowercase
+Γöé  ΓÇó TOUPPER(STRING str) ΓåÆ STRING
+Γöé    Converts a string to uppercase
+Γöé  ΓÇó TRIM(STRING str) ΓåÆ STRING
+Γöé    Removes leading and trailing whitespace from a string
+Γöé
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        READING PROGRAM.PS              Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Γ£ô Read program.ps
+
+Code:
+FUNCTION ADD ( INT a , INT b ) { RETURN a + b }
+FUNCTION SUB ( INT a , INT b ) { RETURN a - b }
+FUNCTION MUL ( INT a , INT b ) { RETURN a * b }
+FUNCTION DIV ( INT a , INT b ) { RETURN a / b }
+FUNCTION GETFIVE ( ) { RETURN 5 }
+FUNCTION GETTEN ( ) { RETURN 10 }
+FUNCTION COMPLEX_MATH ( INT x , INT y ) { RETURN x + y * 2 }
+FUNCTION NESTED_CALC ( INT a , INT b , INT c ) { RETURN a * b + c }
+FUNCTION DOUBLE ( INT n ) { RETURN n + n }
+FUNCTION TRIPLE ( INT n ) { RETURN n * 3 }
+FUNCTION SQUARE ( INT n ) { RETURN n * n }
+FUNCTION GREET ( INT x ) { RETURN }
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        BUILDING TOKEN TREE             Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+=== Building Token Tree ===
+Processing: 'FUNCTION ADD ( INT a , INT b ) { RETURN a + b }
+FUNCTION SUB ( INT a , INT b ) { RETURN a - b }
+FUNCTION MUL ( INT a , INT b ) { RETURN a * b }
+FUNCTION DIV ( INT a , INT b ) { RETURN a / b }
+FUNCTION GETFIVE ( ) { RETURN 5 }
+FUNCTION GETTEN ( ) { RETURN 10 }
+FUNCTION COMPLEX_MATH ( INT x , INT y ) { RETURN x + y * 2 }
+FUNCTION NESTED_CALC ( INT a , INT b , INT c ) { RETURN a * b + c }
+FUNCTION DOUBLE ( INT n ) { RETURN n + n }
+FUNCTION TRIPLE ( INT n ) { RETURN n * 3 }
+FUNCTION SQUARE ( INT n ) { RETURN n * n }
+FUNCTION GREET ( INT x ) { RETURN }
+'
+
+	[0] FUNCTION ΓåÆ FunctionToken
+	[1] ADD ΓåÆ IdentifierToken
+	[2] ( ΓåÆ ParenthesisOpen
+	[3] INT ΓåÆ IntToken
+	[4] A ΓåÆ IdentifierToken
+	[5] , ΓåÆ CommaSeparatorToken
+	[6] INT ΓåÆ IntToken
+	[7] B ΓåÆ IdentifierToken
+	[8] ) ΓåÆ ParenthesisClosed
+	[9] { ΓåÆ ScopeStartToken
+	[10] RETURN ΓåÆ ReturnKeywordToken
+	[11] A ΓåÆ IdentifierToken
+	[12] + ΓåÆ PlusToken
+	[13] B ΓåÆ IdentifierToken
+	[14] } ΓåÆ ScopeEndToken
+	[15] FUNCTION ΓåÆ FunctionToken
+	[16] SUB ΓåÆ IdentifierToken
+	[17] ( ΓåÆ ParenthesisOpen
+	[18] INT ΓåÆ IntToken
+	[19] A ΓåÆ IdentifierToken
+	[20] , ΓåÆ CommaSeparatorToken
+	[21] INT ΓåÆ IntToken
+	[22] B ΓåÆ IdentifierToken
+	[23] ) ΓåÆ ParenthesisClosed
+	[24] { ΓåÆ ScopeStartToken
+	[25] RETURN ΓåÆ ReturnKeywordToken
+	[26] A ΓåÆ IdentifierToken
+	[27] - ΓåÆ MinusToken
+	[28] B ΓåÆ IdentifierToken
+	[29] } ΓåÆ ScopeEndToken
+	[30] FUNCTION ΓåÆ FunctionToken
+	[31] MUL ΓåÆ IdentifierToken
+	[32] ( ΓåÆ ParenthesisOpen
+	[33] INT ΓåÆ IntToken
+	[34] A ΓåÆ IdentifierToken
+	[35] , ΓåÆ CommaSeparatorToken
+	[36] INT ΓåÆ IntToken
+	[37] B ΓåÆ IdentifierToken
+	[38] ) ΓåÆ ParenthesisClosed
+	[39] { ΓåÆ ScopeStartToken
+	[40] RETURN ΓåÆ ReturnKeywordToken
+	[41] A ΓåÆ IdentifierToken
+	[42] * ΓåÆ MultiplyToken
+	[43] B ΓåÆ IdentifierToken
+	[44] } ΓåÆ ScopeEndToken
+	[45] FUNCTION ΓåÆ FunctionToken
+	[46] DIV ΓåÆ IdentifierToken
+	[47] ( ΓåÆ ParenthesisOpen
+	[48] INT ΓåÆ IntToken
+	[49] A ΓåÆ IdentifierToken
+	[50] , ΓåÆ CommaSeparatorToken
+	[51] INT ΓåÆ IntToken
+	[52] B ΓåÆ IdentifierToken
+	[53] ) ΓåÆ ParenthesisClosed
+	[54] { ΓåÆ ScopeStartToken
+	[55] RETURN ΓåÆ ReturnKeywordToken
+	[56] A ΓåÆ IdentifierToken
+	[57] / ΓåÆ DivideToken
+	[58] B ΓåÆ IdentifierToken
+	[59] } ΓåÆ ScopeEndToken
+	[60] FUNCTION ΓåÆ FunctionToken
+	[61] GETFIVE ΓåÆ IdentifierToken
+	[62] ( ΓåÆ ParenthesisOpen
+	[63] ) ΓåÆ ParenthesisClosed
+	[64] { ΓåÆ ScopeStartToken
+	[65] RETURN ΓåÆ ReturnKeywordToken
+	[66] 5 ΓåÆ ValueToken
+	[67] } ΓåÆ ScopeEndToken
+	[68] FUNCTION ΓåÆ FunctionToken
+	[69] GETTEN ΓåÆ IdentifierToken
+	[70] ( ΓåÆ ParenthesisOpen
+	[71] ) ΓåÆ ParenthesisClosed
+	[72] { ΓåÆ ScopeStartToken
+	[73] RETURN ΓåÆ ReturnKeywordToken
+	[74] 10 ΓåÆ ValueToken
+	[75] } ΓåÆ ScopeEndToken
+	[76] FUNCTION ΓåÆ FunctionToken
+	[77] COMPLEX_MATH ΓåÆ IdentifierToken
+	[78] ( ΓåÆ ParenthesisOpen
+	[79] INT ΓåÆ IntToken
+	[80] X ΓåÆ IdentifierToken
+	[81] , ΓåÆ CommaSeparatorToken
+	[82] INT ΓåÆ IntToken
+	[83] Y ΓåÆ IdentifierToken
+	[84] ) ΓåÆ ParenthesisClosed
+	[85] { ΓåÆ ScopeStartToken
+	[86] RETURN ΓåÆ ReturnKeywordToken
+	[87] X ΓåÆ IdentifierToken
+	[88] + ΓåÆ PlusToken
+	[89] Y ΓåÆ IdentifierToken
+	[90] * ΓåÆ MultiplyToken
+	[91] 2 ΓåÆ ValueToken
+	[92] } ΓåÆ ScopeEndToken
+	[93] FUNCTION ΓåÆ FunctionToken
+	[94] NESTED_CALC ΓåÆ IdentifierToken
+	[95] ( ΓåÆ ParenthesisOpen
+	[96] INT ΓåÆ IntToken
+	[97] A ΓåÆ IdentifierToken
+	[98] , ΓåÆ CommaSeparatorToken
+	[99] INT ΓåÆ IntToken
+	[100] B ΓåÆ IdentifierToken
+	[101] , ΓåÆ CommaSeparatorToken
+	[102] INT ΓåÆ IntToken
+	[103] C ΓåÆ IdentifierToken
+	[104] ) ΓåÆ ParenthesisClosed
+	[105] { ΓåÆ ScopeStartToken
+	[106] RETURN ΓåÆ ReturnKeywordToken
+	[107] A ΓåÆ IdentifierToken
+	[108] * ΓåÆ MultiplyToken
+	[109] B ΓåÆ IdentifierToken
+	[110] + ΓåÆ PlusToken
+	[111] C ΓåÆ IdentifierToken
+	[112] } ΓåÆ ScopeEndToken
+	[113] FUNCTION ΓåÆ FunctionToken
+	[114] DOUBLE ΓåÆ IdentifierToken
+	[115] ( ΓåÆ ParenthesisOpen
+	[116] INT ΓåÆ IntToken
+	[117] N ΓåÆ IdentifierToken
+	[118] ) ΓåÆ ParenthesisClosed
+	[119] { ΓåÆ ScopeStartToken
+	[120] RETURN ΓåÆ ReturnKeywordToken
+	[121] N ΓåÆ IdentifierToken
+	[122] + ΓåÆ PlusToken
+	[123] N ΓåÆ IdentifierToken
+	[124] } ΓåÆ ScopeEndToken
+	[125] FUNCTION ΓåÆ FunctionToken
+	[126] TRIPLE ΓåÆ IdentifierToken
+	[127] ( ΓåÆ ParenthesisOpen
+	[128] INT ΓåÆ IntToken
+	[129] N ΓåÆ IdentifierToken
+	[130] ) ΓåÆ ParenthesisClosed
+	[131] { ΓåÆ ScopeStartToken
+	[132] RETURN ΓåÆ ReturnKeywordToken
+	[133] N ΓåÆ IdentifierToken
+	[134] * ΓåÆ MultiplyToken
+	[135] 3 ΓåÆ ValueToken
+	[136] } ΓåÆ ScopeEndToken
+	[137] FUNCTION ΓåÆ FunctionToken
+	[138] SQUARE ΓåÆ IdentifierToken
+	[139] ( ΓåÆ ParenthesisOpen
+	[140] INT ΓåÆ IntToken
+	[141] N ΓåÆ IdentifierToken
+	[142] ) ΓåÆ ParenthesisClosed
+	[143] { ΓåÆ ScopeStartToken
+	[144] RETURN ΓåÆ ReturnKeywordToken
+	[145] N ΓåÆ IdentifierToken
+	[146] * ΓåÆ MultiplyToken
+	[147] N ΓåÆ IdentifierToken
+	[148] } ΓåÆ ScopeEndToken
+	[149] FUNCTION ΓåÆ FunctionToken
+	[150] GREET ΓåÆ IdentifierToken
+	[151] ( ΓåÆ ParenthesisOpen
+	[152] INT ΓåÆ IntToken
+	[153] X ΓåÆ IdentifierToken
+	[154] ) ΓåÆ ParenthesisClosed
+	[155] { ΓåÆ ScopeStartToken
+	[156] RETURN ΓåÆ ReturnKeywordToken
+	[157] } ΓåÆ ScopeEndToken
+Tokens created: 158
+Tokens linked
+	CreateScope: ROOT (depth=0)
+[DEBUG] Entering BuildScope: ROOT at depth 0 with token FunctionToken 'FUNCTION'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: ADD
+[DEBUG] Registered function 'ADD' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'ADD'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'ADD'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'ADD' for processing
+	CreateScope: ADD (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'ADD'
+[DEBUG] Registered RETURN statement in scope 'ADD'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: ADD
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: SUB
+[DEBUG] Registered function 'SUB' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'SUB'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'SUB'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'SUB' for processing
+	CreateScope: SUB (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'SUB'
+[DEBUG] Registered RETURN statement in scope 'SUB'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: SUB
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: MUL
+[DEBUG] Registered function 'MUL' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'MUL'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'MUL'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'MUL' for processing
+	CreateScope: MUL (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'MUL'
+[DEBUG] Registered RETURN statement in scope 'MUL'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: MUL
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: DIV
+[DEBUG] Registered function 'DIV' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'DIV'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'DIV'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'DIV' for processing
+	CreateScope: DIV (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'DIV'
+[DEBUG] Registered RETURN statement in scope 'DIV'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: DIV
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: GETFIVE
+[DEBUG] Registered function 'GETFIVE' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'GETFIVE'
+[DEBUG] Passing control to ScopeProcessor for function 'GETFIVE'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'GETFIVE' for processing
+	CreateScope: GETFIVE (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'GETFIVE'
+[DEBUG] Registered RETURN statement in scope 'GETFIVE'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: GETFIVE
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: GETTEN
+[DEBUG] Registered function 'GETTEN' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'GETTEN'
+[DEBUG] Passing control to ScopeProcessor for function 'GETTEN'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'GETTEN' for processing
+	CreateScope: GETTEN (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'GETTEN'
+[DEBUG] Registered RETURN statement in scope 'GETTEN'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: GETTEN
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: COMPLEX_MATH
+[DEBUG] Registered function 'COMPLEX_MATH' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'COMPLEX_MATH'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'COMPLEX_MATH'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'COMPLEX_MATH' for processing
+	CreateScope: COMPLEX_MATH (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'COMPLEX_MATH'
+[DEBUG] Registered RETURN statement in scope 'COMPLEX_MATH'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: COMPLEX_MATH
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: NESTED_CALC
+[DEBUG] Registered function 'NESTED_CALC' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'NESTED_CALC'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'NESTED_CALC'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'NESTED_CALC' for processing
+	CreateScope: NESTED_CALC (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'NESTED_CALC'
+[DEBUG] Registered RETURN statement in scope 'NESTED_CALC'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: NESTED_CALC
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: DOUBLE
+[DEBUG] Registered function 'DOUBLE' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'DOUBLE'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'DOUBLE'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'DOUBLE' for processing
+	CreateScope: DOUBLE (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'DOUBLE'
+[DEBUG] Registered RETURN statement in scope 'DOUBLE'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: DOUBLE
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: TRIPLE
+[DEBUG] Registered function 'TRIPLE' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'TRIPLE'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'TRIPLE'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'TRIPLE' for processing
+	CreateScope: TRIPLE (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'TRIPLE'
+[DEBUG] Registered RETURN statement in scope 'TRIPLE'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: TRIPLE
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: SQUARE
+[DEBUG] Registered function 'SQUARE' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'SQUARE'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'SQUARE'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'SQUARE' for processing
+	CreateScope: SQUARE (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'SQUARE'
+[DEBUG] Registered RETURN statement in scope 'SQUARE'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: SQUARE
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+		Processing: FunctionToken 'FUNCTION'
+[DEBUG] Processing token: FunctionToken 'FUNCTION' in scope ROOT at depth 0
+[DEBUG] Invoking processor FunctionProcessor for token FunctionToken 'FUNCTION'
+[DEBUG] FunctionProcessor: Processing FUNCTION token 'FUNCTION' at depth 0
+			Found Function
+[DEBUG] Created new function scope:  (Type=Function)
+				Function name: GREET
+[DEBUG] Registered function 'GREET' in scope 'ROOT'
+				Parameters starting
+[DEBUG] Delegating parameter processing for function 'GREET'
+[DEBUG] TryProcessTypeAndIdentifier: token=IntToken 'INT'
+[DEBUG] Passing control to ScopeProcessor for function 'GREET'
+[DEBUG] Validating expectations after processing FunctionToken 'FUNCTION'
+		Processing: ScopeStartToken '{'
+[DEBUG] Processing token: ScopeStartToken '{' in scope ROOT at depth 0
+[DEBUG] Invoking processor ScopeProcessor for token ScopeStartToken '{'
+[DEBUG] ScopeProcessor: Switching to function scope 'GREET' for processing
+	CreateScope: GREET (depth=0)
+			Processing: ReturnKeywordToken 'RETURN'
+[DEBUG] ReturnStatementProcessor: Processing RETURN token 'RETURN' in scope 'GREET'
+[DEBUG] Registered RETURN statement in scope 'GREET'
+[DEBUG] ReturnStatementProcessor: Next token after RETURN is ScopeEndToken '}'
+	Scope complete: GREET
+[DEBUG] Validating expectations after processing ScopeStartToken '{'
+	Scope complete: ROOT
+[DEBUG] Exiting BuildScope: ROOT at depth 0
+Scope creation complete
+
+Γ£ô Token tree built successfully!
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ       TOKEN TREE VISUALIZATION         Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Γö£ΓöÇ Scope: ROOT (Block)
+Γöé  Declarations:
+Γöé    ΓÇó ADD (FunctionDeclaration)
+    Γö£ΓöÇ Scope: ADD (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó SUB (FunctionDeclaration)
+    Γö£ΓöÇ Scope: SUB (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó MUL (FunctionDeclaration)
+    Γö£ΓöÇ Scope: MUL (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó DIV (FunctionDeclaration)
+    Γö£ΓöÇ Scope: DIV (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó GETFIVE (FunctionDeclaration)
+    Γö£ΓöÇ Scope: GETFIVE (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: Literal
+    Γöé  HasReturn: True
+Γöé    ΓÇó GETTEN (FunctionDeclaration)
+    Γö£ΓöÇ Scope: GETTEN (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: Literal
+    Γöé  HasReturn: True
+Γöé    ΓÇó COMPLEX_MATH (FunctionDeclaration)
+    Γö£ΓöÇ Scope: COMPLEX_MATH (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó NESTED_CALC (FunctionDeclaration)
+    Γö£ΓöÇ Scope: NESTED_CALC (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó DOUBLE (FunctionDeclaration)
+    Γö£ΓöÇ Scope: DOUBLE (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó TRIPLE (FunctionDeclaration)
+    Γö£ΓöÇ Scope: TRIPLE (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó SQUARE (FunctionDeclaration)
+    Γö£ΓöÇ Scope: SQUARE (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: BinaryOperation
+    Γöé  HasReturn: True
+Γöé    ΓÇó GREET (FunctionDeclaration)
+    Γö£ΓöÇ Scope: GREET (Function)
+    Γöé  Statements:
+    Γöé    ΓÇó RETURN
+    Γöé      Returns: void
+    Γöé  HasReturn: True
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ     COMPILING & EXECUTING FUNCTIONS    Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+≡ƒôª Compiling function: ADD
+  ΓåÆ Lambda: (A, B) => A + B
+  Γ£ô Compiled and tested: ADD(10, 5) = 15
+≡ƒôª Compiling function: SUB
+  ΓåÆ Lambda: (A, B) => A - B
+  Γ£ô Compiled and tested: SUB(10, 5) = 5
+≡ƒôª Compiling function: MUL
+  ΓåÆ Lambda: (A, B) => A * B
+  Γ£ô Compiled and tested: MUL(10, 5) = 50
+≡ƒôª Compiling function: DIV
+  ΓåÆ Lambda: (A, B) => A / B
+  Γ£ô Compiled and tested: DIV(10, 5) = 2
+≡ƒôª Compiling function: GETFIVE
+  ΓåÆ Lambda: () => 5
+  Γ£ô Executed: GETFIVE() = 5
+≡ƒôª Compiling function: GETTEN
+  ΓåÆ Lambda: () => 10
+  Γ£ô Executed: GETTEN() = 10
+≡ƒôª Compiling function: COMPLEX_MATH
+  ΓåÆ Lambda: (X, Y) => X + Y
+  Γ£ô Compiled and tested: COMPLEX_MATH(10, 5) = 15
+≡ƒôª Compiling function: NESTED_CALC
+  ΓåÆ Lambda: (A, B, C) => A * B
+  Γ£ô Compiled successfully (execution requires 3 parameters)
+≡ƒôª Compiling function: DOUBLE
+  ΓåÆ Lambda: (N) => N + N
+  Γ£ô Compiled successfully (execution requires 1 parameters)
+≡ƒôª Compiling function: TRIPLE
+  ΓåÆ Lambda: (N) => N * 3
+  Γ£ô Compiled successfully (execution requires 1 parameters)
+≡ƒôª Compiling function: SQUARE
+  ΓåÆ Lambda: (N) => N * N
+  Γ£ô Compiled successfully (execution requires 1 parameters)
+≡ƒôª Compiling function: GREET
+  ΓåÆ Function GREET returns VOID
+  Γ£ô Compiled as void function
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ        EXECUTION COMPLETE              Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+
+Program execution complete.

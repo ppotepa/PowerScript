@@ -3,17 +3,22 @@
     /// <summary>
     /// Represents a raw lexical token (text fragment from source code).
     /// This is the lowest-level token before semantic classification.
-    /// Stores the original text and provides normalized/processed versions.
+    /// Stores both the original text (with casing) and normalized version.
     /// </summary>
     public class RawToken
     {
         private RawToken(string @string)
         {
-            // Normalize: trim whitespace and uppercase
-            this.Text = @string.Trim().ToUpper();
+            // Store original text preserving case
+            this.OriginalText = @string.Trim();
+            // Normalize: trim whitespace and uppercase for comparison
+            this.Text = this.OriginalText.ToUpper();
         }
 
-        /// <summary>The normalized token text (trimmed, uppercased)</summary>
+        /// <summary>The original token text (trimmed, preserving case)</summary>
+        public string OriginalText { get; }
+
+        /// <summary>The normalized token text (trimmed, uppercased for comparison)</summary>
         public string Text { get; }
 
         /// <summary>

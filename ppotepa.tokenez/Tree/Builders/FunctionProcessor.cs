@@ -103,8 +103,9 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] Passing control to ScopeProcessor for function '{functionName}'");
             Console.ResetColor();
-            // Return the new function scope for the ScopeProcessor to handle
-            return TokenProcessingResult.ContinueWithScope(nextToken, functionScope);
+            // Return control to continue processing the ScopeStartToken without modifying the parent context
+            // The ScopeProcessor will handle the function scope internally
+            return TokenProcessingResult.Continue(nextToken);
         }
     }
 }

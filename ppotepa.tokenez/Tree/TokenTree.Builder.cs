@@ -30,13 +30,17 @@ namespace ppotepa.tokenez.Tree
             var parameterProcessor = new ParameterProcessor();
             var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
             var returnProcessor = new ReturnStatementProcessor(_validator);
-            // var printProcessor = new PrintStatementProcessor(_validator); // TODO: Re-implement PRINT
+            var printProcessor = new PrintStatementProcessor(_validator);
+            var executeProcessor = new ExecuteCommandProcessor(_validator);
+            var netMethodCallProcessor = new NetMethodCallProcessor(_validator);
             var scopeProcessor = new ScopeProcessor(_registry, _validator, _scopeBuilder);
 
             // Register all processors with the central registry
             _registry.Register(functionProcessor);
             _registry.Register(returnProcessor);
-            // _registry.Register(printProcessor); // TODO: Re-implement PRINT
+            _registry.Register(printProcessor);
+            _registry.Register(executeProcessor);
+            _registry.Register(netMethodCallProcessor);
             _registry.Register(scopeProcessor);
         }
 

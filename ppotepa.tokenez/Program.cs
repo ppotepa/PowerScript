@@ -1,85 +1,118 @@
-﻿using ppotepa.tokenez.Prompt;
+﻿using ppotepa.tokenez.Interpreter;
+using ppotepa.tokenez.Prompt;
 using ppotepa.tokenez.StandardLib;
 using ppotepa.tokenez.Tree;
 
 namespace ppotepa.tokenez
 {
     /// <summary>
-    /// Main entry point for PowerScript.
-    /// 1. Reads program.ps
-    /// 2. Builds token tree
-    /// 3. Compiles functions
-    /// 4. Executes compiled code
+    /// Main entry point for PowerScript Interpreter.
+    /// Can run in three modes:
+    /// 1. Interactive REPL mode (no arguments)
+    /// 2. Execute script file (provide file path as argument)
+    /// 3. Legacy mode (read program.ps from current directory)
     /// </summary>
     internal static class Program
     {
         static void Main(string[] args)
         {
             Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                      POWERSCRIPT v1.0                          ║");
-            Console.WriteLine("║          A Function-Based Language with Standard Library       ║");
+            Console.WriteLine("║                POWERSCRIPT INTERPRETER v2.0                    ║");
+            Console.WriteLine("║          A .NET Wrapper Language with Script Execution         ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════════════╝\n");
 
             // Display the standard library
             var standardLibrary = new StandardLibrary();
             standardLibrary.DisplayFunctions();
 
-            // Step 1: Read program.ps
-            Console.WriteLine("\n╔════════════════════════════════════════╗");
-            Console.WriteLine("║        READING PROGRAM.PS              ║");
-            Console.WriteLine("╚════════════════════════════════════════╝\n");
+            // Create the interpreter
+            var interpreter = PowerScriptInterpreter.CreateNew();
 
-            string programFile = "program.ps";
-            if (!File.Exists(programFile))
+            // Check if a script file was provided as a command line argument
+            if (args.Length > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"✗ Error: {programFile} not found!");
-                Console.ResetColor();
-                Console.WriteLine("\nPress any key to exit...");
-                Console.ReadLine();
-                return;
-            }
-
-            string code = File.ReadAllText(programFile);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"✓ Read {programFile}");
-            Console.ResetColor();
-            Console.WriteLine($"\nCode:\n{code}\n");
-
-            try
-            {
-                // Step 2: Build token tree
-                Console.WriteLine("╔════════════════════════════════════════╗");
-                Console.WriteLine("║        BUILDING TOKEN TREE             ║");
-                Console.WriteLine("╚════════════════════════════════════════╝\n");
-
-                UserPrompt prompt = new(code, args);
-                TokenTree tree = new TokenTree().Create(prompt);
-
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✓ Token tree built successfully!");
-                Console.ResetColor();
-
-                tree.Visualize();
-
-                // Step 3 & 4: Compile and execute
-                PowerScriptCompiler compiler = new(tree);
-                compiler.CompileAndExecute();
-
+                // Mode 1: Execute the provided script file
+                string scriptPath = args[0];
+                Console.WriteLine($"\n[MODE] Executing script from command line: {scriptPath}\n");
+                interpreter.ExecuteFile(scriptPath);
                 Console.WriteLine("\n╔════════════════════════════════════════╗");
                 Console.WriteLine("║        EXECUTION COMPLETE              ║");
                 Console.WriteLine("╚════════════════════════════════════════╝\n");
             }
-            catch (Exception ex)
+            else if (File.Exists("program.ps"))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n✗ Error: {ex.Message}");
-                Console.WriteLine($"Stack Trace:\n{ex.StackTrace}");
-                Console.ResetColor();
+                // Mode 2: Legacy mode - read program.ps from current directory
+                Console.WriteLine("\n[MODE] Legacy mode - executing program.ps from current directory\n");
+                interpreter.ExecuteFile("program.ps");
+                Console.WriteLine("\n╔════════════════════════════════════════╗");
+                Console.WriteLine("║        EXECUTION COMPLETE              ║");
+                Console.WriteLine("╚════════════════════════════════════════╝\n");
+            }
+            else
+            {
+                // Mode 3: Interactive REPL mode
+                Console.WriteLine("\n[MODE] Interactive REPL mode");
+                Console.WriteLine("Commands:");
+                Console.WriteLine("  - Type PowerScript code to execute");
+                Console.WriteLine("  - EXECUTE \"filename.ps\" to run a script file");
+                Console.WriteLine("  - EXIT to quit\n");
+                RunInteractiveMode(interpreter);
             }
 
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadLine();
+            Console.WriteLine("Program execution complete.");
+        }
+
+        /// <summary>
+        /// Runs the interactive Read-Eval-Print Loop (REPL) mode.
+        /// </summary>
+        static void RunInteractiveMode(PowerScriptInterpreter interpreter)
+        {
+            bool running = true;
+            while (running)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write("ps> ");
+                Console.ResetColor();
+                
+                string? command = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(command))
+                    continue;
+
+                if (command.Equals("EXIT", StringComparison.OrdinalIgnoreCase) ||
+                    command.Equals("QUIT", StringComparison.OrdinalIgnoreCase))
+                {
+                    running = false;
+                    Console.WriteLine("\nExiting PowerScript interpreter. Goodbye!");
+                    continue;
+                }
+
+                try
+                {
+                    // Check if it's an EXECUTE command for direct file execution
+                    if (command.StartsWith("EXECUTE ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extract file path from command
+                        string filePath = command.Substring(8).Trim();
+                        // Remove quotes if present
+                        if (filePath.StartsWith("\"") && filePath.EndsWith("\""))
+                            filePath = filePath.Substring(1, filePath.Length - 2);
+                        
+                        interpreter.ExecuteFile(filePath);
+                    }
+                    else
+                    {
+                        // Normal code execution
+                        interpreter.ExecuteCode(command);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Error: {ex.Message}");
+                    Console.ResetColor();
+                }
+            }
         }
     }
 }

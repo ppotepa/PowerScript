@@ -91,8 +91,10 @@ namespace ppotepa.tokenez.Prompt
                     }
                     else
                     {
-                        // Add spaces around delimiters
+                        // Add spaces around delimiters and operators
                         var processed = token
+                            .Replace("::", " :: ")  // Namespace operator
+                            .Replace(".", " . ")     // Dot operator
                             .Replace("{", " { ")
                             .Replace("}", " } ")
                             .Replace(")", " ) ")

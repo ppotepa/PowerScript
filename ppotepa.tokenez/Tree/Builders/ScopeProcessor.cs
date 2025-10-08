@@ -3,6 +3,7 @@ using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Keywords;
 using ppotepa.tokenez.Tree.Tokens.Scoping;
+using ppotepa.tokenez.Tree.Tokens.Identifiers;
 
 namespace ppotepa.tokenez.Tree.Builders
 {
@@ -34,16 +35,57 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             var scopeStartToken = token as ScopeStartToken;
-            BuilderLogger.LogScopeStart(context.CurrentScope.ScopeName, context.Depth);
+
+            // Check if this scope start follows a function declaration
+            // If so, we need to find the function scope that was just created
+            Scope targetScope = context.CurrentScope;
+
+            // Look backwards to find the function that this scope belongs to
+            var prevToken = scopeStartToken.Prev;
+            while (prevToken != null && prevToken is not FunctionToken)
+            {
+                prevToken = prevToken.Prev;
+            }
+
+            if (prevToken is FunctionToken)
+            {
+                // Find the function name
+                var functionNameToken = prevToken.Next as IdentifierToken;
+                if (functionNameToken != null)
+                {
+                    var functionName = functionNameToken.RawToken.Text;
+                    // Find the function's scope in the current scope's declarations
+                    if (context.CurrentScope.Decarations.ContainsKey(functionName))
+                    {
+                        var declaration = context.CurrentScope.Decarations[functionName] as FunctionDeclaration;
+                        if (declaration?.Scope != null)
+                        {
+                            targetScope = declaration.Scope;
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.WriteLine($"[DEBUG] ScopeProcessor: Switching to function scope '{targetScope.ScopeName}' for processing");
+                            Console.ResetColor();
+                        }
+                    }
+                }
+            }
+
+            BuilderLogger.LogScopeStart(targetScope.ScopeName, context.Depth);
 
             // Mark function context for RETURN validation
-            if (context.CurrentScope.Type == ScopeType.Function)
+            if (targetScope.Type == ScopeType.Function)
             {
                 context.EnterFunction();
             }
 
             var currentToken = scopeStartToken.Next;
             int scopeDepth = context.Depth + 1;
+
+            // Create a new context for processing this scope
+            var scopeContext = new ProcessingContext(targetScope, scopeDepth);
+            if (targetScope.Type == ScopeType.Function)
+            {
+                scopeContext.EnterFunction();
+            }
 
             // Process all tokens until we hit the scope end token
             while (currentToken != null && currentToken is not ScopeEndToken)
@@ -57,7 +99,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 var processor = _registry.GetProcessor(currentToken);
                 if (processor != null)
                 {
-                    var result = processor.Process(currentToken, context);
+                    var result = processor.Process(currentToken, scopeContext);
 
                     // If the processor created a new scope (e.g., FunctionProcessor),
                     // recursively build that scope
@@ -98,19 +140,19 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             // Enforce language rule: every function must have a RETURN statement
-            if (context.CurrentScope.Type == ScopeType.Function &&
-                !context.CurrentScope.HasReturn)
+            if (targetScope.Type == ScopeType.Function &&
+                !targetScope.HasReturn)
             {
-                throw new MissingReturnStatementException(context.CurrentScope);
+                throw new MissingReturnStatementException(targetScope);
             }
 
             // Exit function context
-            if (context.CurrentScope.Type == ScopeType.Function)
+            if (targetScope.Type == ScopeType.Function)
             {
                 context.ExitFunction();
             }
 
-            BuilderLogger.LogScopeComplete(context.CurrentScope.ScopeName, context.Depth);
+            BuilderLogger.LogScopeComplete(targetScope.ScopeName, context.Depth);
 
             // Continue from token after scope end
             return TokenProcessingResult.Continue(currentToken?.Next);
