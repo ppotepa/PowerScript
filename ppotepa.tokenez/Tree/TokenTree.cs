@@ -39,6 +39,13 @@ namespace ppotepa.tokenez.Tree
             { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
             { "VAR", typeof(Tokens.Keywords.VarKeywordToken) },       // Variable declaration keyword
             { "FLEX", typeof(Tokens.Keywords.FlexKeywordToken) },     // Dynamic variable declaration keyword
+            { "CYCLE", typeof(Tokens.Keywords.CycleKeywordToken) },   // Loop keyword (foreach equivalent)
+            { "IN", typeof(Tokens.Keywords.InKeywordToken) },         // In keyword for loops
+            { "AS", typeof(Tokens.Keywords.AsKeywordToken) },         // As keyword for renaming
+            { "IF", typeof(Tokens.Keywords.IfKeywordToken) },         // Conditional statement keyword
+            { "ELSE", typeof(Tokens.Keywords.ElseKeywordToken) },     // Else block keyword
+            { "AND", typeof(Tokens.Keywords.AndKeywordToken) },       // Logical AND operator
+            { "OR", typeof(Tokens.Keywords.OrKeywordToken) },         // Logical OR operator
             { "INT", typeof(IntToken) },                              // Integer type keyword
             { "PREC", typeof(PrecToken) },                            // Precision/float type keyword
             { "CHAR", typeof(CharToken) },                            // Character type keyword
@@ -48,11 +55,18 @@ namespace ppotepa.tokenez.Tree
             { "}", typeof(Tokens.Scoping.ScopeEndToken) },           // Scope/block end
             { "[", typeof(Tokens.Delimiters.BracketOpen) },          // Return type bracket open
             { "]", typeof(Tokens.Delimiters.BracketClosed) },        // Return type bracket close
+            { ",", typeof(Tokens.Delimiters.CommaToken) },           // Comma delimiter
             { "+", typeof(PlusToken) },                              // Addition operator
             { "-", typeof(MinusToken) },                             // Subtraction operator
             { "*", typeof(MultiplyToken) },                          // Multiplication operator
             { "/", typeof(DivideToken) },                            // Division operator
             { "=", typeof(Tokens.Operators.EqualsToken) },           // Assignment operator
+            { ">", typeof(Tokens.Operators.GreaterThanToken) },      // Greater than comparison
+            { "<", typeof(Tokens.Operators.LessThanToken) },         // Less than comparison
+            { ">=", typeof(Tokens.Operators.GreaterThanOrEqualToken) }, // Greater than or equal
+            { "<=", typeof(Tokens.Operators.LessThanOrEqualToken) }, // Less than or equal
+            { "==", typeof(Tokens.Operators.EqualsEqualsToken) },    // Equality comparison
+            { "!=", typeof(Tokens.Operators.NotEqualsToken) },       // Not equal comparison
             { "::", typeof(Tokens.Operators.NamespaceOperatorToken) }, // Namespace operator
             { ".", typeof(Tokens.Operators.DotToken) }               // Dot operator for member access
         };
@@ -210,8 +224,13 @@ namespace ppotepa.tokenez.Tree
                         targetType = typeof(ScopeEndToken);
                         break;
                     default:
+                        // Check if it's a template string (starts and ends with backticks)
+                        if (IsTemplateString(rawToken.Text))
+                        {
+                            targetType = typeof(Tokens.Values.TemplateStringToken);
+                        }
                         // Check if it's a string literal (starts and ends with quotes)
-                        if (IsStringLiteral(rawToken.Text))
+                        else if (IsStringLiteral(rawToken.Text))
                         {
                             targetType = typeof(Tokens.Values.StringLiteralToken);
                         }
@@ -241,6 +260,14 @@ namespace ppotepa.tokenez.Tree
         private static bool IsStringLiteral(string text)
         {
             return text.StartsWith("\"") && text.EndsWith("\"") && text.Length >= 2;
+        }
+
+        /// <summary>
+        /// Checks if a string represents a template string (enclosed in backticks).
+        /// </summary>
+        private static bool IsTemplateString(string text)
+        {
+            return text.StartsWith("`") && text.EndsWith("`") && text.Length >= 2;
         }
 
         /// <summary>

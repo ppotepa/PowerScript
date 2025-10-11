@@ -1,6 +1,7 @@
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Diagnostics;
+using ppotepa.tokenez.Tree.Tokens.Operators;
 using TreeExpression = ppotepa.tokenez.Tree.Expressions.Expression;
 using TreeBinaryExpression = ppotepa.tokenez.Tree.Expressions.BinaryExpression;
 using TreeLiteralExpression = ppotepa.tokenez.Tree.Expressions.LiteralExpression;
@@ -19,6 +20,7 @@ namespace ppotepa.tokenez.Tree
     public class PowerScriptCompiler
     {
         private readonly TokenTree _tree;
+        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
 
         public PowerScriptCompiler(TokenTree tree)
         {
@@ -95,17 +97,67 @@ namespace ppotepa.tokenez.Tree
             if (stmt is PrintStatement printStmt)
             {
                 // Evaluate and print the expression
-                if (printStmt.Expression is TreeStringLiteralExpression stringExpr)
+                if (printStmt.Expression is TemplateStringExpression templateExpr)
+                {
+                    // Evaluate template string with variable interpolation
+                    var result = EvaluateTemplateString(templateExpr);
+                    Console.WriteLine(result);
+                }
+                else if (printStmt.Expression is TreeStringLiteralExpression stringExpr)
                 {
                     // Remove quotes from string literal
                     var text = stringExpr.Value.RawToken.Text.Trim('"');
                     Console.WriteLine(text);
                 }
+                else if (printStmt.Expression is IdentifierExpression identExpr)
+                {
+                    // Print variable value
+                    var varName = identExpr.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+                    if (_variables.TryGetValue(varName, out var value))
+                    {
+                        Console.WriteLine(value);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[WARN] Variable '{varName}' not found");
+                    }
+                }
+                else if (printStmt.Expression is LiteralExpression litExpr)
+                {
+                    // Print literal value directly
+                    Console.WriteLine(litExpr.Value.RawToken?.Text ?? litExpr.ToString());
+                }
+                else if (printStmt.Expression is IndexExpression indexExpr)
+                {
+                    // Evaluate array index access and print
+                    var value = EvaluateExpressionValue(indexExpr);
+                    Console.WriteLine(value);
+                }
                 else
                 {
-                    // TODO: Handle other expression types (function calls, variables, etc.)
+                    // Fall back to ToString() for other expression types
                     Console.WriteLine(printStmt.Expression.ToString());
                 }
+            }
+            else if (stmt is VariableDeclarationStatement varDeclStmt)
+            {
+                ExecuteVariableDeclaration(varDeclStmt);
+            }
+            else if (stmt is ArrayAssignmentStatement arrayAssignStmt)
+            {
+                ExecuteArrayAssignment(arrayAssignStmt);
+            }
+            else if (stmt is IfStatement ifStmt)
+            {
+                ExecuteIfStatement(ifStmt);
+            }
+            else if (stmt is FunctionCallStatement funcCallStmt)
+            {
+                ExecuteFunctionCall(funcCallStmt);
+            }
+            else if (stmt is CycleLoopStatement cycleStmt)
+            {
+                ExecuteCycleLoop(cycleStmt);
             }
             else if (stmt is NetMethodCallStatement netStmt)
             {
@@ -114,6 +166,488 @@ namespace ppotepa.tokenez.Tree
             else if (stmt is ExecuteStatement execStmt)
             {
                 ExecuteScriptFile(execStmt.FilePath);
+            }
+        }
+
+        /// <summary>
+        /// Executes a variable declaration (FLEX x = value).
+        /// </summary>
+        private void ExecuteVariableDeclaration(VariableDeclarationStatement varStmt)
+        {
+            var varName = varStmt.Declaration.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+            var value = EvaluateExpressionValue(varStmt.InitialValue);
+
+            _variables[varName] = value;
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[EXEC] Variable {varName} = {value}");
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Executes an array element assignment (FLEX arr[index] = value).
+        /// </summary>
+        private void ExecuteArrayAssignment(ArrayAssignmentStatement arrayAssignStmt)
+        {
+            var arrayName = arrayAssignStmt.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+
+            if (!_variables.TryGetValue(arrayName, out var arrayObj))
+            {
+                throw new Exception($"Array '{arrayName}' not found");
+            }
+
+            // Evaluate the index
+            var indexValue = EvaluateExpressionValue(arrayAssignStmt.IndexExpression);
+            int index = Convert.ToInt32(ConvertToNumber(indexValue));
+
+            // Evaluate the value to assign
+            var value = EvaluateExpressionValue(arrayAssignStmt.ValueExpression);
+
+            // Assign to array
+            if (arrayObj is List<object> list)
+            {
+                if (index < 0 || index >= list.Count)
+                {
+                    throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})");
+                }
+                list[index] = value;
+            }
+            else if (arrayObj is double[] doubleArray)
+            {
+                if (index < 0 || index >= doubleArray.Length)
+                {
+                    throw new Exception($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
+                }
+                doubleArray[index] = ConvertToNumber(value);
+            }
+            else
+            {
+                throw new Exception($"Cannot assign to index of non-array variable '{arrayName}'");
+            }
+
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"[EXEC] {arrayName}[{index}] = {value}");
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Evaluates a template string by replacing @variable references with their runtime values.
+        /// Example: `Hello @name` where name = "World" -> "Hello World"
+        /// </summary>
+        private string EvaluateTemplateString(TemplateStringExpression templateExpr)
+        {
+            var result = "";
+
+            foreach (var part in templateExpr.Template.Parts)
+            {
+                if (part.IsLiteral)
+                {
+                    // Just append the literal text
+                    result += part.Text;
+                }
+                else
+                {
+                    // Look up the variable value
+                    var varName = part.Text.ToUpperInvariant();
+                    if (_variables.TryGetValue(varName, out var value))
+                    {
+                        result += value.ToString();
+                    }
+                    else
+                    {
+                        // Variable not found - leave the @var syntax or show error
+                        result += $"@{part.Text}";
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"[WARN] Variable '{varName}' not found in template string");
+                        Console.ResetColor();
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Executes an IF statement by evaluating the condition and executing the appropriate branch.
+        /// </summary>
+        private void ExecuteIfStatement(IfStatement ifStmt)
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"[EXEC] Evaluating IF condition: {ifStmt.Condition}");
+            Console.ResetColor();
+
+            // Evaluate the condition
+            bool conditionResult = EvaluateCondition(ifStmt.Condition);
+
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"[EXEC] Condition result: {conditionResult}");
+            Console.ResetColor();
+
+            if (conditionResult)
+            {
+                // Execute THEN branch
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"[EXEC] Executing THEN branch");
+                Console.ResetColor();
+
+                foreach (var stmt in ifStmt.ThenScope.Statements)
+                {
+                    ExecuteStatement(stmt);
+                }
+            }
+            else if (ifStmt.ElseScope != null)
+            {
+                // Execute ELSE branch
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"[EXEC] Executing ELSE branch");
+                Console.ResetColor();
+
+                foreach (var stmt in ifStmt.ElseScope.Statements)
+                {
+                    ExecuteStatement(stmt);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Evaluates a condition expression to a boolean result.
+        /// </summary>
+        private bool EvaluateCondition(Expression condition)
+        {
+            // Handle comparison expressions
+            if (condition is BinaryExpression binaryExpr)
+            {
+                // Get left and right values
+                var left = EvaluateExpressionValue(binaryExpr.Left);
+                var right = EvaluateExpressionValue(binaryExpr.Right);
+
+                // Get operator string from token
+                var op = binaryExpr.Operator.RawToken?.Text ?? "";
+
+                // Perform comparison based on operator
+                return op switch
+                {
+                    "<" => CompareValues(left, right) < 0,
+                    ">" => CompareValues(left, right) > 0,
+                    "<=" => CompareValues(left, right) <= 0,
+                    ">=" => CompareValues(left, right) >= 0,
+                    "==" => CompareValues(left, right) == 0,
+                    "!=" => CompareValues(left, right) != 0,
+                    _ => throw new Exception($"Unknown comparison operator: {op}")
+                };
+            }
+
+            // Handle logical expressions (AND/OR)
+            if (condition is LogicalExpression logicalExpr)
+            {
+                bool leftResult = EvaluateCondition(logicalExpr.Left);
+
+                var op = logicalExpr.Operator.RawToken?.Text ?? "";
+
+                if (op == "AND")
+                {
+                    // Short-circuit evaluation for AND
+                    if (!leftResult) return false;
+                    return EvaluateCondition(logicalExpr.Right);
+                }
+                else if (op == "OR")
+                {
+                    // Short-circuit evaluation for OR
+                    if (leftResult) return true;
+                    return EvaluateCondition(logicalExpr.Right);
+                }
+
+                throw new Exception($"Unknown logical operator: {op}");
+            }
+
+            throw new Exception($"Cannot evaluate condition of type: {condition.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Evaluates an expression to get its runtime value.
+        /// </summary>
+        private object EvaluateExpressionValue(Expression expr)
+        {
+            if (expr is ArrayLiteralExpression arrayLiteralExpr)
+            {
+                // Create array from literal values
+                var array = new List<object>();
+                foreach (var elementExpr in arrayLiteralExpr.Elements)
+                {
+                    var elementValue = EvaluateExpressionValue(elementExpr);
+                    array.Add(elementValue);
+                }
+                
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[EXEC] Created array literal with {array.Count} elements");
+                Console.ResetColor();
+                
+                return array;
+            }
+
+            if (expr is ArrayCreationExpression arrayCreationExpr)
+            {
+                // Create array with specified size
+                var sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
+                int size = int.Parse(sizeText);
+
+                // Create a List<object> initialized with zeros
+                var array = new List<object>(size);
+                for (int i = 0; i < size; i++)
+                {
+                    array.Add(0.0);
+                }
+                return array;
+            }
+
+            if (expr is TreeStringLiteralExpression stringLiteralExpr)
+            {
+                // String literal - remove quotes
+                var text = stringLiteralExpr.Value.RawToken?.Text ?? "";
+                return text.Trim('"');
+            }
+
+            if (expr is LiteralExpression literalExpr)
+            {
+                // Parse the literal value
+                var text = literalExpr.Value.RawToken?.Text ?? "";
+                if (int.TryParse(text, out int intValue))
+                    return intValue;
+                if (double.TryParse(text, out double doubleValue))
+                    return doubleValue;
+                return text;
+            }
+
+            if (expr is IndexExpression indexExpr)
+            {
+                // Array index access
+                var arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
+                if (!_variables.TryGetValue(arrayName, out var arrayObj))
+                {
+                    throw new Exception($"Array not found: {arrayName}");
+                }
+
+                // Evaluate the index expression
+                var indexValue = EvaluateExpressionValue(indexExpr.Index);
+                int index = Convert.ToInt32(ConvertToNumber(indexValue));
+
+                // Support different array types
+                if (arrayObj is List<object> list)
+                {
+                    if (index < 0 || index >= list.Count)
+                    {
+                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})");
+                    }
+                    return list[index];
+                }
+                else if (arrayObj is double[] doubleArray)
+                {
+                    if (index < 0 || index >= doubleArray.Length)
+                    {
+                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
+                    }
+                    return doubleArray[index];
+                }
+                else if (arrayObj is object[] objArray)
+                {
+                    if (index < 0 || index >= objArray.Length)
+                    {
+                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {objArray.Length})");
+                    }
+                    return objArray[index];
+                }
+                else
+                {
+                    throw new Exception($"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})");
+                }
+            }
+
+            if (expr is IdentifierExpression identifierExpr)
+            {
+                // Look up variable value
+                var varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
+                if (_variables.TryGetValue(varName, out var value))
+                {
+                    return value;
+                }
+                throw new Exception($"Variable not found: {varName}");
+            }
+
+            if (expr is BinaryExpression binaryExpr)
+            {
+                // Evaluate binary operation
+                return EvaluateBinaryExpression(binaryExpr);
+            }
+
+            throw new Exception($"Cannot evaluate expression of type: {expr.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Evaluates a binary expression (e.g., a + b, x * y).
+        /// </summary>
+        private object EvaluateBinaryExpression(BinaryExpression expr)
+        {
+            var left = EvaluateExpressionValue(expr.Left);
+            var right = EvaluateExpressionValue(expr.Right);
+
+            // Convert to numeric values
+            double leftNum = ConvertToNumber(left);
+            double rightNum = ConvertToNumber(right);
+
+            // Perform the operation based on operator type
+            if (expr.Operator is PlusToken)
+            {
+                var result = leftNum + rightNum;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[EXEC] {leftNum} + {rightNum} = {result}");
+                Console.ResetColor();
+                return result;
+            }
+            else if (expr.Operator is MinusToken)
+            {
+                var result = leftNum - rightNum;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[EXEC] {leftNum} - {rightNum} = {result}");
+                Console.ResetColor();
+                return result;
+            }
+            else if (expr.Operator is MultiplyToken)
+            {
+                var result = leftNum * rightNum;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[EXEC] {leftNum} * {rightNum} = {result}");
+                Console.ResetColor();
+                return result;
+            }
+            else if (expr.Operator is DivideToken)
+            {
+                if (rightNum == 0)
+                {
+                    throw new Exception("Division by zero");
+                }
+                var result = leftNum / rightNum;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[EXEC] {leftNum} / {rightNum} = {result}");
+                Console.ResetColor();
+                return result;
+            }
+            else
+            {
+                throw new Exception($"Unknown binary operator: {expr.Operator.GetType().Name}");
+            }
+        }
+
+        /// <summary>
+        /// Converts a value to a number (double).
+        /// </summary>
+        private double ConvertToNumber(object value)
+        {
+            if (value is int intValue)
+                return intValue;
+            if (value is double doubleValue)
+                return doubleValue;
+            if (double.TryParse(value.ToString(), out double result))
+                return result;
+
+            throw new Exception($"Cannot convert '{value}' to number");
+        }
+
+        /// <summary>
+        /// Compares two values and returns -1, 0, or 1.
+        /// </summary>
+        private int CompareValues(object left, object right)
+        {
+            // Try numeric comparison
+            if (left is int leftInt && right is int rightInt)
+                return leftInt.CompareTo(rightInt);
+
+            if (left is double leftDouble && right is double rightDouble)
+                return leftDouble.CompareTo(rightDouble);
+
+            // Try numeric conversion
+            if (double.TryParse(left.ToString(), out double leftNum) &&
+                double.TryParse(right.ToString(), out double rightNum))
+            {
+                return leftNum.CompareTo(rightNum);
+            }
+
+            // Fall back to string comparison
+            return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Executes a function call by looking up the function declaration and running its body.
+        /// </summary>
+        private void ExecuteFunctionCall(FunctionCallStatement funcCallStmt)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"[EXEC] Calling function: {funcCallStmt.FunctionName}()");
+            Console.ResetColor();
+
+            // Find the function declaration in the root scope
+            if (!_tree.RootScope.Decarations.TryGetValue(funcCallStmt.FunctionName, out var declaration))
+            {
+                throw new Exception($"Function not found: {funcCallStmt.FunctionName}");
+            }
+
+            if (declaration is not FunctionDeclaration functionDecl)
+            {
+                throw new Exception($"{funcCallStmt.FunctionName} is not a function");
+            }
+
+            // Execute all statements in the function's scope
+            foreach (var stmt in functionDecl.Scope.Statements)
+            {
+                ExecuteStatement(stmt);
+            }
+        }
+
+        /// <summary>
+        /// Executes a CYCLE loop (count-based or collection-based).
+        /// </summary>
+        private void ExecuteCycleLoop(CycleLoopStatement cycleStmt)
+        {
+            if (cycleStmt.IsCountBased)
+            {
+                // Count-based loop: CYCLE 5 AS i { ... }
+                var countValue = EvaluateExpressionValue(cycleStmt.CollectionExpression);
+
+                if (!int.TryParse(countValue.ToString(), out int count))
+                {
+                    throw new Exception($"CYCLE count must be a number, got: {countValue}");
+                }
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
+                Console.ResetColor();
+
+                // Execute the loop body 'count' times
+                for (int i = 0; i < count; i++)
+                {
+                    // Set the loop variable to the current index
+                    var varName = cycleStmt.LoopVariableName.ToUpperInvariant();
+                    _variables[varName] = i;
+
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[EXEC] CYCLE iteration {i}, {varName} = {i}");
+                    Console.ResetColor();
+
+                    // Execute all statements in the loop body
+                    foreach (var stmt in cycleStmt.LoopBody.Statements)
+                    {
+                        ExecuteStatement(stmt);
+                    }
+                }
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"[EXEC] CYCLE loop completed");
+                Console.ResetColor();
+            }
+            else
+            {
+                // Collection-based loop: CYCLE IN items AS item { ... }
+                // TODO: Implement collection-based loops
+                throw new NotImplementedException("Collection-based CYCLE loops not yet implemented. Use count-based: CYCLE 5 { ... }");
             }
         }
 

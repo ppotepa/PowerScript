@@ -49,8 +49,23 @@ namespace ppotepa.tokenez.Prompt
 
                 while (i < text.Length)
                 {
+                    // Handle template strings (backticks)
+                    if (text[i] == '`')
+                    {
+                        int startQuote = i;
+                        i++; // Skip opening backtick
+                        while (i < text.Length && text[i] != '`')
+                        {
+                            i++;
+                        }
+                        if (i < text.Length)
+                        {
+                            i++; // Include closing backtick
+                            tokens.Add(text.Substring(startQuote, i - startQuote));
+                        }
+                    }
                     // Handle string literals
-                    if (text[i] == '"')
+                    else if (text[i] == '"')
                     {
                         int startQuote = i;
                         i++; // Skip opening quote
@@ -80,20 +95,25 @@ namespace ppotepa.tokenez.Prompt
                     }
                 }
 
-                // Now add spaces around delimiters and operators (but not inside string literals)
+                // Now add spaces around delimiters and operators (but not inside string literals or template strings)
                 var processedTokens = new List<string>();
                 foreach (var token in tokens)
                 {
-                    if (token.StartsWith("\""))
+                    if (token.StartsWith("\"") || token.StartsWith("`"))
                     {
-                        // Keep string literals as-is
+                        // Keep string literals and template strings as-is
                         processedTokens.Add(token);
                     }
                     else
                     {
                         // Add spaces around delimiters and operators
+                        // Handle multi-character operators FIRST before single-character ones
                         var processed = token
                             .Replace("::", " :: ")  // Namespace operator
+                            .Replace("==", " == ")  // Equality comparison
+                            .Replace("!=", " != ")  // Not equal comparison
+                            .Replace(">=", " >= ")  // Greater than or equal
+                            .Replace("<=", " <= ")  // Less than or equal
                             .Replace(".", " . ")     // Dot operator
                             .Replace("{", " { ")
                             .Replace("}", " } ")
@@ -106,6 +126,8 @@ namespace ppotepa.tokenez.Prompt
                             .Replace("-", " - ")
                             .Replace("*", " * ")
                             .Replace("/", " / ")
+                            .Replace(">", " > ")     // Greater than
+                            .Replace("<", " < ")     // Less than
                             .Replace("=", " = ");   // Assignment operator
 
                         processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));

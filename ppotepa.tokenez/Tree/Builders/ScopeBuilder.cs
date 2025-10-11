@@ -54,40 +54,37 @@ namespace ppotepa.tokenez.Tree.Builders
                 Console.WriteLine($"[DEBUG] Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {depth}");
                 Console.ResetColor();
 
-                // Only process tokens that have declared expectations
-                if (HasExpectations(currentToken))
+                // Check if any processor can handle this token (even without expectations)
+                // This allows processors like FunctionCallProcessor to handle identifiers followed by parentheses
+                var processor = _registry.GetProcessor(currentToken);
+                if (processor != null)
                 {
-                    // Find a processor that can handle this token type
-                    var processor = _registry.GetProcessor(currentToken);
-                    if (processor != null)
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[DEBUG] Invoking processor {processor.GetType().Name} for token {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
+                    Console.ResetColor();
+                    // Process the token and get the next token to continue from
+                    var result = processor.Process(currentToken, context);
+
+                    // Optionally validate that the next token meets expectations (only for tokens that have them)
+                    if (result.ShouldValidateExpectations && HasExpectations(currentToken))
                     {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine($"[DEBUG] Invoking processor {processor.GetType().Name} for token {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
+                        Console.WriteLine($"[DEBUG] Validating expectations after processing {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
                         Console.ResetColor();
-                        // Process the token and get the next token to continue from
-                        var result = processor.Process(currentToken, context);
-
-                        // Optionally validate that the next token meets expectations
-                        if (result.ShouldValidateExpectations)
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine($"[DEBUG] Validating expectations after processing {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
-                            Console.ResetColor();
-                            _validator.ValidateNext(currentToken);
-                        }
-
-                        // Update scope if processor modified it
-                        if (result.ModifiedScope != null)
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine($"[DEBUG] Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
-                            Console.ResetColor();
-                            context.CurrentScope = result.ModifiedScope;
-                        }
-
-                        currentToken = result.NextToken;
-                        continue;
+                        _validator.ValidateNext(currentToken);
                     }
+
+                    // Update scope if processor modified it
+                    if (result.ModifiedScope != null)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"[DEBUG] Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
+                        Console.ResetColor();
+                        context.CurrentScope = result.ModifiedScope;
+                    }
+
+                    currentToken = result.NextToken;
+                    continue;
                 }
 
                 // No processor found, move to next token

@@ -32,8 +32,11 @@ namespace ppotepa.tokenez.Tree
             // Create specialized processors for different token types
             var parameterProcessor = new ParameterProcessor();
             var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
+            var functionCallProcessor = new FunctionCallProcessor();
             var linkProcessor = new LinkStatementProcessor(_dotNetLinker);
             var flexVariableProcessor = new FlexVariableProcessor(_validator);
+            var cycleLoopProcessor = new CycleLoopProcessor(_validator, _scopeBuilder);
+            var ifStatementProcessor = new IfStatementProcessor(_validator, _scopeBuilder);
             var returnProcessor = new ReturnStatementProcessor(_validator);
             var printProcessor = new PrintStatementProcessor(_validator);
             var executeProcessor = new ExecuteCommandProcessor(_validator);
@@ -45,7 +48,10 @@ namespace ppotepa.tokenez.Tree
             // LINK processor should be registered first since LINK statements must come at the top
             _registry.Register(linkProcessor);
             _registry.Register(functionProcessor);
+            _registry.Register(functionCallProcessor); // Function calls (identifier followed by parentheses)
             _registry.Register(flexVariableProcessor);  // FLEX variable declarations
+            _registry.Register(cycleLoopProcessor);     // CYCLE loops
+            _registry.Register(ifStatementProcessor);   // IF conditional statements
             _registry.Register(returnProcessor);
             _registry.Register(printProcessor);
             _registry.Register(executeProcessor);
