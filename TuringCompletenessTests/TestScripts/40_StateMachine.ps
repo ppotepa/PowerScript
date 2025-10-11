@@ -1,0 +1,33 @@
+// Test 40: State Machine - Demonstrates all Turing completeness features
+// State: IDLE -> RUNNING -> COMPLETED
+
+FLEX state = "IDLE"
+FLEX counter = 0
+
+FUNCTION changeState(newState) [STRING] {
+    PRINT "Changing state to: "
+    PRINT newState
+    RETURN newState
+}
+
+PRINT "Initial state: "
+PRINT state
+
+IF state == "IDLE" {
+    state = changeState("RUNNING")
+}
+
+CYCLE 3 TIMES {
+    counter = counter + 1
+    PRINT "Processing step: "
+    PRINT counter
+}
+
+IF counter >= 3 {
+    state = changeState("COMPLETED")
+}
+
+PRINT "Final state: "
+PRINT state
+PRINT "Total steps: "
+PRINT counter

@@ -1,0 +1,28 @@
+// Test 41: Algorithm - Sum of numbers
+// Demonstrates: loops, variables, conditionals, functions
+
+FUNCTION sumUpTo(n) [INT] {
+    FLEX sum = 0
+    FLEX i = 1
+    
+    CYCLE n TIMES {
+        sum = sum + i
+        i = i + 1
+    }
+    
+    RETURN sum
+}
+
+FLEX result = 0
+FLEX target = 5
+
+PRINT "Calculating sum of numbers from 1 to "
+PRINT target
+
+IF target > 0 {
+    result = sumUpTo(target)
+    PRINT "Result: "
+    PRINT result
+} ELSE {
+    PRINT "Invalid target"
+}

@@ -1,0 +1,15 @@
+// Test 05: Nested conditionals
+FLEX x = 10
+FLEX y = 20
+
+IF x < y {
+    PRINT "First level"
+    
+    IF x > 5 {
+        PRINT "Second level"
+        
+        IF y < 30 {
+            PRINT "Third level"
+        }
+    }
+}
