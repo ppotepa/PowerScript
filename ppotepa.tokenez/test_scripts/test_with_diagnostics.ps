@@ -1,0 +1,16 @@
+LINK System
+
+FUNCTION testWithProperLink(){
+    System::Console.WriteLine("This should work fine!")
+    PRINT "Using linked System library"
+}
+
+FUNCTION badFunction(INT value)[STRING]{
+    PRINT "This function has return type but no return"
+}
+
+FUNCTION goodFunction(){
+    RETURN 42
+}
+
+testWithProperLink()

@@ -9,6 +9,8 @@ This folder contains various test scripts for the PowerScript language interpret
 - **`test_scoped_vars.ps`** - Tests variable scoping and nested scopes
 - **`test_duplicate.ps`** - Tests duplicate declaration handling
 - **`test_execute.ps`** - Tests the EXECUTE command for running external scripts
+- **`test_link_functionality.ps`** - Tests LINK keyword for importing libraries and files
+- **`test_multiple_links.ps`** - Tests multiple LINK statements with different library types
 
 ### Function Features
 - **`test_return_types.ps`** - Tests basic return type functionality with `[TYPE]` syntax
@@ -24,6 +26,38 @@ This folder contains various test scripts for the PowerScript language interpret
 ### Testing Infrastructure
 - **`quick_test.ps`** - Quick test for rapid verification
 - **`test_shell.ps1`** - PowerShell script for testing the interactive shell
+
+## LINK System - Library/File Imports
+
+PowerScript supports importing external libraries and files using the `LINK` keyword. LINK statements must appear at the very top of the script, before any functions or other statements.
+
+### Syntax:
+```powerscript
+LINK LibraryName        // Well-known library
+LINK "path/to/file.ps"  // Custom file path
+```
+
+### Well-Known Libraries:
+- **`LINK System`** - System utilities and core functions
+- **`LINK Math`** - Mathematical functions and constants
+- **`LINK IO`** - Input/output operations
+- **`LINK String`** - String manipulation functions
+
+### File Imports:
+- **Relative paths**: `LINK "utilities/helper.ps"`
+- **Absolute paths**: `LINK "/full/path/to/library.ps"`
+
+### Example:
+```powerscript
+LINK System
+LINK Math
+LINK "custom/utilities.ps"
+
+FUNCTION calculate(PREC a, PREC b)[PREC]{
+    // Now can use functions from linked libraries
+    RETURN a + b
+}
+```
 
 ## Type System
 

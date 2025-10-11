@@ -31,12 +31,14 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private static Dictionary<string, Type> _map = new()
         {
+            { "LINK", typeof(Tokens.Keywords.LinkKeywordToken) },     // Library/file import keyword
             { "FUNCTION", typeof(Tokens.Keywords.FunctionToken) },   // Function declaration keyword
             { "RETURN", typeof(Tokens.Keywords.ReturnKeywordToken) }, // Return statement keyword
             { "PRINT", typeof(Tokens.Keywords.PrintKeywordToken) },   // Print statement keyword
             { "EXECUTE", typeof(Tokens.Keywords.ExecuteKeywordToken) }, // Execute script file keyword
             { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
             { "VAR", typeof(Tokens.Keywords.VarKeywordToken) },       // Variable declaration keyword
+            { "FLEX", typeof(Tokens.Keywords.FlexKeywordToken) },     // Dynamic variable declaration keyword
             { "INT", typeof(IntToken) },                              // Integer type keyword
             { "PREC", typeof(PrecToken) },                            // Precision/float type keyword
             { "CHAR", typeof(CharToken) },                            // Character type keyword

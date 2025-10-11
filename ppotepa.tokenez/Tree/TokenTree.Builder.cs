@@ -1,4 +1,5 @@
-﻿using ppotepa.tokenez.Tree.Builders;
+﻿using ppotepa.tokenez.DotNet;
+using ppotepa.tokenez.Tree.Builders;
 using ppotepa.tokenez.Tree.Tokens.Base;
 
 namespace ppotepa.tokenez.Tree
@@ -12,6 +13,7 @@ namespace ppotepa.tokenez.Tree
         private readonly ScopeBuilder _scopeBuilder;
         private readonly TokenProcessorRegistry _registry;
         private readonly ExpectationValidator _validator;
+        private readonly DotNetLinker _dotNetLinker;
 
         /// <summary>
         /// Initializes the token tree builder with all necessary processors.
@@ -22,6 +24,7 @@ namespace ppotepa.tokenez.Tree
             // Create core infrastructure
             _validator = new ExpectationValidator();
             _registry = new TokenProcessorRegistry();
+            _dotNetLinker = new DotNetLinker();
 
             // Create the scope builder first (needed by ScopeProcessor)
             _scopeBuilder = new ScopeBuilder(_registry, _validator);
@@ -29,6 +32,8 @@ namespace ppotepa.tokenez.Tree
             // Create specialized processors for different token types
             var parameterProcessor = new ParameterProcessor();
             var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
+            var linkProcessor = new LinkStatementProcessor(_dotNetLinker);
+            var flexVariableProcessor = new FlexVariableProcessor(_validator);
             var returnProcessor = new ReturnStatementProcessor(_validator);
             var printProcessor = new PrintStatementProcessor(_validator);
             var executeProcessor = new ExecuteCommandProcessor(_validator);
@@ -37,7 +42,10 @@ namespace ppotepa.tokenez.Tree
             var scopeProcessor = new ScopeProcessor(_registry, _validator, _scopeBuilder);
 
             // Register all processors with the central registry
+            // LINK processor should be registered first since LINK statements must come at the top
+            _registry.Register(linkProcessor);
             _registry.Register(functionProcessor);
+            _registry.Register(flexVariableProcessor);  // FLEX variable declarations
             _registry.Register(returnProcessor);
             _registry.Register(printProcessor);
             _registry.Register(executeProcessor);

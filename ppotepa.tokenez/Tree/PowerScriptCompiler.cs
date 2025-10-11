@@ -1,5 +1,6 @@
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
+using ppotepa.tokenez.Tree.Diagnostics;
 using TreeExpression = ppotepa.tokenez.Tree.Expressions.Expression;
 using TreeBinaryExpression = ppotepa.tokenez.Tree.Expressions.BinaryExpression;
 using TreeLiteralExpression = ppotepa.tokenez.Tree.Expressions.LiteralExpression;
@@ -26,9 +27,13 @@ namespace ppotepa.tokenez.Tree
 
         /// <summary>
         /// Compiles all functions in the root scope and executes them.
+        /// Also runs diagnostic analysis to provide warnings and suggestions.
         /// </summary>
         public void CompileAndExecute()
         {
+            // First, run diagnostic analysis
+            RunDiagnosticAnalysis();
+
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("\n╔════════════════════════════════════════╗");
             Console.WriteLine("║     COMPILING & EXECUTING FUNCTIONS    ║");
@@ -407,6 +412,84 @@ namespace ppotepa.tokenez.Tree
                 Console.WriteLine($"✗ EXECUTE failed: {ex.Message}");
                 Console.ResetColor();
             }
+        }
+
+        /// <summary>
+        /// Runs diagnostic analysis and displays warnings, errors, and suggestions.
+        /// </summary>
+        private void RunDiagnosticAnalysis()
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("\n╔════════════════════════════════════════╗");
+            Console.WriteLine("║           DIAGNOSTIC ANALYSIS          ║");
+            Console.WriteLine("╚════════════════════════════════════════╝\n");
+            Console.ResetColor();
+
+            var analyzer = new DiagnosticAnalyzer();
+            var diagnostics = analyzer.Analyze(_tree.RootScope, _tree.Tokens);
+
+            if (diagnostics.Count == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("✅ No issues found - your code looks good!");
+                Console.ResetColor();
+                return;
+            }
+
+            // Group diagnostics by severity
+            var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+            var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning).ToList();
+            var suggestions = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion).ToList();
+            var info = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info).ToList();
+
+            // Display errors first
+            if (errors.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("ERRORS:");
+                foreach (var error in errors)
+                    Console.WriteLine($"  {error}");
+                Console.WriteLine();
+                Console.ResetColor();
+            }
+
+            // Then warnings
+            if (warnings.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("WARNINGS:");
+                foreach (var warning in warnings)
+                    Console.WriteLine($"  {warning}");
+                Console.WriteLine();
+                Console.ResetColor();
+            }
+
+            // Then suggestions
+            if (suggestions.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("SUGGESTIONS:");
+                foreach (var suggestion in suggestions)
+                    Console.WriteLine($"  {suggestion}");
+                Console.WriteLine();
+                Console.ResetColor();
+            }
+
+            // Finally info (only show if verbose or if there are no other diagnostics)
+            if (info.Any() && (errors.Count + warnings.Count + suggestions.Count == 0))
+            {
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine("INFO:");
+                foreach (var infoItem in info)
+                    Console.WriteLine($"  {infoItem}");
+                Console.WriteLine();
+                Console.ResetColor();
+            }
+
+            // Summary
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine($"📊 Analysis complete: {errors.Count} errors, {warnings.Count} warnings, {suggestions.Count} suggestions");
+            Console.ResetColor();
         }
     }
 }

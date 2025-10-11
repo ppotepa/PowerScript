@@ -1,0 +1,28 @@
+using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Identifiers;
+using ppotepa.tokenez.Tree.Tokens.Interfaces;
+using ppotepa.tokenez.Tree.Tokens.Raw;
+using ppotepa.tokenez.Tree.Tokens.Values;
+
+namespace ppotepa.tokenez.Tree.Tokens.Keywords
+{
+    /// <summary>
+    /// Token representing 'LINK' - the library/file import keyword.
+    /// Used to import external libraries or files into the current context.
+    /// Example: "LINK System" or "LINK `path/to/file.ps`"
+    /// Must appear at the top of the script before any other statements.
+    /// </summary>
+    public class LinkKeywordToken : Token, IKeyWordToken
+    {
+        public LinkKeywordToken()
+        {
+        }
+
+        public LinkKeywordToken(RawToken rawToken) : base(rawToken)
+        {
+        }
+
+        /// <summary>After LINK, expect identifier (library name) or string literal (file path)</summary>
+        public override Type[] Expectations => [typeof(IdentifierToken), typeof(StringLiteralToken)];
+    }
+}

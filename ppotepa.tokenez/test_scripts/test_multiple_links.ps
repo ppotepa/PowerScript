@@ -1,0 +1,15 @@
+LINK Math
+LINK IO 
+LINK "custom/utilities.ps"
+
+FUNCTION calculate(PREC a, PREC b)[PREC]{
+    PRINT "Using linked Math library"
+    RETURN a + b
+}
+
+FUNCTION greetUser(){
+    PRINT "Using linked IO library"  
+}
+
+calculate(3.14, 2.86)
+greetUser()

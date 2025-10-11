@@ -96,7 +96,7 @@ namespace ppotepa.tokenez.Tree.Builders
             if (nextToken is Tokens.Delimiters.BracketOpen)
             {
                 BuilderLogger.LogFunctionName($"Processing return type for function '{functionName}'", context.Depth);
-                
+
                 // Expect a type token after the opening bracket
                 if (nextToken.Next is not Tokens.Keywords.Types.ITypeToken returnTypeInterface)
                 {
@@ -121,7 +121,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     Console.WriteLine($"[DEBUG] Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
                     Console.ResetColor();
                 }
-                
+
                 // Store the return type in the function declaration (using base type for now)
                 declaration.ReturnType = returnTypeToken;
 

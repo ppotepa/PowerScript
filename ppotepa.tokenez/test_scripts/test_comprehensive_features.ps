@@ -1,0 +1,31 @@
+// Test 1: FLEX Variables (Dynamic typing)
+FLEX counter = 0
+FLEX message = "Hello"
+FLEX data = 42
+
+PRINT "=== FLEX Variables Test ==="
+PRINT counter
+PRINT message
+PRINT data
+
+// Test 2: Statically typed variables with Int32 or INT
+FUNCTION testTypedVariables() {
+    INT staticValue = 100
+    PRINT "Static INT variable:"
+    PRINT staticValue
+}
+
+testTypedVariables()
+
+// Test 3: .NET namespace linking
+LINK System
+LINK System.Collections.Generic
+
+FUNCTION testDotNetTypes() {
+    PRINT "=== .NET Integration Test ==="
+    NET::System.Console.WriteLine("Direct .NET call from System namespace")
+}
+
+testDotNetTypes()
+
+PRINT "=== All Tests Completed ==="

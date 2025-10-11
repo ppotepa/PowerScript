@@ -1,4 +1,5 @@
-﻿using ppotepa.tokenez.Tree.Statements;
+﻿#nullable enable
+using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
 using System.Collections;
 
@@ -20,7 +21,7 @@ namespace ppotepa.tokenez.Tree
     /// </summary>
     public class Scope
     {
-        public Scope _outerScope = default;
+        public Scope? _outerScope = default;
 
         /// <summary>Declarations (functions, variables) made in this scope</summary>
         public Dictionary<string, Declaration> Decarations = [];
@@ -35,7 +36,13 @@ namespace ppotepa.tokenez.Tree
         public ScopeType Type { get; set; } = ScopeType.Block;
 
         /// <summary>For function scopes, reference back to the function declaration</summary>
-        public FunctionDeclaration FunctionDeclaration { get; set; }
+        public FunctionDeclaration? FunctionDeclaration { get; set; }
+
+        /// <summary>Track which variables are dynamically typed (FLEX)</summary>
+        private HashSet<string> _dynamicVariables = new HashSet<string>();
+
+        /// <summary>Track variable types for static type checking</summary>
+        private Dictionary<string, Type> _variableTypes = new Dictionary<string, Type>();
 
         public Scope(string scopeName)
         {
@@ -43,26 +50,26 @@ namespace ppotepa.tokenez.Tree
         }
 
         public Scope() { }
-        public IEnumerator Enumerator { get; set; }
+        public IEnumerator? Enumerator { get; set; }
 
-        public Scope InnerScope { get; set; }
+        public Scope? InnerScope { get; set; }
 
-        public string Name { get; }
+        public string? Name { get; }
 
-        public Scope OuterScope
+        public Scope? OuterScope
         {
             get => _outerScope;
             set => _outerScope = value;
         }
 
-        public string ScopeName { get; set; }
-        public Token Token { get; set; }
+        public string? ScopeName { get; set; }
+        public Token? Token { get; set; }
 
         public override string ToString()
         {
             if (OuterScope is null)
             {
-                return ScopeName;
+                return ScopeName ?? "UnnamedScope";
             }
             else
             {
@@ -152,6 +159,79 @@ namespace ppotepa.tokenez.Tree
             {
                 InnerScope.Visualize(depth + 1);
             }
+        }
+
+        /// <summary>
+        /// Registers a variable as dynamically typed (FLEX)
+        /// </summary>
+        public void AddDynamicVariable(string name)
+        {
+            _dynamicVariables.Add(name);
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"[Scope] Registered dynamic variable '{name}' in scope '{ScopeName}'");
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Checks if a variable is dynamically typed
+        /// </summary>
+        public bool IsDynamicVariable(string name)
+        {
+            if (_dynamicVariables.Contains(name))
+                return true;
+
+            // Check parent scope
+            if (_outerScope != null)
+                return _outerScope.IsDynamicVariable(name);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Registers the type of a statically typed variable
+        /// </summary>
+        public void RegisterVariableType(string name, Type type)
+        {
+            _variableTypes[name] = type;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"[Scope] Registered variable '{name}' with type '{type.Name}' in scope '{ScopeName}'");
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Gets the declared type of a variable
+        /// </summary>
+        public Type? GetVariableType(string name)
+        {
+            if (_variableTypes.TryGetValue(name, out var type))
+                return type;
+
+            // Check parent scope
+            if (_outerScope != null)
+                return _outerScope.GetVariableType(name);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Validates type assignment for statically typed variables
+        /// </summary>
+        public bool ValidateTypeAssignment(string variableName, Type valueType)
+        {
+            // Dynamic variables can accept any type
+            if (IsDynamicVariable(variableName))
+                return true;
+
+            // Get the declared type
+            var declaredType = GetVariableType(variableName);
+            if (declaredType == null)
+            {
+                // Variable not found - might be a new declaration
+                return true;
+            }
+
+            // Check type compatibility
+            return declaredType.IsAssignableFrom(valueType) || valueType.IsAssignableFrom(declaredType);
         }
     }
 }

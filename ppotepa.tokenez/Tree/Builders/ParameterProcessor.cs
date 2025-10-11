@@ -86,7 +86,7 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
             Console.ResetColor();
-            
+
             // First token must be a type (INT, PREC, CHAR, STRING, etc.)
             if (token is not ITypeToken)
             {
