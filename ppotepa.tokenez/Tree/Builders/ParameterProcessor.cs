@@ -77,7 +77,8 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Attempts to parse a type-identifier pair (e.g., "INT x").
+        /// Attempts to parse a type-identifier pair (e.g., "INT x" or "INT CHAIN numbers").
+        /// Supports composite types like INT CHAIN, PREC CHAIN, CHAR CHAIN.
         /// Returns true if successfully parsed, false if token is not a type.
         /// </summary>
         private bool TryProcessTypeAndIdentifier(Token token, FunctionParametersToken parameters, out Token nextToken)
@@ -85,7 +86,8 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
             Console.ResetColor();
-            // First token must be a type (INT, FUNCTION, etc.)
+            
+            // First token must be a type (INT, PREC, CHAR, STRING, etc.)
             if (token is not ITypeToken)
             {
                 // If it's an identifier where we expect a type, it's an invalid type name
@@ -93,7 +95,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 {
                     throw new UnexpectedTokenException(
                         token,
-                        $"Invalid parameter type '{token.RawToken.Text}'. Valid types are: INT",
+                        $"Invalid parameter type '{token.RawToken.Text}'. Valid types are: INT, PREC, CHAR, STRING, CHAIN",
                         typeof(IntToken)
                     );
                 }
@@ -103,15 +105,26 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             var typeToken = token;
-            var identifierToken = token.Next;
+            var currentToken = token.Next;
 
-            // Type must be followed by an identifier (parameter name)
-            if (identifierToken is not IdentifierToken)
+            // Check if this is a composite type (e.g., INT CHAIN, PREC CHAIN)
+            if (currentToken is ChainToken chainToken)
             {
-                throw new UnexpectedTokenException(identifierToken, typeof(IdentifierToken));
+                // Create a composite type representation (for now, we'll use the base type)
+                // In the future, this could be enhanced to create a proper composite type declaration
+                currentToken = chainToken.Next;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[DEBUG] Found composite type: {typeToken.GetType().Name} CHAIN");
+                Console.ResetColor();
             }
 
-            // Add parameter to the list
+            // Current token should now be the identifier (parameter name)
+            if (currentToken is not IdentifierToken identifierToken)
+            {
+                throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
+            }
+
+            // Add parameter to the list (using the base type token for now)
             parameters.Declarations.Add(new ParameterDeclaration(typeToken, identifierToken));
             nextToken = identifierToken.Next;
             return true;

@@ -105,21 +105,34 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // Cast to Token to access Token properties
                 var returnTypeToken = (Token)returnTypeInterface;
+                var currentReturnToken = returnTypeToken.Next;
+
+                // Check if this is a composite return type (e.g., INT CHAIN, PREC CHAIN)
+                if (currentReturnToken is Tokens.Keywords.Types.ChainToken)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[DEBUG] Function '{functionName}' has composite return type: {returnTypeToken.RawToken?.Text} CHAIN");
+                    Console.ResetColor();
+                    currentReturnToken = currentReturnToken.Next;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[DEBUG] Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
+                    Console.ResetColor();
+                }
                 
-                // Store the return type in the function declaration
+                // Store the return type in the function declaration (using base type for now)
                 declaration.ReturnType = returnTypeToken;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[DEBUG] Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
-                Console.ResetColor();
 
                 // Expect closing bracket after the return type
-                if (returnTypeToken.Next is not Tokens.Delimiters.BracketClosed)
+                if (currentReturnToken is not Tokens.Delimiters.BracketClosed)
                 {
-                    throw new UnexpectedTokenException(returnTypeToken.Next, typeof(Tokens.Delimiters.BracketClosed));
+                    throw new UnexpectedTokenException(currentReturnToken, typeof(Tokens.Delimiters.BracketClosed));
                 }
 
                 // Move to the token after the closing bracket
-                nextToken = returnTypeToken.Next.Next;
+                nextToken = currentReturnToken.Next;
             }
 
             // After parameters (and optional return type), we expect a scope start token ('{')

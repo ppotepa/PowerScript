@@ -15,7 +15,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords.Types
         {
         }
 
-        public override Type[] Expectations => [typeof(IdentifierToken)];
+        public override Type[] Expectations => [typeof(IdentifierToken), typeof(ChainToken)];
     }
 
     public class FunctionTypeToken : Token

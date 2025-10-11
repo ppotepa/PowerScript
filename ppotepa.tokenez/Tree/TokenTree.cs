@@ -38,6 +38,10 @@ namespace ppotepa.tokenez.Tree
             { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
             { "VAR", typeof(Tokens.Keywords.VarKeywordToken) },       // Variable declaration keyword
             { "INT", typeof(IntToken) },                              // Integer type keyword
+            { "PREC", typeof(PrecToken) },                            // Precision/float type keyword
+            { "CHAR", typeof(CharToken) },                            // Character type keyword
+            { "STRING", typeof(StringToken) },                        // String type keyword (CHAR CHAIN)
+            { "CHAIN", typeof(ChainToken) },                          // Collection/array type modifier
             { "{", typeof(Tokens.Scoping.ScopeStartToken) },         // Scope/block start
             { "}", typeof(Tokens.Scoping.ScopeEndToken) },           // Scope/block end
             { "[", typeof(Tokens.Delimiters.BracketOpen) },          // Return type bracket open
@@ -69,8 +73,9 @@ namespace ppotepa.tokenez.Tree
                     _tokenTypes
                         = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes())
                             .Where(type => type.IsSubclassOf(typeof(Token)))
-                            // Exclude operator tokens to prevent conflicts (they should be in _map instead)
+                            // Exclude operator and value tokens to prevent conflicts (they should be in _map instead)
                             .Where(type => !type.Namespace.Contains("Operators"))
+                            .Where(type => !type.Namespace.Contains("Values"))
                             .ToDictionary(
                                     // Map by class name without 'Token' suffix (e.g., 'FunctionToken' -> 'FUNCTION')
                                     type => type.Name.ToUpperInvariant().Replace("TOKEN", ""),
