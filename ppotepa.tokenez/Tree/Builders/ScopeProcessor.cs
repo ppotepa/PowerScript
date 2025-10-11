@@ -139,9 +139,10 @@ namespace ppotepa.tokenez.Tree.Builders
                 currentToken = currentToken.Next;
             }
 
-            // Enforce language rule: every function must have a RETURN statement
+            // Enforce language rule: functions with return types must have a RETURN statement
             if (targetScope.Type == ScopeType.Function &&
-                !targetScope.HasReturn)
+                !targetScope.HasReturn &&
+                targetScope.FunctionDeclaration?.ReturnType != null)
             {
                 throw new MissingReturnStatementException(targetScope);
             }

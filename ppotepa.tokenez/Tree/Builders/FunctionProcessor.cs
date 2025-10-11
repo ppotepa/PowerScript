@@ -66,6 +66,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
             // Link the scope to the declaration so we can visualize it later
             declaration.Scope = functionScope;
+            functionScope.FunctionDeclaration = declaration;
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] Registered function '{functionName}' in scope '{context.CurrentScope.ScopeName}'");
@@ -91,7 +92,37 @@ namespace ppotepa.tokenez.Tree.Builders
             // Store the parameters in the function declaration
             declaration.Parameters = parametersToken.Declarations;
 
-            // After parameters, we expect a scope start token ('{')
+            // Check if there's an optional return type specified with brackets
+            if (nextToken is Tokens.Delimiters.BracketOpen)
+            {
+                BuilderLogger.LogFunctionName($"Processing return type for function '{functionName}'", context.Depth);
+                
+                // Expect a type token after the opening bracket
+                if (nextToken.Next is not Tokens.Keywords.Types.ITypeToken returnTypeInterface)
+                {
+                    throw new UnexpectedTokenException(nextToken.Next, typeof(Tokens.Keywords.Types.ITypeToken));
+                }
+
+                // Cast to Token to access Token properties
+                var returnTypeToken = (Token)returnTypeInterface;
+                
+                // Store the return type in the function declaration
+                declaration.ReturnType = returnTypeToken;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[DEBUG] Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
+                Console.ResetColor();
+
+                // Expect closing bracket after the return type
+                if (returnTypeToken.Next is not Tokens.Delimiters.BracketClosed)
+                {
+                    throw new UnexpectedTokenException(returnTypeToken.Next, typeof(Tokens.Delimiters.BracketClosed));
+                }
+
+                // Move to the token after the closing bracket
+                nextToken = returnTypeToken.Next.Next;
+            }
+
+            // After parameters (and optional return type), we expect a scope start token ('{')
             if (nextToken is not Tokens.Scoping.ScopeStartToken)
             {
                 Console.ForegroundColor = ConsoleColor.Red;

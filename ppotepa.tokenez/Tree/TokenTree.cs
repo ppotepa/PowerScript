@@ -36,13 +36,17 @@ namespace ppotepa.tokenez.Tree
             { "PRINT", typeof(Tokens.Keywords.PrintKeywordToken) },   // Print statement keyword
             { "EXECUTE", typeof(Tokens.Keywords.ExecuteKeywordToken) }, // Execute script file keyword
             { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
+            { "VAR", typeof(Tokens.Keywords.VarKeywordToken) },       // Variable declaration keyword
             { "INT", typeof(IntToken) },                              // Integer type keyword
             { "{", typeof(Tokens.Scoping.ScopeStartToken) },         // Scope/block start
             { "}", typeof(Tokens.Scoping.ScopeEndToken) },           // Scope/block end
+            { "[", typeof(Tokens.Delimiters.BracketOpen) },          // Return type bracket open
+            { "]", typeof(Tokens.Delimiters.BracketClosed) },        // Return type bracket close
             { "+", typeof(PlusToken) },                              // Addition operator
             { "-", typeof(MinusToken) },                             // Subtraction operator
             { "*", typeof(MultiplyToken) },                          // Multiplication operator
             { "/", typeof(DivideToken) },                            // Division operator
+            { "=", typeof(Tokens.Operators.EqualsToken) },           // Assignment operator
             { "::", typeof(Tokens.Operators.NamespaceOperatorToken) }, // Namespace operator
             { ".", typeof(Tokens.Operators.DotToken) }               // Dot operator for member access
         };
@@ -52,6 +56,7 @@ namespace ppotepa.tokenez.Tree
         /// <summary>
         /// Dynamically discovered token types through reflection.
         /// Finds all Token subclasses and maps them by their name (without 'Token' suffix).
+        /// Excludes operator tokens to prevent conflicts with function names.
         /// This allows adding new token types without modifying the core mapping logic.
         /// </summary>
         private Dictionary<string, Type> TokenTypes
@@ -64,6 +69,8 @@ namespace ppotepa.tokenez.Tree
                     _tokenTypes
                         = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes())
                             .Where(type => type.IsSubclassOf(typeof(Token)))
+                            // Exclude operator tokens to prevent conflicts (they should be in _map instead)
+                            .Where(type => !type.Namespace.Contains("Operators"))
                             .ToDictionary(
                                     // Map by class name without 'Token' suffix (e.g., 'FunctionToken' -> 'FUNCTION')
                                     type => type.Name.ToUpperInvariant().Replace("TOKEN", ""),

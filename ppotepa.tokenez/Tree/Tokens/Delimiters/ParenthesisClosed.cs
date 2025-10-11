@@ -19,7 +19,7 @@ namespace ppotepa.tokenez.Tree.Tokens.Delimiters
         {
         }
 
-        /// <summary>After ')', expect '{' to start function body</summary>
-        public override Type[] Expectations => [typeof(ScopeStartToken)];
+        /// <summary>After ')', expect '{' to start function body or '[' for return type</summary>
+        public override Type[] Expectations => [typeof(ScopeStartToken), typeof(BracketOpen)];
     }
 }

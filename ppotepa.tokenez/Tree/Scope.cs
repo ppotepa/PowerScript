@@ -34,6 +34,9 @@ namespace ppotepa.tokenez.Tree
         /// <summary>The type of this scope (root, function, block)</summary>
         public ScopeType Type { get; set; } = ScopeType.Block;
 
+        /// <summary>For function scopes, reference back to the function declaration</summary>
+        public FunctionDeclaration FunctionDeclaration { get; set; }
+
         public Scope(string scopeName)
         {
             this.ScopeName = scopeName;

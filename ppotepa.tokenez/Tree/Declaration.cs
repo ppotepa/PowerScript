@@ -1,4 +1,6 @@
-﻿using ppotepa.tokenez.Tree.Tokens.Base;
+﻿#nullable enable
+using ppotepa.tokenez.Tree.Expressions;
+using ppotepa.tokenez.Tree.Tokens.Base;
 
 namespace ppotepa.tokenez.Tree
 {
@@ -19,7 +21,7 @@ namespace ppotepa.tokenez.Tree
 
     /// <summary>
     /// Represents a function declaration.
-    /// Example: "FUNCTION add(a, b) { ... }"
+    /// Example: "FUNCTION add(a, b) { ... }" or "FUNCTION multiply(INT A, INT B)[INT] { ... }"
     /// </summary>
     public class FunctionDeclaration : Declaration
     {
@@ -29,7 +31,10 @@ namespace ppotepa.tokenez.Tree
         public List<Declaration> Parameters { get; set; } = new();
 
         /// <summary>The scope (body) of this function</summary>
-        public Scope Scope { get; set; }
+        public Scope Scope { get; set; } = default!;
+
+        /// <summary>The return type token (e.g., INT), or null for void functions</summary>
+        public Token? ReturnType { get; set; }
     }
 
     /// <summary>
@@ -45,5 +50,25 @@ namespace ppotepa.tokenez.Tree
 
         /// <summary>The type token (e.g., NUMBER, STRING)</summary>
         public Token DeclarativeType { get; }
+    }
+
+    /// <summary>
+    /// Represents a variable declaration.
+    /// Example: "VAR x = 10" or "VAR INT x = 10"
+    /// </summary>
+    public class VariableDeclaration : Declaration
+    {
+        public VariableDeclaration(Token identifier) : base(identifier) { }
+
+        public VariableDeclaration(Token type, Token identifier) : base(identifier)
+        {
+            this.DeclarativeType = type;
+        }
+
+        /// <summary>The type token (e.g., INT), or null for inferred types</summary>
+        public Token? DeclarativeType { get; }
+
+        /// <summary>The initial value expression assigned to this variable</summary>
+        public Expression? InitialValue { get; set; }
     }
 }

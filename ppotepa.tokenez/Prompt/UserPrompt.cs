@@ -99,13 +99,14 @@ namespace ppotepa.tokenez.Prompt
                             .Replace("}", " } ")
                             .Replace(")", " ) ")
                             .Replace("(", " ( ")
-                            .Replace("[", " ] ")
-                            .Replace("]", " [ ")
+                            .Replace("[", " [ ")
+                            .Replace("]", " ] ")
                             .Replace(",", " , ")
                             .Replace("+", " + ")
                             .Replace("-", " - ")
                             .Replace("*", " * ")
-                            .Replace("/", " / ");
+                            .Replace("/", " / ")
+                            .Replace("=", " = ");   // Assignment operator
 
                         processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));
                     }
