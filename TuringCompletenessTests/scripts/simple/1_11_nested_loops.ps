@@ -1,0 +1,8 @@
+CYCLE 3 AS row {
+    FLEX r = row + 1
+    CYCLE 3 AS col {
+        FLEX c = col + 1
+        FLEX product = r * c
+        PRINT product
+    }
+}

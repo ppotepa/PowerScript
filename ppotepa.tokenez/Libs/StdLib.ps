@@ -1,0 +1,50 @@
+// PowerScript Standard Library
+// This library contains common utility functions
+
+// Link .NET System namespace for Console operations
+LINK System
+
+// ============================================================
+// OUTPUT FUNCTIONS - Using INT as generic parameter type
+// Note: .NET Console.WriteLine accepts any object, so INT works as placeholder
+// ============================================================
+
+FUNCTION out(INT value)[] {
+    #Console.WriteLine(value)
+}
+
+FUNCTION outln(INT value)[] {
+    #Console.WriteLine(value)
+}
+
+FUNCTION outNum(INT number)[] {
+    #Console.WriteLine(number)
+}
+
+FUNCTION outStr(STRING text)[] {
+    #Console.WriteLine(text)
+}
+
+// Print multiple values on same line (simulated)
+FUNCTION outMulti(INT a, INT b)[] {
+    #Console.WriteLine(a)
+    #Console.WriteLine(b)
+}
+
+FUNCTION outThree(INT a, INT b, INT c)[] {
+    #Console.WriteLine(a)
+    #Console.WriteLine(b)
+    #Console.WriteLine(c)
+}
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+FUNCTION newline(INT dummy)[] {
+    #Console.WriteLine("")
+}
+
+FUNCTION space(INT dummy)[] {
+    #Console.Write(" ")
+}

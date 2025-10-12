@@ -1,0 +1,11 @@
+FLEX sum = 0
+FLEX product = 1
+CYCLE 5 AS i {
+    FLEX num = i + 1
+    IF num > 2 {
+        FLEX sum = sum + num
+        FLEX product = product * num
+    }
+}
+PRINT sum
+PRINT product

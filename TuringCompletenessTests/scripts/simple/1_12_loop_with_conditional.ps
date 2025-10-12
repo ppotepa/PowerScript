@@ -1,0 +1,8 @@
+FLEX counter = 0
+CYCLE 10 AS i {
+    FLEX num = i + 1
+    IF num > 5 {
+        FLEX counter = counter + 1
+    }
+}
+PRINT counter

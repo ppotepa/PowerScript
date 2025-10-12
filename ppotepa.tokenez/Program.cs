@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using ppotepa.tokenez.Interpreter;
 using ppotepa.tokenez.Prompt;
-using ppotepa.tokenez.StandardLib;
 using ppotepa.tokenez.Tree;
 using System.Text;
 
@@ -27,6 +26,25 @@ namespace ppotepa.tokenez
         {
             // Create persistent interpreter instance
             _interpreter = PowerScriptInterpreter.CreateNew();
+
+            // Auto-link StdLib.ps if it exists
+            // TEMPORARILY DISABLED FOR TESTING
+            /*
+            var stdLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Libs", "StdLib.ps");
+            if (File.Exists(stdLibPath))
+            {
+                try
+                {
+                    _interpreter.LinkLibrary(stdLibPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"[WARNING] Could not link StdLib.ps: {ex.Message}");
+                    Console.ResetColor();
+                }
+            }
+            */
 
             // Check execution mode
             if (args.Length > 0)

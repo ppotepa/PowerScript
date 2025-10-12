@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the NET keyword.
+    /// Token representing the NET keyword or # shorthand.
     /// Used to access .NET framework functionality directly.
-    /// Example: "NET::System.Console.WriteLine(...)"
+    /// Example: "NET::System.Console.WriteLine(...)" or "#Console.WriteLine(...)"
     /// </summary>
     public class NetKeywordToken : Token, IKeyWordToken
     {
@@ -20,8 +20,8 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         {
         }
 
-        /// <summary>After NET, expect namespace operator ::</summary>
-        public override Type[] Expectations => [typeof(NamespaceOperatorToken)];
+        /// <summary>After NET, expect namespace operator :: OR after #, expect identifier (class name)</summary>
+        public override Type[] Expectations => [typeof(NamespaceOperatorToken), typeof(Tokens.Identifiers.IdentifierToken)];
 
         public override string KeyWord => "NET";
     }

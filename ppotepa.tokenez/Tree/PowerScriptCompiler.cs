@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Diagnostics;
@@ -36,11 +37,9 @@ namespace ppotepa.tokenez.Tree
             // First, run diagnostic analysis
             RunDiagnosticAnalysis();
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("\n╔════════════════════════════════════════╗");
-            Console.WriteLine("║     COMPILING & EXECUTING FUNCTIONS    ║");
-            Console.WriteLine("╚════════════════════════════════════════╝\n");
-            Console.ResetColor();
+            LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
+            LoggerService.Logger.Info("║     COMPILING & EXECUTING FUNCTIONS    ║");
+            LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
             // Iterate through all function declarations in root scope
             foreach (var decl in _tree.RootScope.Decarations.Values.OfType<FunctionDeclaration>())
@@ -48,9 +47,7 @@ namespace ppotepa.tokenez.Tree
                 var funcName = decl.Identifier.RawToken.Text;
                 var funcScope = decl.Scope;
 
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"📦 Compiling function: {funcName}");
-                Console.ResetColor();
+                LoggerService.Logger.Warning($"📦 Compiling function: {funcName}");
 
                 try
                 {
@@ -58,20 +55,16 @@ namespace ppotepa.tokenez.Tree
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"  ✗ Compilation failed: {ex.Message}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Error($"  ✗ Compilation failed: {ex.Message}");
                 }
             }
 
             // Now execute any statements in the root scope (like PRINT statements)
             if (_tree.RootScope.Statements.Any())
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("\n╔════════════════════════════════════════╗");
-                Console.WriteLine("║       EXECUTING ROOT STATEMENTS        ║");
-                Console.WriteLine("╚════════════════════════════════════════╝\n");
-                Console.ResetColor();
+                LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
+                LoggerService.Logger.Info("║       EXECUTING ROOT STATEMENTS        ║");
+                LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
                 foreach (var stmt in _tree.RootScope.Statements)
                 {
@@ -81,9 +74,7 @@ namespace ppotepa.tokenez.Tree
                     }
                     catch (Exception ex)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"✗ Execution failed: {ex.Message}");
-                        Console.ResetColor();
+                        LoggerService.Logger.Error($"✗ Execution failed: {ex.Message}");
                     }
                 }
             }
@@ -119,7 +110,7 @@ namespace ppotepa.tokenez.Tree
                     }
                     else
                     {
-                        Console.WriteLine($"[WARN] Variable '{varName}' not found");
+                        LoggerService.Logger.Warning($"[WARN] Variable '{varName}' not found");
                     }
                 }
                 else if (printStmt.Expression is LiteralExpression litExpr)
@@ -179,9 +170,7 @@ namespace ppotepa.tokenez.Tree
 
             _variables[varName] = value;
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[EXEC] Variable {varName} = {value}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"[EXEC] Variable {varName} = {value}");
         }
 
         /// <summary>
@@ -225,9 +214,7 @@ namespace ppotepa.tokenez.Tree
                 throw new Exception($"Cannot assign to index of non-array variable '{arrayName}'");
             }
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[EXEC] {arrayName}[{index}] = {value}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"[EXEC] {arrayName}[{index}] = {value}");
         }
 
         /// <summary>
@@ -257,8 +244,7 @@ namespace ppotepa.tokenez.Tree
                     {
                         // Variable not found - leave the @var syntax or show error
                         result += $"@{part.Text}";
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"[WARN] Variable '{varName}' not found in template string");
+                        LoggerService.Logger.Warning($"[WARN] Variable '{varName}' not found in template string");
                         Console.ResetColor();
                     }
                 }
@@ -272,23 +258,17 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private void ExecuteIfStatement(IfStatement ifStmt)
         {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine($"[EXEC] Evaluating IF condition: {ifStmt.Condition}");
-            Console.ResetColor();
+            LoggerService.Logger.Info($"[EXEC] Evaluating IF condition: {ifStmt.Condition}");
 
             // Evaluate the condition
             bool conditionResult = EvaluateCondition(ifStmt.Condition);
 
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine($"[EXEC] Condition result: {conditionResult}");
-            Console.ResetColor();
+            LoggerService.Logger.Info($"[EXEC] Condition result: {conditionResult}");
 
             if (conditionResult)
             {
                 // Execute THEN branch
-                Console.ForegroundColor = ConsoleColor.Magenta;
-                Console.WriteLine($"[EXEC] Executing THEN branch");
-                Console.ResetColor();
+                LoggerService.Logger.Info($"[EXEC] Executing THEN branch");
 
                 foreach (var stmt in ifStmt.ThenScope.Statements)
                 {
@@ -298,9 +278,7 @@ namespace ppotepa.tokenez.Tree
             else if (ifStmt.ElseScope != null)
             {
                 // Execute ELSE branch
-                Console.ForegroundColor = ConsoleColor.Magenta;
-                Console.WriteLine($"[EXEC] Executing ELSE branch");
-                Console.ResetColor();
+                LoggerService.Logger.Info($"[EXEC] Executing ELSE branch");
 
                 foreach (var stmt in ifStmt.ElseScope.Statements)
                 {
@@ -377,11 +355,9 @@ namespace ppotepa.tokenez.Tree
                     var elementValue = EvaluateExpressionValue(elementExpr);
                     array.Add(elementValue);
                 }
-                
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[EXEC] Created array literal with {array.Count} elements");
-                Console.ResetColor();
-                
+
+                LoggerService.Logger.Debug($"[EXEC] Created array literal with {array.Count} elements");
+
                 return array;
             }
 
@@ -498,25 +474,19 @@ namespace ppotepa.tokenez.Tree
             if (expr.Operator is PlusToken)
             {
                 var result = leftNum + rightNum;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[EXEC] {leftNum} + {rightNum} = {result}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"[EXEC] {leftNum} + {rightNum} = {result}");
                 return result;
             }
             else if (expr.Operator is MinusToken)
             {
                 var result = leftNum - rightNum;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[EXEC] {leftNum} - {rightNum} = {result}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"[EXEC] {leftNum} - {rightNum} = {result}");
                 return result;
             }
             else if (expr.Operator is MultiplyToken)
             {
                 var result = leftNum * rightNum;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[EXEC] {leftNum} * {rightNum} = {result}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"[EXEC] {leftNum} * {rightNum} = {result}");
                 return result;
             }
             else if (expr.Operator is DivideToken)
@@ -526,9 +496,7 @@ namespace ppotepa.tokenez.Tree
                     throw new Exception("Division by zero");
                 }
                 var result = leftNum / rightNum;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[EXEC] {leftNum} / {rightNum} = {result}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"[EXEC] {leftNum} / {rightNum} = {result}");
                 return result;
             }
             else
@@ -580,9 +548,7 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private void ExecuteFunctionCall(FunctionCallStatement funcCallStmt)
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"[EXEC] Calling function: {funcCallStmt.FunctionName}()");
-            Console.ResetColor();
+            LoggerService.Logger.Info($"[EXEC] Calling function: {funcCallStmt.FunctionName}()");
 
             // Find the function declaration in the root scope
             if (!_tree.RootScope.Decarations.TryGetValue(funcCallStmt.FunctionName, out var declaration))
@@ -617,9 +583,7 @@ namespace ppotepa.tokenez.Tree
                     throw new Exception($"CYCLE count must be a number, got: {countValue}");
                 }
 
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
-                Console.ResetColor();
+                LoggerService.Logger.Info($"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
 
                 // Execute the loop body 'count' times
                 for (int i = 0; i < count; i++)
@@ -628,9 +592,7 @@ namespace ppotepa.tokenez.Tree
                     var varName = cycleStmt.LoopVariableName.ToUpperInvariant();
                     _variables[varName] = i;
 
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[EXEC] CYCLE iteration {i}, {varName} = {i}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug($"[EXEC] CYCLE iteration {i}, {varName} = {i}");
 
                     // Execute all statements in the loop body
                     foreach (var stmt in cycleStmt.LoopBody.Statements)
@@ -639,9 +601,7 @@ namespace ppotepa.tokenez.Tree
                     }
                 }
 
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"[EXEC] CYCLE loop completed");
-                Console.ResetColor();
+                LoggerService.Logger.Info($"[EXEC] CYCLE loop completed");
             }
             else
             {
@@ -658,7 +618,7 @@ namespace ppotepa.tokenez.Tree
         {
             try
             {
-                // Parse the method path: System.Console.WriteLine
+                // Parse the method path: System.Console.WriteLine or Console.WriteLine
                 var parts = netStmt.FullMethodPath.Split('.');
                 if (parts.Length < 2)
                 {
@@ -671,18 +631,22 @@ namespace ppotepa.tokenez.Tree
                 // Everything before is the type name
                 var typeName = string.Join(".", parts[..^1]);
 
-                // Try to find the type
-                Type? type = null;
+                // Try to resolve the type using DotNetLinker (which knows about linked namespaces)
+                Type? type = _tree.DotNetLinker.ResolveType(typeName);
 
-                // First, try in System assemblies (with proper assembly name)
-                type = Type.GetType($"{typeName}, System.Console");
+                // Fallback: try direct resolution if DotNetLinker didn't find it
+                if (type == null)
+                {
+                    // Try in System assemblies (with proper assembly name)
+                    type = Type.GetType($"{typeName}, System.Console");
+                }
 
                 if (type == null)
                 {
                     type = Type.GetType(typeName);
                 }
 
-                // If not found, search in all loaded assemblies
+                // If still not found, search in all loaded assemblies
                 if (type == null)
                 {
                     foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -740,9 +704,7 @@ namespace ppotepa.tokenez.Tree
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"✗ NET method call failed: {ex.Message}");
-                Console.ResetColor();
+                LoggerService.Logger.Error($"✗ NET method call failed: {ex.Message}");
             }
         }
 
@@ -794,7 +756,7 @@ namespace ppotepa.tokenez.Tree
             var returnStmt = funcScope.Statements.OfType<ReturnStatement>().FirstOrDefault();
             if (returnStmt == null)
             {
-                Console.WriteLine($"  ⚠ No return statement found in {funcName}");
+                LoggerService.Logger.Warning($"  ⚠ No return statement found in {funcName}");
                 return;
             }
 
@@ -807,15 +769,13 @@ namespace ppotepa.tokenez.Tree
             if (returnStmt.ReturnValue == null)
             {
                 // Void return
-                Console.WriteLine($"  → Function {funcName} returns VOID");
+                LoggerService.Logger.Info($"  → Function {funcName} returns VOID");
                 var voidLambda = SysExpression.Lambda(
                     SysExpression.Empty(),
                     parameters
                 );
                 var compiledVoid = voidLambda.Compile();
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"  ✓ Compiled as void function");
-                Console.ResetColor();
+                LoggerService.Logger.Success($"  ✓ Compiled as void function");
             }
             else
             {
@@ -828,13 +788,11 @@ namespace ppotepa.tokenez.Tree
                     var lambda = SysExpression.Lambda<Func<int>>(bodyExpression);
                     var compiled = lambda.Compile();
 
-                    Console.WriteLine($"  → Lambda: () => {GetExpressionDescription(returnStmt.ReturnValue)}");
+                    LoggerService.Logger.Info($"  → Lambda: () => {GetExpressionDescription(returnStmt.ReturnValue)}");
 
                     // Execute the function
                     var result = compiled();
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"  ✓ Executed: {funcName}() = {result}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Success($"  ✓ Executed: {funcName}() = {result}");
                 }
                 else if (parameters.Count == 2)
                 {
@@ -842,20 +800,16 @@ namespace ppotepa.tokenez.Tree
                     var lambda = SysExpression.Lambda<Func<int, int, int>>(bodyExpression, parameters);
                     var compiled = lambda.Compile();
 
-                    Console.WriteLine($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
+                    LoggerService.Logger.Info($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
 
                     // Example execution with test values
                     var result = compiled(10, 5);
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"  ✓ Compiled and tested: {funcName}(10, 5) = {result}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Success($"  ✓ Compiled and tested: {funcName}(10, 5) = {result}");
                 }
                 else
                 {
-                    Console.WriteLine($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"  ✓ Compiled successfully (execution requires {parameters.Count} parameters)");
-                    Console.ResetColor();
+                    LoggerService.Logger.Info($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
+                    LoggerService.Logger.Success($"  ✓ Compiled successfully (execution requires {parameters.Count} parameters)");
                 }
             }
         }
@@ -942,9 +896,7 @@ namespace ppotepa.tokenez.Tree
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"✗ EXECUTE failed: {ex.Message}");
-                Console.ResetColor();
+                LoggerService.Logger.Error($"✗ EXECUTE failed: {ex.Message}");
             }
         }
 
@@ -953,20 +905,16 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private void RunDiagnosticAnalysis()
         {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine("\n╔════════════════════════════════════════╗");
-            Console.WriteLine("║           DIAGNOSTIC ANALYSIS          ║");
-            Console.WriteLine("╚════════════════════════════════════════╝\n");
-            Console.ResetColor();
+            LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
+            LoggerService.Logger.Info("║           DIAGNOSTIC ANALYSIS          ║");
+            LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
             var analyzer = new DiagnosticAnalyzer();
             var diagnostics = analyzer.Analyze(_tree.RootScope, _tree.Tokens);
 
             if (diagnostics.Count == 0)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✅ No issues found - your code looks good!");
-                Console.ResetColor();
+                LoggerService.Logger.Success("✅ No issues found - your code looks good!");
                 return;
             }
 

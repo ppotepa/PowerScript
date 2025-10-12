@@ -31,20 +31,26 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] NetMethodCallProcessor: Processing NET:: call in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine($"[DEBUG] NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             var netToken = token as NetKeywordToken;
             var currentToken = netToken.Next;
 
-            // Expect namespace operator ::
-            if (!(currentToken is NamespaceOperatorToken))
-            {
-                throw new Exception($"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
-            }
-            currentToken = currentToken.Next;
+            // Check if using # shorthand (no ::) or NET:: syntax
+            bool isShorthand = netToken.RawToken.Text == "#";
 
-            // Parse the fully qualified .NET path (e.g., System.Console.WriteLine)
+            if (!isShorthand)
+            {
+                // Expect namespace operator :: for NET syntax
+                if (!(currentToken is NamespaceOperatorToken))
+                {
+                    throw new Exception($"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
+                }
+                currentToken = currentToken.Next;
+            }
+
+            // Parse the fully qualified .NET path (e.g., System.Console.WriteLine or Console.WriteLine)
             string fullPath = ParseDotPath(ref currentToken);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;

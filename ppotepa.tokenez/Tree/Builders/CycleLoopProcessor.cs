@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -15,7 +16,7 @@ namespace ppotepa.tokenez.Tree.Builders
     /// Syntax: 
     ///   Count-based: CYCLE 5 { ... } or CYCLE 10 AS i { ... }
     ///   Collection-based: CYCLE IN collection { ... } or CYCLE IN collection AS variableName { ... }
-    /// Automatic index variables: a, b, c, d, ... based on nesting level
+    /// Automatic index variables: A, B, C, D, ... based on nesting level (when AS is not specified)
     /// </summary>
     internal class CycleLoopProcessor : ITokenProcessor
     {
@@ -35,16 +36,14 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"[CycleLoopProcessor] Processing CYCLE loop in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Info($"[CycleLoopProcessor] Processing CYCLE loop in scope '{context.CurrentScope.ScopeName}'");
 
             var cycleToken = token as CycleKeywordToken;
             var currentToken = cycleToken!.Next;
 
             Expression collectionExpression;
             string loopVariableName;
-            int nestingLevel = CalculateLoopNestingLevel(context.CurrentScope);
+            int nestingLevel = context.CycleNestingDepth;
             bool isCountBased = false;
 
             // Check if this is a count-based loop (CYCLE <number>) or collection-based (CYCLE IN)
@@ -143,17 +142,20 @@ namespace ppotepa.tokenez.Tree.Builders
             // Register the loop variable as a dynamic variable in the loop scope
             loopScope.AddDynamicVariable(loopVariableName);
 
+            // Create a new context with incremented cycle nesting depth for nested loops
+            var loopContext = context.Clone();
+            loopContext.CurrentScope = loopScope;
+            loopContext.CycleNestingDepth = context.CycleNestingDepth + 1;
+
             // Build the loop body scope
-            _scopeBuilder.BuildScope(currentToken, loopScope, context.Depth + 1);
+            _scopeBuilder.BuildScope(currentToken, loopScope, loopContext);
 
             loopStatement.LoopBody = loopScope;
 
             // Add the loop statement to the current scope
             context.CurrentScope.Statements.Add(loopStatement);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"[CycleLoopProcessor] Registered CYCLE loop with variable '{loopVariableName}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Success($"[CycleLoopProcessor] Registered CYCLE loop with variable '{loopVariableName}' in scope '{context.CurrentScope.ScopeName}'");
 
             // Find the closing brace to continue processing
             Token? nextToken = currentToken;
@@ -246,21 +248,21 @@ namespace ppotepa.tokenez.Tree.Builders
 
         /// <summary>
         /// Gets the automatic index variable name based on nesting level
-        /// Level 0 = 'a', Level 1 = 'b', Level 2 = 'c', etc.
+        /// Level 0 = 'A', Level 1 = 'B', Level 2 = 'C', etc.
         /// </summary>
         private string GetAutomaticIndexName(int nestingLevel)
         {
             if (nestingLevel < 26)
             {
-                char indexChar = (char)('a' + nestingLevel);
+                char indexChar = (char)('A' + nestingLevel);
                 return indexChar.ToString();
             }
             else
             {
-                // For deep nesting, use aa, ab, ac, etc.
+                // For deep nesting, use AA, AB, AC, etc.
                 int firstChar = (nestingLevel / 26) - 1;
                 int secondChar = nestingLevel % 26;
-                return $"{(char)('a' + firstChar)}{(char)('a' + secondChar)}";
+                return $"{(char)('A' + firstChar)}{(char)('A' + secondChar)}";
             }
         }
     }

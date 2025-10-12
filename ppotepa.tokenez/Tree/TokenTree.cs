@@ -24,6 +24,9 @@ namespace ppotepa.tokenez.Tree
         /// <summary>All tokens in the tree</summary>
         public Token[] Tokens { get; private set; }
 
+        /// <summary>The .NET linker for resolving types from linked namespaces</summary>
+        public DotNet.DotNetLinker DotNetLinker => _dotNetLinker;
+
         /// <summary>
         /// Static mapping of exact text strings to their corresponding token types.
         /// This is checked first before the reflection-based TokenTypes dictionary.
@@ -37,6 +40,7 @@ namespace ppotepa.tokenez.Tree
             { "PRINT", typeof(Tokens.Keywords.PrintKeywordToken) },   // Print statement keyword
             { "EXECUTE", typeof(Tokens.Keywords.ExecuteKeywordToken) }, // Execute script file keyword
             { "NET", typeof(Tokens.Keywords.NetKeywordToken) },       // .NET access keyword
+            { "#", typeof(Tokens.Keywords.NetKeywordToken) },         // .NET access shorthand (# for C#)
             { "VAR", typeof(Tokens.Keywords.VarKeywordToken) },       // Variable declaration keyword
             { "FLEX", typeof(Tokens.Keywords.FlexKeywordToken) },     // Dynamic variable declaration keyword
             { "CYCLE", typeof(Tokens.Keywords.CycleKeywordToken) },   // Loop keyword (foreach equivalent)

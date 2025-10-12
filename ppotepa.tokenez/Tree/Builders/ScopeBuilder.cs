@@ -26,12 +26,21 @@ namespace ppotepa.tokenez.Tree.Builders
         /// </summary>
         public Scope BuildScope(Token startToken, Scope scope, int depth = 0)
         {
-            BuilderLogger.LogScopeStart(scope.ScopeName, depth);
+            var context = new ProcessingContext(scope, depth);
+            return BuildScope(startToken, scope, context);
+        }
+
+        /// <summary>
+        /// Builds a complete scope by processing tokens from start to end with an existing context.
+        /// This allows preserving context state like CycleNestingDepth across nested scopes.
+        /// </summary>
+        public Scope BuildScope(Token startToken, Scope scope, ProcessingContext context)
+        {
+            BuilderLogger.LogScopeStart(scope.ScopeName, context.Depth);
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Entering BuildScope: {scope.ScopeName} at depth {depth} with token {startToken?.GetType().Name} '{startToken?.RawToken?.Text}'");
+            Console.WriteLine($"[DEBUG] Entering BuildScope: {scope.ScopeName} at depth {context.Depth} with token {startToken?.GetType().Name} '{startToken?.RawToken?.Text}'");
             Console.ResetColor();
 
-            var context = new ProcessingContext(scope, depth);
             var currentToken = startToken;
 
             // Process all tokens sequentially
@@ -42,16 +51,16 @@ namespace ppotepa.tokenez.Tree.Builders
                 if (safetyCounter > 1000)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"[ERROR] Exceeded 1000 iterations in BuildScope for scope {scope.ScopeName} at depth {depth}. Possible endless loop.");
+                    Console.WriteLine($"[ERROR] Exceeded 1000 iterations in BuildScope for scope {scope.ScopeName} at depth {context.Depth}. Possible endless loop.");
                     Console.ResetColor();
                     break;
                 }
                 BuilderLogger.LogProcessing(
                     currentToken.GetType().Name,
                     currentToken.RawToken?.Text,
-                    depth);
+                    context.Depth);
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[DEBUG] Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {depth}");
+                Console.WriteLine($"[DEBUG] Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {context.Depth}");
                 Console.ResetColor();
 
                 // Check if any processor can handle this token (even without expectations)
@@ -94,9 +103,9 @@ namespace ppotepa.tokenez.Tree.Builders
                 Console.ResetColor();
             }
 
-            BuilderLogger.LogScopeComplete(scope.ScopeName, depth);
+            BuilderLogger.LogScopeComplete(scope.ScopeName, context.Depth);
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Exiting BuildScope: {scope.ScopeName} at depth {depth}");
+            Console.WriteLine($"[DEBUG] Exiting BuildScope: {scope.ScopeName} at depth {context.Depth}");
             Console.ResetColor();
 
             return scope;

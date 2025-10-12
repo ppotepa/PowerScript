@@ -20,6 +20,9 @@ namespace ppotepa.tokenez.Tree.Builders
         /// <summary>Tracks whether we're currently inside a function scope (for RETURN validation)</summary>
         public bool IsInsideFunction { get; set; }
 
+        /// <summary>Tracks CYCLE loop nesting depth for auto-generated variable names (A, B, C, ...)</summary>
+        public int CycleNestingDepth { get; set; }
+
         /// <summary>Tracks parenthesis depth (future use for complex expressions)</summary>
         public int ParenthesisDepth { get; set; }
 
@@ -54,6 +57,7 @@ namespace ppotepa.tokenez.Tree.Builders
             return new ProcessingContext(CurrentScope, Depth)
             {
                 IsInsideFunction = IsInsideFunction,
+                CycleNestingDepth = CycleNestingDepth,
                 ParenthesisDepth = ParenthesisDepth,
                 ProcessingStack = new Stack<Token>(ProcessingStack)
             };

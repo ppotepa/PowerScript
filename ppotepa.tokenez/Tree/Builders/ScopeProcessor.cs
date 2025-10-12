@@ -80,8 +80,10 @@ namespace ppotepa.tokenez.Tree.Builders
             var currentToken = scopeStartToken.Next;
             int scopeDepth = context.Depth + 1;
 
-            // Create a new context for processing this scope
-            var scopeContext = new ProcessingContext(targetScope, scopeDepth);
+            // Create a new context for processing this scope, preserving important context state
+            var scopeContext = context.Clone();
+            scopeContext.CurrentScope = targetScope;
+            scopeContext.Depth = scopeDepth;
             if (targetScope.Type == ScopeType.Function)
             {
                 scopeContext.EnterFunction();

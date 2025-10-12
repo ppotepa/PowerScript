@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -31,9 +32,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Info($"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
 
             var flexToken = token as FlexKeywordToken;
             var currentToken = flexToken!.Next;
@@ -45,9 +44,7 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             string variableName = identifierToken.RawToken!.Text;
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[FlexVariableProcessor] Variable name: {variableName}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"[FlexVariableProcessor] Variable name: {variableName}");
 
             currentToken = currentToken.Next;
 
@@ -83,9 +80,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 context.CurrentScope.Statements.Add(arrayAssignStmt);
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
-                Console.ResetColor();
+                LoggerService.Logger.Success($"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
 
                 return new TokenProcessingResult
                 {
@@ -116,9 +111,7 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(statement);
             context.CurrentScope.AddDynamicVariable(variableName);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Success($"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
             return new TokenProcessingResult
             {
@@ -204,28 +197,28 @@ namespace ppotepa.tokenez.Tree.Builders
             {
                 // Array literal: [1, 2, 3, 4]
                 token = token.Next; // Move past '['
-                
+
                 var elements = new List<Expression>();
-                
+
                 // Handle empty array []
                 if (token is BracketClosed)
                 {
                     token = token.Next; // Move past ']'
                     return new ArrayLiteralExpression(elements);
                 }
-                
+
                 // Parse array elements
                 while (token != null)
                 {
                     // Parse element expression
                     var elementExpr = ParsePrimaryExpression(ref token);
                     elements.Add(elementExpr);
-                    
+
                     // Check for comma or closing bracket
                     if (token is CommaToken)
                     {
                         token = token.Next; // Move past comma
-                        
+
                         // Allow trailing comma: [1, 2, 3,]
                         if (token is BracketClosed)
                         {
@@ -241,12 +234,12 @@ namespace ppotepa.tokenez.Tree.Builders
                         throw new Exception($"Expected ',' or ']' in array literal, got {token?.GetType().Name}");
                     }
                 }
-                
+
                 if (token is not BracketClosed)
                 {
                     throw new Exception($"Expected ']' to close array literal, got {token?.GetType().Name}");
                 }
-                
+
                 token = token.Next; // Move past ']'
                 return new ArrayLiteralExpression(elements);
             }

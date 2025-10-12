@@ -115,6 +115,7 @@ namespace ppotepa.tokenez.Prompt
                             .Replace(">=", " >= ")  // Greater than or equal
                             .Replace("<=", " <= ")  // Less than or equal
                             .Replace(".", " . ")     // Dot operator
+                            .Replace("#", " # ")     // C# .NET shorthand
                             .Replace("{", " { ")
                             .Replace("}", " } ")
                             .Replace(")", " ) ")
@@ -125,10 +126,10 @@ namespace ppotepa.tokenez.Prompt
                             .Replace("+", " + ")
                             .Replace("-", " - ")
                             .Replace("*", " * ")
-                            .Replace("/", " / ")
-                            .Replace(">", " > ")     // Greater than
-                            .Replace("<", " < ")     // Less than
-                            .Replace("=", " = ");   // Assignment operator
+                            .Replace("/", " / ");
+                        // NOTE: Single "=" and "<", ">" are NOT replaced here
+                        // because they would break multi-character operators like "==", "<=", ">="
+                        // The tokenizer will handle them correctly without extra spaces
 
                         processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));
                     }
