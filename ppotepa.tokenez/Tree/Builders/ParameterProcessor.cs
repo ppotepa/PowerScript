@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Delimiters;
@@ -30,10 +31,8 @@ namespace ppotepa.tokenez.Tree.Builders
                 paramSafetyCounter++;
                 if (paramSafetyCounter > 100)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(
-                        "[ERROR] Exceeded 100 iterations in ProcessParameters. Possible endless loop in parameter list.");
-                    Console.ResetColor();
+                    LoggerService.Logger.Error(
+                        "Exceeded 100 iterations in ProcessParameters. Possible endless loop in parameter list.");
                     break;
                 }
 
@@ -76,10 +75,8 @@ namespace ppotepa.tokenez.Tree.Builders
         /// </summary>
         private bool TryProcessTypeAndIdentifier(Token token, FunctionParametersToken parameters, out Token nextToken)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
 
             // First token must be a type (INT, PREC, CHAR, STRING, etc.)
             if (token is not ITypeToken)
@@ -105,9 +102,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 // Create a composite type representation (for now, we'll use the base type)
                 // In the future, this could be enhanced to create a proper composite type declaration
                 currentToken = chainToken.Next;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[DEBUG] Found composite type: {typeToken.GetType().Name} CHAIN");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"Found composite type: {typeToken.GetType().Name} CHAIN");
             }
 
             // Current token should now be the identifier (parameter name)

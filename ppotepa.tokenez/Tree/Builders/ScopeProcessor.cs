@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Tokens.Base;
@@ -48,10 +49,8 @@ namespace ppotepa.tokenez.Tree.Builders
                         if (declaration?.Scope != null)
                         {
                             targetScope = declaration.Scope;
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine(
-                                $"[DEBUG] ScopeProcessor: Switching to function scope '{targetScope.ScopeName}' for processing");
-                            Console.ResetColor();
+                            LoggerService.Logger.Debug(
+                                $"ScopeProcessor: Switching to function scope '{targetScope.ScopeName}' for processing");
                         }
                     }
                 }

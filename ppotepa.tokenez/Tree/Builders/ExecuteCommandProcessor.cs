@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Statements;
@@ -21,10 +22,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] ExecuteCommandProcessor: Processing EXECUTE command in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"ExecuteCommandProcessor: Processing EXECUTE command in scope '{context.CurrentScope.ScopeName}'");
 
             var executeToken = token as ExecuteKeywordToken;
             var nextToken = executeToken!.Next;
@@ -43,9 +42,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 throw new UnexpectedTokenException(nextToken!, typeof(StringLiteralToken));
             }
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Parsed EXECUTE file path: {filePath}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Parsed EXECUTE file path: {filePath}");
 
             // Create and register the execute statement
             ExecuteStatement executeStatement = new(filePath)
@@ -55,10 +52,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
             context.CurrentScope.Statements.Add(executeStatement);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] Registered EXECUTE statement for file '{filePath}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"Registered EXECUTE statement for file '{filePath}' in scope '{context.CurrentScope.ScopeName}'");
 
             return new TokenProcessingResult
             {

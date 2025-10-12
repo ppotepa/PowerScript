@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
@@ -27,10 +28,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(
-                $"[DEBUG] FunctionCallProcessor: Processing function call '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"FunctionCallProcessor: Processing function call '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
 
             IdentifierToken identifierToken = (IdentifierToken)token;
             string functionName = identifierToken.RawToken?.Text?.ToUpperInvariant() ?? "";
@@ -61,10 +60,8 @@ namespace ppotepa.tokenez.Tree.Builders
             // Add the statement to the current scope
             context.CurrentScope.Statements.Add(statement);
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(
-                $"[DEBUG] FunctionCallProcessor: Added function call '{functionName}()' to scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"FunctionCallProcessor: Added function call '{functionName}()' to scope '{context.CurrentScope.ScopeName}'");
 
             // Continue from the token after the closing parenthesis
             return TokenProcessingResult.Continue(closeParen.Next);

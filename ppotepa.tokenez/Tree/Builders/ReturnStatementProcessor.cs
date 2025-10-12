@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Expressions;
@@ -29,10 +30,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
             // Enforce language rule: RETURN can only appear inside functions
             if (!context.IsInsideFunction) throw new InvalidReturnStatementException(token);
 
@@ -47,17 +46,13 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(returnStatement);
             context.CurrentScope.HasReturn = true; // Mark scope as having RETURN
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Registered RETURN statement in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Registered RETURN statement in scope '{context.CurrentScope.ScopeName}'");
 
             // Find where the expression ends (at scope end)
             var nextToken = FindNextToken(token.Next);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
             return TokenProcessingResult.Continue(nextToken!);
         }
 

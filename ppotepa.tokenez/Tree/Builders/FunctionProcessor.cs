@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Tokens.Base;
@@ -28,10 +29,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] FunctionProcessor: Processing FUNCTION token '{token.RawToken?.Text}' at depth {context.Depth}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"FunctionProcessor: Processing FUNCTION token '{token.RawToken?.Text}' at depth {context.Depth}");
             var functionToken = token as FunctionToken;
             BuilderLogger.LogFunctionFound(context.Depth);
 
@@ -41,9 +40,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 OuterScope = context.CurrentScope,
                 Type = ScopeType.Function // Mark as function scope to enforce RETURN requirement
             };
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Created new function scope: {functionScope.ScopeName} (Type={functionScope.Type})");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Created new function scope: {functionScope.ScopeName} (Type={functionScope.Type})");
 
             // Function must be followed by an identifier (function name)
             if (functionToken?.Next is not IdentifierToken functionNameToken)
@@ -61,9 +58,7 @@ namespace ppotepa.tokenez.Tree.Builders
             declaration.Scope = functionScope;
             functionScope.FunctionDeclaration = declaration;
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Registered function '{functionName}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Registered function '{functionName}' in scope '{context.CurrentScope.ScopeName}'");
 
             Token currentToken = functionNameToken;
 
@@ -75,9 +70,7 @@ namespace ppotepa.tokenez.Tree.Builders
             BuilderLogger.LogParametersStarting(context.Depth);
 
             // Delegate parameter processing to specialized processor
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Delegating parameter processing for function '{functionName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Delegating parameter processing for function '{functionName}'");
             var (parametersToken, nextToken) = _parameterProcessor.ProcessParameters(currentToken.Next);
 
             // Store the parameters in the function declaration
@@ -99,18 +92,14 @@ namespace ppotepa.tokenez.Tree.Builders
                 // Check if this is a composite return type (e.g., INT CHAIN, PREC CHAIN)
                 if (currentReturnToken is ChainToken)
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(
-                        $"[DEBUG] Function '{functionName}' has composite return type: {returnTypeToken.RawToken?.Text} CHAIN");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug(
+                        $"Function '{functionName}' has composite return type: {returnTypeToken.RawToken?.Text} CHAIN");
                     currentReturnToken = currentReturnToken.Next;
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(
-                        $"[DEBUG] Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug(
+                        $"Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
                 }
 
                 // Store the return type in the function declaration (using base type for now)
@@ -127,16 +116,12 @@ namespace ppotepa.tokenez.Tree.Builders
             // After parameters (and optional return type), we expect a scope start token ('{')
             if (nextToken is not ScopeStartToken)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(
-                    $"[ERROR] Expected ScopeStartToken after parameters for function '{functionName}', but got {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
-                Console.ResetColor();
+                LoggerService.Logger.Error(
+                    $"Expected ScopeStartToken after parameters for function '{functionName}', but got {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
                 throw new UnexpectedTokenException(nextToken!, typeof(ScopeStartToken));
             }
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Passing control to ScopeProcessor for function '{functionName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Passing control to ScopeProcessor for function '{functionName}'");
             // Return control to continue processing the ScopeStartToken without modifying the parent context
             // The ScopeProcessor will handle the function scope internally
             return TokenProcessingResult.Continue(nextToken);

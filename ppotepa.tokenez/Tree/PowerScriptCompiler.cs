@@ -241,8 +241,7 @@ namespace ppotepa.tokenez.Tree
                     {
                         // Variable not found - leave the @var syntax or show error
                         result.Append($"@{part.Text}");
-                        LoggerService.Logger.Warning($"[WARN] Variable '{varName}' not found in template string");
-                        Console.ResetColor();
+                        LoggerService.Logger.Warning($"Variable '{varName}' not found in template string");
                     }
                 }
             }
@@ -983,64 +982,54 @@ namespace ppotepa.tokenez.Tree
             // Display errors first
             if (errors.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERRORS:");
+                LoggerService.Logger.Error("ERRORS:");
                 foreach (Diagnostic? error in errors)
                 {
-                    Console.WriteLine($"  {error}");
+                    LoggerService.Logger.Error($"  {error}");
                 }
 
-                Console.WriteLine();
-                Console.ResetColor();
+                LoggerService.Logger.Error("");
             }
 
             // Then warnings
             if (warnings.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("WARNINGS:");
+                LoggerService.Logger.Warning("WARNINGS:");
                 foreach (Diagnostic? warning in warnings)
                 {
-                    Console.WriteLine($"  {warning}");
+                    LoggerService.Logger.Warning($"  {warning}");
                 }
 
-                Console.WriteLine();
-                Console.ResetColor();
+                LoggerService.Logger.Warning("");
             }
 
             // Then suggestions
             if (suggestions.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("SUGGESTIONS:");
+                LoggerService.Logger.Info("SUGGESTIONS:");
                 foreach (Diagnostic? suggestion in suggestions)
                 {
-                    Console.WriteLine($"  {suggestion}");
+                    LoggerService.Logger.Info($"  {suggestion}");
                 }
 
-                Console.WriteLine();
-                Console.ResetColor();
+                LoggerService.Logger.Info("");
             }
 
             // Finally info (only show if verbose or if there are no other diagnostics)
             if (info.Count > 0 && errors.Count + warnings.Count + suggestions.Count == 0)
             {
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine("INFO:");
+                LoggerService.Logger.Info("INFO:");
                 foreach (Diagnostic? infoItem in info)
                 {
-                    Console.WriteLine($"  {infoItem}");
+                    LoggerService.Logger.Info($"  {infoItem}");
                 }
 
-                Console.WriteLine();
-                Console.ResetColor();
+                LoggerService.Logger.Info("");
             }
 
             // Summary
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(
+            LoggerService.Logger.Info(
                 $"📊 Analysis complete: {errors.Count} errors, {warnings.Count} warnings, {suggestions.Count} suggestions");
-            Console.ResetColor();
         }
     }
 }

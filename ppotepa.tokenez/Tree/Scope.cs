@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System.Collections;
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
 
@@ -75,53 +76,43 @@ namespace ppotepa.tokenez.Tree
             string indent = new(' ', depth * 2);
 
             // Scope header
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"{indent}├─ Scope: {ScopeName} ({Type})");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"{indent}├─ Scope: {ScopeName} ({Type})");
 
             // Declarations
             if (Decarations.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"{indent}│  Declarations:");
+                LoggerService.Logger.Debug($"{indent}│  Declarations:");
                 foreach (var decl in Decarations)
                 {
-                    Console.WriteLine($"{indent}│    • {decl.Key} ({decl.Value.GetType().Name})");
+                    LoggerService.Logger.Debug($"{indent}│    • {decl.Key} ({decl.Value.GetType().Name})");
 
                     // If it's a function declaration, visualize its scope
                     if (decl.Value is FunctionDeclaration funcDecl && funcDecl.Scope != null)
                         funcDecl.Scope.Visualize(depth + 2);
                 }
-
-                Console.ResetColor();
             }
 
             // Statements
             if (Statements.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"{indent}│  Statements:");
+                LoggerService.Logger.Debug($"{indent}│  Statements:");
                 foreach (var stmt in Statements)
                 {
-                    Console.WriteLine($"{indent}│    • {stmt.StatementType}");
+                    LoggerService.Logger.Debug($"{indent}│    • {stmt.StatementType}");
                     if (stmt is ReturnStatement retStmt)
                     {
                         if (retStmt.ReturnValue != null)
-                            Console.WriteLine($"{indent}│      Returns: {retStmt.ReturnValue.ExpressionType}");
+                            LoggerService.Logger.Debug($"{indent}│      Returns: {retStmt.ReturnValue.ExpressionType}");
                         else
-                            Console.WriteLine($"{indent}│      Returns: void");
+                            LoggerService.Logger.Debug($"{indent}│      Returns: void");
                     }
                 }
-
-                Console.ResetColor();
             }
 
             // Return status
             if (Type == ScopeType.Function)
             {
-                Console.ForegroundColor = HasReturn ? ConsoleColor.Green : ConsoleColor.Red;
-                Console.WriteLine($"{indent}│  HasReturn: {HasReturn}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"{indent}│  HasReturn: {HasReturn}");
             }
 
             // Inner scope (if exists)
@@ -134,9 +125,7 @@ namespace ppotepa.tokenez.Tree
         public void AddDynamicVariable(string name)
         {
             _dynamicVariables.Add(name);
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine($"[Scope] Registered dynamic variable '{name}' in scope '{ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Registered dynamic variable '{name}' in scope '{ScopeName}'");
         }
 
         /// <summary>
@@ -156,9 +145,7 @@ namespace ppotepa.tokenez.Tree
         public void RegisterVariableType(string name, Type type)
         {
             _variableTypes[name] = type;
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"[Scope] Registered variable '{name}' with type '{type.Name}' in scope '{ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Registered variable '{name}' with type '{type.Name}' in scope '{ScopeName}'");
         }
 
         /// <summary>

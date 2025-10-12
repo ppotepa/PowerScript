@@ -1,4 +1,5 @@
 #nullable enable
+using ppotepa.tokenez.Logging;
 using System.Reflection;
 
 namespace ppotepa.tokenez.DotNet;
@@ -26,9 +27,7 @@ public class DotNetLinker
     /// </summary>
     public void LinkNamespace(string namespacePath)
     {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine($"[DotNetLinker] Linking namespace: {namespacePath}");
-        Console.ResetColor();
+        LoggerService.Logger.Info($"Linking namespace: {namespacePath}");
 
         _linkedNamespaces.Add(namespacePath);
 
@@ -41,9 +40,7 @@ public class DotNetLinker
                 Assembly assembly = Assembly.Load(assemblyName);
                 _loadedAssemblies[assemblyName] = assembly;
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"[DotNetLinker] Loaded assembly: {assemblyName}");
-                Console.ResetColor();
+                LoggerService.Logger.Success($"Loaded assembly: {assemblyName}");
             }
             catch (Exception ex)
             {
@@ -54,16 +51,11 @@ public class DotNetLinker
                 if (existingAssembly != null)
                 {
                     _loadedAssemblies[assemblyName] = existingAssembly;
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"[DotNetLinker] Found assembly in AppDomain: {assemblyName}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Success($"Found assembly in AppDomain: {assemblyName}");
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine(
-                        $"[DotNetLinker] Warning: Could not load assembly '{assemblyName}': {ex.Message}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Warning($"Could not load assembly '{assemblyName}': {ex.Message}");
                 }
             }
         }
@@ -79,9 +71,7 @@ public class DotNetLinker
     /// </summary>
     public Type? ResolveType(string typeName)
     {
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine($"[DotNetLinker] Resolving type: {typeName}");
-        Console.ResetColor();
+        LoggerService.Logger.Debug($"Resolving type: {typeName}");
 
         // Case 1: Type name includes namespace operator (System::Collections::Generic::List)
         if (typeName.Contains("::"))
@@ -98,9 +88,7 @@ public class DotNetLinker
         if (IsBasicPowerScriptType(typeName))
         {
             Type? type = MapPowerScriptTypeToDotNet(typeName);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"[DotNetLinker] Resolved PowerScript type '{typeName}' to .NET type '{type?.FullName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Resolved PowerScript type '{typeName}' to .NET type '{type?.FullName}'");
             return type;
         }
 
@@ -111,10 +99,7 @@ public class DotNetLinker
             Type? type = ResolveFullyQualifiedType(fullName);
             if (type != null)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(
-                    $"[DotNetLinker] Resolved '{typeName}' to '{type.FullName}' via linked namespace '{ns}'");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"Resolved '{typeName}' to '{type.FullName}' via linked namespace '{ns}'");
                 return type;
             }
         }
@@ -126,9 +111,7 @@ public class DotNetLinker
             return directType;
         }
 
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"[DotNetLinker] Could not resolve type: {typeName}");
-        Console.ResetColor();
+        LoggerService.Logger.Warning($"Could not resolve type: {typeName}");
         return null;
     }
 

@@ -66,11 +66,7 @@ namespace ppotepa.tokenez.Tree.Exceptions
             var codeLine = BuildCodeLine(token);
             var underline = BuildUnderline(token, codeLine);
 
-            // Save current color and set to red for error underline
-            var originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
             var result = $"{codeLine}\n{underline}";
-            Console.ForegroundColor = originalColor;
 
             return result;
         }

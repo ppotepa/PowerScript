@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -26,10 +27,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] PrintStatementProcessor: Processing PRINT token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"PrintStatementProcessor: Processing PRINT token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
 
             var printToken = token as PrintKeywordToken;
             var nextToken = printToken!.Next;
@@ -97,9 +96,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
             context.CurrentScope.Statements.Add(printStatement);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Registered PRINT statement in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Registered PRINT statement in scope '{context.CurrentScope.ScopeName}'");
 
             // Don't validate expectations since we already handled the token sequence
             return new TokenProcessingResult

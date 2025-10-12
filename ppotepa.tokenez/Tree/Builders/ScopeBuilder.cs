@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Tokens.Base;
 
 namespace ppotepa.tokenez.Tree.Builders
@@ -25,10 +26,8 @@ namespace ppotepa.tokenez.Tree.Builders
         public Scope BuildScope(Token startToken, Scope scope, ProcessingContext context)
         {
             BuilderLogger.LogScopeStart(scope.ScopeName ?? "unknown", context.Depth);
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] Entering BuildScope: {scope.ScopeName} at depth {context.Depth} with token {startToken?.GetType().Name} '{startToken?.RawToken?.Text}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"Entering BuildScope: {scope.ScopeName} at depth {context.Depth} with token {startToken?.GetType().Name} '{startToken?.RawToken?.Text}'");
 
             Token? currentToken = startToken;
 
@@ -39,10 +38,8 @@ namespace ppotepa.tokenez.Tree.Builders
                 safetyCounter++;
                 if (safetyCounter > 1000)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(
-                        $"[ERROR] Exceeded 1000 iterations in BuildScope for scope {scope.ScopeName} at depth {context.Depth}. Possible endless loop.");
-                    Console.ResetColor();
+                    LoggerService.Logger.Error(
+                        $"Exceeded 1000 iterations in BuildScope for scope {scope.ScopeName} at depth {context.Depth}. Possible endless loop.");
                     break;
                 }
 
@@ -50,30 +47,24 @@ namespace ppotepa.tokenez.Tree.Builders
                     currentToken.GetType().Name,
                     currentToken.RawToken?.Text ?? string.Empty,
                     context.Depth);
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine(
-                    $"[DEBUG] Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {context.Depth}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug(
+                    $"Processing token: {currentToken.GetType().Name} '{currentToken.RawToken?.Text}' in scope {scope.ScopeName} at depth {context.Depth}");
 
                 // Check if any processor can handle this token (even without expectations)
                 // This allows processors like FunctionCallProcessor to handle identifiers followed by parentheses
                 Interfaces.ITokenProcessor? processor = registry.GetProcessor(currentToken);
                 if (processor != null)
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(
-                        $"[DEBUG] Invoking processor {processor.GetType().Name} for token {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug(
+                        $"Invoking processor {processor.GetType().Name} for token {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
                     // Process the token and get the next token to continue from
                     TokenProcessingResult result = processor.Process(currentToken, context);
 
                     // Update scope if processor modified it
                     if (result.ModifiedScope != null)
                     {
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine(
-                            $"[DEBUG] Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
-                        Console.ResetColor();
+                        LoggerService.Logger.Debug(
+                            $"Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
                         context.CurrentScope = result.ModifiedScope;
                     }
 
@@ -83,16 +74,12 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // No processor found, move to next token
                 currentToken = currentToken.Next;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine(
-                    $"[DEBUG] Moving to next token: {currentToken?.GetType().Name} '{currentToken?.RawToken?.Text}'");
-                Console.ResetColor();
+                LoggerService.Logger.Debug(
+                    $"Moving to next token: {currentToken?.GetType().Name} '{currentToken?.RawToken?.Text}'");
             }
 
             BuilderLogger.LogScopeComplete(scope.ScopeName ?? "unknown", context.Depth);
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Exiting BuildScope: {scope.ScopeName} at depth {context.Depth}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Exiting BuildScope: {scope.ScopeName} at depth {context.Depth}");
 
             return scope;
         }

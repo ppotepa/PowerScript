@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -24,10 +25,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
 
             var netToken = token as NetKeywordToken;
             var currentToken = netToken!.Next;
@@ -46,9 +45,7 @@ namespace ppotepa.tokenez.Tree.Builders
             // Parse the fully qualified .NET path (e.g., System.Console.WriteLine or Console.WriteLine)
             var fullPath = ParseDotPath(ref currentToken);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Parsed .NET path: {fullPath}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Parsed .NET path: {fullPath}");
 
             // Check for open parenthesis for parameters
             if (currentToken is not ParenthesisOpen)
@@ -58,9 +55,7 @@ namespace ppotepa.tokenez.Tree.Builders
             // Parse method arguments
             var arguments = ParseArguments(ref currentToken);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Parsed {arguments.Count} argument(s)");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Parsed {arguments.Count} argument(s)");
 
             // Create the .NET method call statement
             NetMethodCallStatement netMethodCall = new(fullPath, arguments)
@@ -71,10 +66,8 @@ namespace ppotepa.tokenez.Tree.Builders
             // Add the statement to the current scope
             context.CurrentScope.Statements.Add(netMethodCall);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] Registered .NET method call to '{fullPath}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"Registered .NET method call to '{fullPath}' in scope '{context.CurrentScope.ScopeName}'");
 
             return new TokenProcessingResult
             {

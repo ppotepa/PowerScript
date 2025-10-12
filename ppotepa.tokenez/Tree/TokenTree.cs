@@ -1,5 +1,7 @@
 ﻿using ppotepa.tokenez.DotNet;
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Prompt;
+using ppotepa.tokenez.Tree.Builders;
 using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Delimiters;
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
@@ -81,20 +83,23 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         public TokenTree Create(UserPrompt prompt)
         {
-            Console.WriteLine("\n=== Building Token Tree ===");
-            Console.WriteLine($"Processing: '{prompt.WrappedPrompt}'\n");
+            LoggerService.Logger.Info("");
+            LoggerService.Logger.Info("=== Building Token Tree ===");
+            LoggerService.Logger.Info($"Processing: '{prompt.WrappedPrompt}'");
+            LoggerService.Logger.Info("");
 
             // Step 1: Convert raw text tokens into strongly-typed token objects
             Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select(ToToken)];
-            Console.WriteLine($"Tokens created: {tokens.Length}");
+            LoggerService.Logger.Info($"Tokens created: {tokens.Length}");
 
             // Step 2: Link all tokens with Previous/Next references for easy navigation
             tokens = [.. tokens.Select((element, index) => Link(element, index, tokens)).ToArray()];
-            Console.WriteLine("Tokens linked");
+            LoggerService.Logger.Info("Tokens linked");
 
             // Step 3: Build the scope hierarchy starting from root scope
             Scope scope = CreateScope(tokens[0], new Scope("ROOT"));
-            Console.WriteLine("Scope creation complete\n");
+            LoggerService.Logger.Info("Scope creation complete");
+            LoggerService.Logger.Info("");
 
             // Store the results
             Tokens = tokens;
@@ -109,11 +114,11 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         public void Visualize()
         {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine("\n╔════════════════════════════════════════╗");
-            Console.WriteLine("║       TOKEN TREE VISUALIZATION         ║");
-            Console.WriteLine("╚════════════════════════════════════════╝\n");
-            Console.ResetColor();
+            LoggerService.Logger.Info("");
+            LoggerService.Logger.Info("╔════════════════════════════════════════╗");
+            LoggerService.Logger.Info("║       TOKEN TREE VISUALIZATION         ║");
+            LoggerService.Logger.Info("╚════════════════════════════════════════╝");
+            LoggerService.Logger.Info("");
 
             if (RootScope != null)
             {
@@ -121,12 +126,10 @@ namespace ppotepa.tokenez.Tree
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No root scope found!");
-                Console.ResetColor();
+                LoggerService.Logger.Error("No root scope found!");
             }
 
-            Console.WriteLine();
+            LoggerService.Logger.Info("");
         }
 
         /// <summary>
@@ -222,7 +225,7 @@ namespace ppotepa.tokenez.Tree
             {
                 throw new InvalidOperationException($"Failed to create token of type {targetType.Name}");
             }
-            Console.WriteLine($"\t[{index}] {rawToken.Text} → {targetType.Name}");
+            LoggerService.Logger.Debug($"\t[{index}] {rawToken.Text} → {targetType.Name}");
             return token;
         }
 

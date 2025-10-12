@@ -1,3 +1,4 @@
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -27,10 +28,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine(
-                $"[IfStatementProcessor] Processing IF statement in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"IfStatementProcessor: Processing IF statement in scope '{context.CurrentScope.ScopeName}'");
 
             IfKeywordToken? ifToken = token as IfKeywordToken;
             Token currentToken = ifToken!.Next;
@@ -38,9 +37,7 @@ namespace ppotepa.tokenez.Tree.Builders
             // Parse the condition expression
             Expression condition = ParseConditionExpression(ref currentToken);
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[IfStatementProcessor] Condition: {condition}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"IfStatementProcessor: Condition: {condition}");
 
             // Expect opening brace for THEN block
             if (currentToken is not ScopeStartToken)
@@ -56,9 +53,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 OuterScope = context.CurrentScope
             };
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[IfStatementProcessor] Created THEN scope: {thenScopeName}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"IfStatementProcessor: Created THEN scope: {thenScopeName}");
 
             // Build the THEN scope body
             _scopeBuilder.BuildScope(currentToken, thenScope, context.Depth + 1);
@@ -84,9 +79,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     OuterScope = context.CurrentScope
                 };
 
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[IfStatementProcessor] Created ELSE scope: {elseScopeName}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"IfStatementProcessor: Created ELSE scope: {elseScopeName}");
 
                 // Build the ELSE scope body
                 _scopeBuilder.BuildScope(currentToken, elseScope, context.Depth + 1);
@@ -99,9 +92,7 @@ namespace ppotepa.tokenez.Tree.Builders
             };
             context.CurrentScope.Statements.Add(ifStatement);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[IfStatementProcessor] IF statement created successfully");
-            Console.ResetColor();
+            LoggerService.Logger.Success("IfStatementProcessor: IF statement created successfully");
 
             // Find the closing brace and continue from there
             Token? nextToken = currentToken;

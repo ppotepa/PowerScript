@@ -1,5 +1,6 @@
 #nullable enable
 using System.Text;
+using ppotepa.tokenez.Logging;
 
 namespace ppotepa.tokenez.Runtime;
 
@@ -17,9 +18,7 @@ public class CallStack
     {
         _frames.Push(frame);
 
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine($"[CALL STACK] → Entering: {frame.FunctionName}() [Depth: {Depth}]");
-        Console.ResetColor();
+        LoggerService.Logger.Debug($"→ Entering: {frame.FunctionName}() [Depth: {Depth}]");
     }
 
     public StackFrame Pop()
@@ -31,9 +30,7 @@ public class CallStack
 
         StackFrame frame = _frames.Pop();
 
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine($"[CALL STACK] ← Exiting: {frame.FunctionName}() [Depth: {Depth}]");
-        Console.ResetColor();
+        LoggerService.Logger.Debug($"← Exiting: {frame.FunctionName}() [Depth: {Depth}]");
 
         return frame;
     }

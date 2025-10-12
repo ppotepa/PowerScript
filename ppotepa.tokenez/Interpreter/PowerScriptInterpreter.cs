@@ -1,4 +1,5 @@
 using System.Text;
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Prompt;
 using ppotepa.tokenez.Tree;
 
@@ -63,9 +64,7 @@ namespace ppotepa.tokenez.Interpreter
         {
             try
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("[INTERPRETER] Executing PowerScript code...");
-                Console.ResetColor();
+                LoggerService.Logger.Info("Executing PowerScript code...");
 
                 // Preprocess: expand LINK "file.ps" statements
                 var expandedCode = ExpandLinkStatements(code);
@@ -86,9 +85,7 @@ namespace ppotepa.tokenez.Interpreter
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[INTERPRETER] Execution error: {ex.Message}");
-                Console.ResetColor();
+                LoggerService.Logger.Error($"Execution error: {ex.Message}");
                 return null;
             }
         }
@@ -110,27 +107,22 @@ namespace ppotepa.tokenez.Interpreter
                 // Read the file content
                 var code = File.ReadAllText(fullPath);
 
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("\n╔════════════════════════════════════════╗");
-                Console.WriteLine($"║  EXECUTING SCRIPT: {Path.GetFileName(fullPath),-20} ║");
-                Console.WriteLine("╚════════════════════════════════════════╝");
-                Console.ResetColor();
+                LoggerService.Logger.Info("");
+                LoggerService.Logger.Info("╔════════════════════════════════════════╗");
+                LoggerService.Logger.Info($"║  EXECUTING SCRIPT: {Path.GetFileName(fullPath),-20} ║");
+                LoggerService.Logger.Info("╚════════════════════════════════════════╝");
 
                 // Execute the code
                 return ExecuteCode(code);
             }
             catch (FileNotFoundException ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[INTERPRETER] File not found: {ex.Message}");
-                Console.ResetColor();
+                LoggerService.Logger.Error($"File not found: {ex.Message}");
                 return null;
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[INTERPRETER] Error executing file {filePath}: {ex.Message}");
-                Console.ResetColor();
+                LoggerService.Logger.Error($"Error executing file {filePath}: {ex.Message}");
                 return null;
             }
         }
@@ -157,16 +149,12 @@ namespace ppotepa.tokenez.Interpreter
         /// </summary>
         private string ExpandLinkStatements(string code)
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("[LINK] Starting file expansion preprocessing...");
-            Console.ResetColor();
+            LoggerService.Logger.Debug("Starting file expansion preprocessing...");
 
             HashSet<string> linkedFiles = []; // Track to prevent circular references
             var result = ExpandLinkStatementsRecursive(code, linkedFiles);
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"[LINK] File expansion completed. Linked {linkedFiles.Count} file(s).");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"File expansion completed. Linked {linkedFiles.Count} file(s).");
 
             return result;
         }
@@ -196,27 +184,21 @@ namespace ppotepa.tokenez.Interpreter
                             // Check for circular references
                             if (linkedFiles.Contains(resolvedPath))
                             {
-                                Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine($"[LINK] Skipping already linked file: {filePath}");
-                                Console.ResetColor();
+                                LoggerService.Logger.Warning($"Skipping already linked file: {filePath}");
                                 result.AppendLine($"// {line} (already linked)");
                                 continue;
                             }
 
                             if (!File.Exists(resolvedPath))
                             {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine($"[LINK] File not found: {filePath} (resolved to: {resolvedPath})");
-                                Console.ResetColor();
+                                LoggerService.Logger.Error($"File not found: {filePath} (resolved to: {resolvedPath})");
                                 result.AppendLine(line); // Keep original line
                                 continue;
                             }
 
                             linkedFiles.Add(resolvedPath);
 
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"[LINK] Expanding file: {filePath}");
-                            Console.ResetColor();
+                            LoggerService.Logger.Success($"Expanding file: {filePath}");
 
                             // Read the file content
                             var fileContent = File.ReadAllText(resolvedPath);
@@ -233,9 +215,7 @@ namespace ppotepa.tokenez.Interpreter
                     }
                     catch (Exception ex)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"[LINK] Error processing LINK statement: {ex.Message}");
-                        Console.ResetColor();
+                        LoggerService.Logger.Error($"Error processing LINK statement: {ex.Message}");
                         result.AppendLine(line); // Keep original line on error
                         continue;
                     }

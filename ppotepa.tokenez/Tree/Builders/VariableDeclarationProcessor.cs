@@ -1,4 +1,5 @@
 #nullable enable
+using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
@@ -30,10 +31,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(
-                $"[DEBUG] VariableDeclarationProcessor: Processing VAR token in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Debug(
+                $"VariableDeclarationProcessor: Processing VAR token in scope '{context.CurrentScope.ScopeName}'");
 
             var varToken = token as VarKeywordToken;
             var currentToken = varToken!.Next!;
@@ -60,10 +59,8 @@ namespace ppotepa.tokenez.Tree.Builders
             identifierToken = currentToken;
             var variableName = identifierToken.RawToken?.Text ?? "";
 
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Variable name: {variableName}");
-            if (typeToken != null) Console.WriteLine($"[DEBUG] Variable type: {typeToken.RawToken?.Text}");
-            Console.ResetColor();
+            LoggerService.Logger.Debug($"Variable name: {variableName}");
+            if (typeToken != null) LoggerService.Logger.Debug($"Variable type: {typeToken.RawToken?.Text}");
 
             // Check for duplicate declarations in current scope
             if (context.CurrentScope.Decarations.ContainsKey(variableName))
@@ -121,10 +118,8 @@ namespace ppotepa.tokenez.Tree.Builders
 
             context.CurrentScope.Statements.Add(statement);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(
-                $"[DEBUG] ✓ Registered variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
-            Console.ResetColor();
+            LoggerService.Logger.Success(
+                $"✓ Registered variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
             return TokenProcessingResult.Continue(currentToken);
         }

@@ -50,9 +50,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 collectionExpression = new LiteralExpression(countToken);
                 loopVariableName = GetAutomaticIndexName(nestingLevel);
 
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[CycleLoopProcessor] Count-based loop: {countToken.RawToken?.Text} iterations");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"Count-based loop: {countToken.RawToken?.Text} iterations");
 
                 currentToken = currentToken.Next;
 
@@ -69,9 +67,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     loopVariableName = customNameToken.RawToken!.Text;
                     currentToken = currentToken.Next;
 
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[CycleLoopProcessor] Custom loop variable name: {loopVariableName}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug($"Custom loop variable name: {loopVariableName}");
                 }
             }
             else if (currentToken is InKeywordToken)
@@ -82,9 +78,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 // Parse the collection expression
                 collectionExpression = ParseCollectionExpression(ref currentToken);
 
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[CycleLoopProcessor] Collection expression: {collectionExpression}");
-                Console.ResetColor();
+                LoggerService.Logger.Debug($"Collection expression: {collectionExpression}");
 
                 loopVariableName = GetAutomaticIndexName(nestingLevel);
 
@@ -101,16 +95,12 @@ namespace ppotepa.tokenez.Tree.Builders
                     loopVariableName = customNameToken.RawToken!.Text;
                     currentToken = currentToken.Next;
 
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[CycleLoopProcessor] Custom loop variable name: {loopVariableName}");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug($"Custom loop variable name: {loopVariableName}");
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(
-                        $"[CycleLoopProcessor] Automatic loop variable: {loopVariableName} (nesting level {nestingLevel})");
-                    Console.ResetColor();
+                    LoggerService.Logger.Debug(
+                        $"Automatic loop variable: {loopVariableName} (nesting level {nestingLevel})");
                 }
             }
             else
