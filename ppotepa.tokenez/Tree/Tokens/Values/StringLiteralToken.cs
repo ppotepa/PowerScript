@@ -5,13 +5,14 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Values
 {
     /// <summary>
-    /// Token representing a string literal value.
-    /// Examples: "Hello", "World", "PowerScript"
+    ///     Token representing a string literal value.
+    ///     Examples: "Hello", "World", "PowerScript"
     /// </summary>
     public class StringLiteralToken : Token, IValue
     {
         public StringLiteralToken()
         {
+            Value = string.Empty;
         }
 
         public StringLiteralToken(RawToken rawToken) : base(rawToken)

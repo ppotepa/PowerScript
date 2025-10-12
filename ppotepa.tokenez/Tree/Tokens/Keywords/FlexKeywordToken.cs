@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the FLEX keyword for dynamic variable declaration.
-    /// FLEX variables can change their type at runtime.
-    /// Example: FLEX counter = 0  // Later can be: counter = "many"
+    ///     Token representing the FLEX keyword for dynamic variable declaration.
+    ///     FLEX variables can change their type at runtime.
+    ///     Example: FLEX counter = 0  // Later can be: counter = "many"
     /// </summary>
     public class FlexKeywordToken : Token, IKeyWordToken
     {

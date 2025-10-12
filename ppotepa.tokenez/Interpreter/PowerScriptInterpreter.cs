@@ -1,30 +1,28 @@
+using System.Text;
 using ppotepa.tokenez.Prompt;
 using ppotepa.tokenez.Tree;
 
 namespace ppotepa.tokenez.Interpreter
 {
     /// <summary>
-    /// Core interpreter for PowerScript language that handles script execution.
-    /// Can execute code from strings or files, maintaining a global execution context.
+    ///     Core interpreter for PowerScript language that handles script execution.
+    ///     Can execute code from strings or files, maintaining a global execution context.
     /// </summary>
     public class PowerScriptInterpreter
     {
-        private readonly Dictionary<string, TokenTree> _compiledScripts = new Dictionary<string, TokenTree>();
-        private readonly List<string> _linkedLibraries = new List<string>();
-        private string _linkedLibraryCode = null;
+        private readonly Dictionary<string, TokenTree> _compiledScripts = [];
+        private readonly List<string> _linkedLibraries = [];
+        private string? _linkedLibraryCode;
 
         /// <summary>
-        /// Links a library file to be included with all script executions.
+        ///     Links a library file to be included with all script executions.
         /// </summary>
         /// <param name="libraryPath">Path to the library .ps file</param>
         public void LinkLibrary(string libraryPath)
         {
-            string fullPath = ResolveFilePath(libraryPath);
+            var fullPath = ResolveFilePath(libraryPath);
 
-            if (!File.Exists(fullPath))
-            {
-                throw new FileNotFoundException($"Library file not found: {fullPath}");
-            }
+            if (!File.Exists(fullPath)) throw new FileNotFoundException($"Library file not found: {fullPath}");
 
             if (!_linkedLibraries.Contains(fullPath))
             {
@@ -35,7 +33,7 @@ namespace ppotepa.tokenez.Interpreter
         }
 
         /// <summary>
-        /// Reloads all linked libraries into a single code string.
+        ///     Reloads all linked libraries into a single code string.
         /// </summary>
         private void ReloadLibraries()
         {
@@ -45,22 +43,23 @@ namespace ppotepa.tokenez.Interpreter
                 return;
             }
 
-            var libraryCode = new System.Text.StringBuilder();
+            StringBuilder libraryCode = new();
             foreach (var libPath in _linkedLibraries)
             {
                 libraryCode.AppendLine($"// Linked library: {Path.GetFileName(libPath)}");
                 libraryCode.AppendLine(File.ReadAllText(libPath));
                 libraryCode.AppendLine();
             }
+
             _linkedLibraryCode = libraryCode.ToString();
         }
 
         /// <summary>
-        /// Executes PowerScript code directly from a string.
+        ///     Executes PowerScript code directly from a string.
         /// </summary>
         /// <param name="code">The PowerScript source code to execute</param>
         /// <returns>Execution result (if any)</returns>
-        public object ExecuteCode(string code)
+        public object? ExecuteCode(string code)
         {
             try
             {
@@ -69,18 +68,15 @@ namespace ppotepa.tokenez.Interpreter
                 Console.ResetColor();
 
                 // Preprocess: expand LINK "file.ps" statements
-                string expandedCode = ExpandLinkStatements(code);
+                var expandedCode = ExpandLinkStatements(code);
 
                 // Combine library code with script code
-                string fullCode = expandedCode;
-                if (_linkedLibraryCode != null)
-                {
-                    fullCode = _linkedLibraryCode + "\n" + expandedCode;
-                }
+                var fullCode = expandedCode;
+                if (_linkedLibraryCode != null) fullCode = _linkedLibraryCode + "\n" + expandedCode;
 
                 // Create prompt and build token tree
                 UserPrompt prompt = new(fullCode, Array.Empty<string>());
-                TokenTree tree = new TokenTree().Create(prompt);
+                var tree = new TokenTree().Create(prompt);
 
                 // Compile and execute
                 PowerScriptCompiler compiler = new(tree);
@@ -98,29 +94,26 @@ namespace ppotepa.tokenez.Interpreter
         }
 
         /// <summary>
-        /// Executes a PowerScript file.
+        ///     Executes a PowerScript file.
         /// </summary>
         /// <param name="filePath">Path to the .ps script file</param>
         /// <returns>Execution result (if any)</returns>
-        public object ExecuteFile(string filePath)
+        public object? ExecuteFile(string filePath)
         {
             try
             {
                 // Resolve the file path
-                string fullPath = ResolveFilePath(filePath);
+                var fullPath = ResolveFilePath(filePath);
 
-                if (!File.Exists(fullPath))
-                {
-                    throw new FileNotFoundException($"Script file not found: {fullPath}");
-                }
+                if (!File.Exists(fullPath)) throw new FileNotFoundException($"Script file not found: {fullPath}");
 
                 // Read the file content
-                string code = File.ReadAllText(fullPath);
+                var code = File.ReadAllText(fullPath);
 
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"\n╔════════════════════════════════════════╗");
+                Console.WriteLine("\n╔════════════════════════════════════════╗");
                 Console.WriteLine($"║  EXECUTING SCRIPT: {Path.GetFileName(fullPath),-20} ║");
-                Console.WriteLine($"╚════════════════════════════════════════╝");
+                Console.WriteLine("╚════════════════════════════════════════╝");
                 Console.ResetColor();
 
                 // Execute the code
@@ -143,39 +136,33 @@ namespace ppotepa.tokenez.Interpreter
         }
 
         /// <summary>
-        /// Resolves a file path, checking current directory and relative paths.
+        ///     Resolves a file path, checking current directory and relative paths.
         /// </summary>
         private string ResolveFilePath(string filePath)
         {
             // If the path is already absolute and exists, return it
-            if (Path.IsPathRooted(filePath) && File.Exists(filePath))
-            {
-                return filePath;
-            }
+            if (Path.IsPathRooted(filePath) && File.Exists(filePath)) return filePath;
 
             // Try relative to current directory
-            string currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-            if (File.Exists(currentDirPath))
-            {
-                return currentDirPath;
-            }
+            var currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
+            if (File.Exists(currentDirPath)) return currentDirPath;
 
             // Return the original path (will fail if not found)
             return filePath;
         }
 
         /// <summary>
-        /// Expands LINK "file.ps" statements by replacing them with the file content.
-        /// Recursively processes nested LINK statements.
+        ///     Expands LINK "file.ps" statements by replacing them with the file content.
+        ///     Recursively processes nested LINK statements.
         /// </summary>
         private string ExpandLinkStatements(string code)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"[LINK] Starting file expansion preprocessing...");
+            Console.WriteLine("[LINK] Starting file expansion preprocessing...");
             Console.ResetColor();
 
-            var linkedFiles = new HashSet<string>();  // Track to prevent circular references
-            string result = ExpandLinkStatementsRecursive(code, linkedFiles);
+            HashSet<string> linkedFiles = []; // Track to prevent circular references
+            var result = ExpandLinkStatementsRecursive(code, linkedFiles);
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"[LINK] File expansion completed. Linked {linkedFiles.Count} file(s).");
@@ -187,7 +174,7 @@ namespace ppotepa.tokenez.Interpreter
         private string ExpandLinkStatementsRecursive(string code, HashSet<string> linkedFiles)
         {
             var lines = code.Split('\n');
-            var result = new System.Text.StringBuilder();
+            StringBuilder result = new();
 
             foreach (var line in lines)
             {
@@ -195,17 +182,16 @@ namespace ppotepa.tokenez.Interpreter
 
                 // Check if this is a LINK statement with a file path (string literal)
                 if (trimmed.StartsWith("LINK", StringComparison.OrdinalIgnoreCase) && trimmed.Contains("\""))
-                {
                     try
                     {
                         // Extract the file path from the quotes
-                        int firstQuote = trimmed.IndexOf('"');
-                        int lastQuote = trimmed.LastIndexOf('"');
+                        var firstQuote = trimmed.IndexOf('"');
+                        var lastQuote = trimmed.LastIndexOf('"');
 
                         if (firstQuote >= 0 && lastQuote > firstQuote)
                         {
-                            string filePath = trimmed.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
-                            string resolvedPath = ResolveFilePath(filePath);
+                            var filePath = trimmed.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
+                            var resolvedPath = ResolveFilePath(filePath);
 
                             // Check for circular references
                             if (linkedFiles.Contains(resolvedPath))
@@ -233,10 +219,10 @@ namespace ppotepa.tokenez.Interpreter
                             Console.ResetColor();
 
                             // Read the file content
-                            string fileContent = File.ReadAllText(resolvedPath);
+                            var fileContent = File.ReadAllText(resolvedPath);
 
                             // Recursively expand any LINK statements in the linked file
-                            string expandedContent = ExpandLinkStatementsRecursive(fileContent, linkedFiles);
+                            var expandedContent = ExpandLinkStatementsRecursive(fileContent, linkedFiles);
 
                             // Add a comment to show what was linked
                             result.AppendLine($"// === Linked from: {filePath} ===");
@@ -253,7 +239,6 @@ namespace ppotepa.tokenez.Interpreter
                         result.AppendLine(line); // Keep original line on error
                         continue;
                     }
-                }
 
                 // Not a file LINK statement, keep the line as-is
                 result.AppendLine(line);
@@ -263,7 +248,7 @@ namespace ppotepa.tokenez.Interpreter
         }
 
         /// <summary>
-        /// Creates a new interpreter instance.
+        ///     Creates a new interpreter instance.
         /// </summary>
         public static PowerScriptInterpreter CreateNew()
         {

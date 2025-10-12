@@ -5,9 +5,9 @@ using ppotepa.tokenez.Tree.Tokens.Scoping;
 namespace ppotepa.tokenez.Tree.Tokens.Delimiters
 {
     /// <summary>
-    /// Token representing ')' - closing parenthesis.
-    /// Closes function parameter lists.
-    /// Example: "FUNCTION add(a, b)" - the ')' after parameters
+    ///     Token representing ')' - closing parenthesis.
+    ///     Closes function parameter lists.
+    ///     Example: "FUNCTION add(a, b)" - the ')' after parameters
     /// </summary>
     public class ParenthesisClosed : Token
     {

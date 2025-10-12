@@ -5,9 +5,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Operators
 {
     /// <summary>
-    /// Token representing the namespace operator ::.
-    /// Used for accessing .NET namespaces after the NET keyword.
-    /// Example: "NET::System.Console"
+    ///     Token representing the namespace operator ::.
+    ///     Used for accessing .NET namespaces after the NET keyword.
+    ///     Example: "NET::System.Console"
     /// </summary>
     public class NamespaceOperatorToken : Token
     {

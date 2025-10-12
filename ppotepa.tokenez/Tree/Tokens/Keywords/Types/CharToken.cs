@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords.Types
 {
     /// <summary>
-    /// Token representing 'CHAR' - the character type.
-    /// Used for single character values.
-    /// Example: "VAR CHAR letter = 'A'" or "CHAR CHAIN text" (which equals STRING)
+    ///     Token representing 'CHAR' - the character type.
+    ///     Used for single character values.
+    ///     Example: "VAR CHAR letter = 'A'" or "CHAR CHAIN text" (which equals STRING)
     /// </summary>
     public class CharToken : Token, IKeyWordToken, IBaseTypeToken
     {

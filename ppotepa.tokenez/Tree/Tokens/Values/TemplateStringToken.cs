@@ -4,22 +4,12 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Values
 {
     /// <summary>
-    /// Represents a template string literal with variable interpolation.
-    /// Syntax: `Hello @name, you are @age years old`
-    /// The @ symbol indicates a variable to be interpolated.
+    ///     Represents a template string literal with variable interpolation.
+    ///     Syntax: `Hello @name, you are @age years old`
+    ///     The @ symbol indicates a variable to be interpolated.
     /// </summary>
     public class TemplateStringToken : Token
     {
-        /// <summary>
-        /// The raw template string including backticks and @ markers
-        /// </summary>
-        public string TemplateText { get; set; }
-
-        /// <summary>
-        /// List of text segments and variable names extracted from the template
-        /// </summary>
-        public List<TemplatePart> Parts { get; set; } = new();
-
         public TemplateStringToken()
         {
             TemplateText = "";
@@ -32,8 +22,20 @@ namespace ppotepa.tokenez.Tree.Tokens.Values
         }
 
         /// <summary>
-        /// Parses the template string to extract literal parts and variable names.
-        /// Example: `Hello @name` -> ["Hello ", VariableRef("name")]
+        ///     The raw template string including backticks and @ markers
+        /// </summary>
+        public string TemplateText { get; set; }
+
+        /// <summary>
+        ///     List of text segments and variable names extracted from the template
+        /// </summary>
+        public List<TemplatePart> Parts { get; set; } = [];
+
+        public override Type[] Expectations => new Type[] { };
+
+        /// <summary>
+        ///     Parses the template string to extract literal parts and variable names.
+        ///     Example: `Hello @name` -> ["Hello ", VariableRef("name")]
         /// </summary>
         private void ParseTemplate()
         {
@@ -44,7 +46,6 @@ namespace ppotepa.tokenez.Tree.Tokens.Values
             var i = 0;
 
             while (i < content.Length)
-            {
                 if (content[i] == '@' && i + 1 < content.Length)
                 {
                     // Save any accumulated text
@@ -63,34 +64,16 @@ namespace ppotepa.tokenez.Tree.Tokens.Values
                         i++;
                     }
 
-                    if (varName.Length > 0)
-                    {
-                        Parts.Add(new TemplatePart { IsLiteral = false, Text = varName });
-                    }
+                    if (varName.Length > 0) Parts.Add(new TemplatePart { IsLiteral = false, Text = varName });
                 }
                 else
                 {
                     currentText += content[i];
                     i++;
                 }
-            }
 
             // Add any remaining text
-            if (currentText.Length > 0)
-            {
-                Parts.Add(new TemplatePart { IsLiteral = true, Text = currentText });
-            }
+            if (currentText.Length > 0) Parts.Add(new TemplatePart { IsLiteral = true, Text = currentText });
         }
-
-        public override Type[] Expectations => new Type[] { };
-    }
-
-    /// <summary>
-    /// Represents a part of a template string - either literal text or a variable reference
-    /// </summary>
-    public class TemplatePart
-    {
-        public bool IsLiteral { get; set; }
-        public string Text { get; set; } = "";
     }
 }

@@ -3,11 +3,17 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Context information passed through the token processing pipeline.
-    /// Maintains state about the current scope, depth, and function context during processing.
+    ///     Context information passed through the token processing pipeline.
+    ///     Maintains state about the current scope, depth, and function context during processing.
     /// </summary>
     internal class ProcessingContext
     {
+        public ProcessingContext(Scope currentScope, int depth)
+        {
+            CurrentScope = currentScope;
+            Depth = depth;
+        }
+
         /// <summary>Current scope being built</summary>
         public Scope CurrentScope { get; set; }
 
@@ -26,15 +32,9 @@ namespace ppotepa.tokenez.Tree.Builders
         /// <summary>Tracks parenthesis depth (future use for complex expressions)</summary>
         public int ParenthesisDepth { get; set; }
 
-        public ProcessingContext(Scope currentScope, int depth)
-        {
-            CurrentScope = currentScope;
-            Depth = depth;
-        }
-
         /// <summary>
-        /// Marks that we've entered a function scope.
-        /// This enables RETURN statement validation.
+        ///     Marks that we've entered a function scope.
+        ///     This enables RETURN statement validation.
         /// </summary>
         public void EnterFunction()
         {
@@ -42,7 +42,7 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Marks that we've exited a function scope.
+        ///     Marks that we've exited a function scope.
         /// </summary>
         public void ExitFunction()
         {
@@ -50,7 +50,7 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Creates a deep copy of the context for nested processing.
+        ///     Creates a deep copy of the context for nested processing.
         /// </summary>
         public ProcessingContext Clone()
         {

@@ -7,9 +7,9 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the PRINT keyword.
-    /// Used to print output to console (maps to Console.WriteLine).
-    /// Example: "PRINT ( "Hello World" )"
+    ///     Token representing the PRINT keyword.
+    ///     Used to print output to console (maps to Console.WriteLine).
+    ///     Example: "PRINT ( "Hello World" )"
     /// </summary>
     public class PrintKeywordToken : Token, IKeyWordToken
     {
@@ -22,7 +22,8 @@ namespace ppotepa.tokenez.Tree.Tokens.Keywords
         }
 
         /// <summary>After PRINT, expect either a string literal, template string, or opening parenthesis for arguments</summary>
-        public override Type[] Expectations => [typeof(StringLiteralToken), typeof(TemplateStringToken), typeof(ParenthesisOpen)];
+        public override Type[] Expectations =>
+            [typeof(StringLiteralToken), typeof(TemplateStringToken), typeof(ParenthesisOpen)];
 
         public override string KeyWord => "PRINT";
     }

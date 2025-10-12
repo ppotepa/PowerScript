@@ -6,8 +6,8 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Operators
 {
     /// <summary>
-    /// Token representing the '-' subtraction operator.
-    /// Used in binary expressions: a - b
+    ///     Token representing the '-' subtraction operator.
+    ///     Used in binary expressions: a - b
     /// </summary>
     public class MinusToken : Token
     {

@@ -10,11 +10,11 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes PRINT keyword tokens.
-    /// Responsible for:
-    /// - Parsing the expression to print (string literal, function call, etc.)
-    /// - Creating PrintStatement objects
-    /// - Registering print statements in the current scope
+    ///     Processes PRINT keyword tokens.
+    ///     Responsible for:
+    ///     - Parsing the expression to print (string literal, function call, etc.)
+    ///     - Creating PrintStatement objects
+    ///     - Registering print statements in the current scope
     /// </summary>
     internal class PrintStatementProcessor : ITokenProcessor
     {
@@ -33,14 +33,15 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] PrintStatementProcessor: Processing PRINT token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] PrintStatementProcessor: Processing PRINT token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             var printToken = token as PrintKeywordToken;
-            var nextToken = printToken.Next;
+            var nextToken = printToken!.Next;
 
             // Parse the expression to print
-            Expression expression = null;
+            Expression? expression = null;
 
             if (nextToken is TemplateStringToken templateToken)
             {
@@ -65,9 +66,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     // Expect closing bracket
                     if (currentToken is not BracketClosed)
-                    {
                         throw new Exception($"Expected ']' after array index but found {currentToken?.GetType().Name}");
-                    }
 
                     expression = new IndexExpression
                     {
@@ -92,11 +91,12 @@ namespace ppotepa.tokenez.Tree.Builders
             else
             {
                 // TODO: Handle other expression types (binary expressions, etc.)
-                throw new NotImplementedException($"PRINT does not yet support expression type: {nextToken?.GetType().Name}");
+                throw new NotImplementedException(
+                    $"PRINT does not yet support expression type: {nextToken?.GetType().Name}");
             }
 
             // Create and register the print statement
-            var printStatement = new PrintStatement(expression)
+            PrintStatement printStatement = new(expression)
             {
                 StartToken = printToken
             };
@@ -116,26 +116,25 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Parses a simple expression (literal, identifier, or value).
+        ///     Parses a simple expression (literal, identifier, or value).
         /// </summary>
         private Expression ParseSimpleExpression(ref Token currentToken)
         {
             if (currentToken is ValueToken valueToken)
             {
-                var expr = new LiteralExpression(valueToken);
+                LiteralExpression expr = new(valueToken);
                 currentToken = currentToken.Next;
                 return expr;
             }
-            else if (currentToken is IdentifierToken identifierToken)
+
+            if (currentToken is IdentifierToken identifierToken)
             {
-                var expr = new IdentifierExpression(identifierToken);
+                IdentifierExpression expr = new(identifierToken);
                 currentToken = currentToken.Next;
                 return expr;
             }
-            else
-            {
-                throw new Exception($"Expected expression but found {currentToken?.GetType().Name}");
-            }
+
+            throw new Exception($"Expected expression but found {currentToken?.GetType().Name}");
         }
     }
 }

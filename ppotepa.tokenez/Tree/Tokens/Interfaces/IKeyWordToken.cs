@@ -1,8 +1,8 @@
 ﻿namespace ppotepa.tokenez.Tree.Tokens.Interfaces
 {
     /// <summary>
-    /// Interface for keyword tokens (FUNCTION, RETURN, etc.).
-    /// Provides access to the keyword string.
+    ///     Interface for keyword tokens (FUNCTION, RETURN, etc.).
+    ///     Provides access to the keyword string.
     /// </summary>
     internal interface IKeyWordToken
     {

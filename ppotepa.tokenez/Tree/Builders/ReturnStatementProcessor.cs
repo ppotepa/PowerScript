@@ -12,12 +12,12 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes RETURN keyword tokens.
-    /// Responsible for:
-    /// - Validating RETURN is inside a function
-    /// - Parsing the return expression (or null for void returns)
-    /// - Marking the scope as having a valid RETURN statement
-    /// Supports both value returns (RETURN expr) and void returns (RETURN)
+    ///     Processes RETURN keyword tokens.
+    ///     Responsible for:
+    ///     - Validating RETURN is inside a function
+    ///     - Parsing the return expression (or null for void returns)
+    ///     - Marking the scope as having a valid RETURN statement
+    ///     Supports both value returns (RETURN expr) and void returns (RETURN)
     /// </summary>
     internal class ReturnStatementProcessor : ITokenProcessor
     {
@@ -36,21 +36,22 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
             // Enforce language rule: RETURN can only appear inside functions
-            if (!context.IsInsideFunction)
-            {
-                throw new InvalidReturnStatementException(token);
-            }
+            if (!context.IsInsideFunction) throw new InvalidReturnStatementException(token);
 
             // Parse the expression after RETURN keyword
             var expression = ParseExpression(token.Next);
 
             // Create and register the RETURN statement
-            var returnStatement = new ReturnStatement(token, expression);
+            ReturnStatement returnStatement = new(token, expression)
+            {
+                StartToken = token
+            };
             context.CurrentScope.Statements.Add(returnStatement);
-            context.CurrentScope.HasReturn = true;  // Mark scope as having RETURN
+            context.CurrentScope.HasReturn = true; // Mark scope as having RETURN
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] Registered RETURN statement in scope '{context.CurrentScope.ScopeName}'");
@@ -60,31 +61,31 @@ namespace ppotepa.tokenez.Tree.Builders
             var nextToken = FindNextToken(token.Next);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
+            Console.WriteLine(
+                $"[DEBUG] ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
             Console.ResetColor();
-            return TokenProcessingResult.Continue(nextToken);
+            return TokenProcessingResult.Continue(nextToken!);
         }
 
         /// <summary>
-        /// Parses an expression following the RETURN keyword.
-        /// Currently supports:
-        /// - Void return (e.g., RETURN) - returns null expression
-        /// - Simple identifiers (e.g., RETURN x)
-        /// - Literal values (e.g., RETURN 42)
-        /// - Binary operations (e.g., RETURN a + b)
+        ///     Parses an expression following the RETURN keyword.
+        ///     Currently supports:
+        ///     - Void return (e.g., RETURN) - returns null expression
+        ///     - Simple identifiers (e.g., RETURN x)
+        ///     - Literal values (e.g., RETURN 42)
+        ///     - Binary operations (e.g., RETURN a + b)
         /// </summary>
-        private Expression ParseExpression(Token startToken)
+        private Expression? ParseExpression(Token? startToken)
         {
             // Allow void return: RETURN with no expression (followed by scope end)
-            if (startToken == null || startToken is ScopeEndToken)
-                return null;
+            if (startToken is null or ScopeEndToken) return null;
 
             if (startToken is IdentifierToken identToken)
             {
                 // Check if followed by an operator (binary expression)
                 if (startToken.Next is PlusToken or MinusToken or MultiplyToken or DivideToken)
                 {
-                    var left = new IdentifierExpression(identToken);
+                    IdentifierExpression left = new(identToken);
                     var op = startToken.Next;
                     var right = ParseSimpleExpression(op.Next);
                     return new BinaryExpression(left, op, right);
@@ -95,53 +96,45 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             // Check for literal value
-            if (startToken is ValueToken valueToken)
-            {
-                return new LiteralExpression(valueToken);
-            }
-
-            throw new UnexpectedTokenException(startToken, typeof(IdentifierToken), typeof(ValueToken), typeof(ScopeEndToken));
+            return startToken is ValueToken valueToken
+                ? (Expression)new LiteralExpression(valueToken)
+                : throw new UnexpectedTokenException(startToken, typeof(IdentifierToken), typeof(ValueToken),
+                    typeof(ScopeEndToken));
         }
 
         /// <summary>
-        /// Parses a simple expression (identifier or value without operators).
-        /// Used as the right-hand side of binary expressions.
+        ///     Parses a simple expression (identifier or value without operators).
+        ///     Used as the right-hand side of binary expressions.
         /// </summary>
         private Expression ParseSimpleExpression(Token token)
         {
-            if (token is IdentifierToken identToken)
-                return new IdentifierExpression(identToken);
-
-            if (token is ValueToken valueToken)
-                return new LiteralExpression(valueToken);
-
-            throw new UnexpectedTokenException(token, typeof(IdentifierToken), typeof(ValueToken));
+            return token is IdentifierToken identToken
+                ? new IdentifierExpression(identToken)
+                : token is ValueToken valueToken
+                    ? (Expression)new LiteralExpression(valueToken)
+                    : throw new UnexpectedTokenException(token, typeof(IdentifierToken), typeof(ValueToken));
         }
 
         /// <summary>
-        /// Finds the token after the return expression ends.
-        /// Navigates through the expression tokens until reaching scope end.
+        ///     Finds the token after the return expression ends.
+        ///     Navigates through the expression tokens until reaching scope end.
         /// </summary>
         private Token FindNextToken(Token expressionStart)
         {
             var current = expressionStart;
 
             // Skip through expression tokens
-            while (current != null && current is not ScopeEndToken)
+            while (current is not null and not ScopeEndToken)
             {
                 if (current is IdentifierToken or ValueToken)
                 {
                     // Check if this is part of a binary expression
                     if (current.Next is PlusToken or MinusToken or MultiplyToken or DivideToken)
-                    {
                         // Skip the operator and right operand
                         current = current.Next?.Next;
-                    }
                     else
-                    {
                         // Simple expression, move past it
                         current = current.Next;
-                    }
                 }
                 else
                 {
@@ -149,11 +142,10 @@ namespace ppotepa.tokenez.Tree.Builders
                 }
 
                 // Stop at scope end
-                if (current is ScopeEndToken)
-                    return current;
+                if (current is ScopeEndToken) return current;
             }
 
-            return current;
+            return current!;
         }
     }
 }

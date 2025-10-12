@@ -5,9 +5,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Delimiters
 {
     /// <summary>
-    /// Token representing '(' - opening parenthesis.
-    /// Used for function parameter lists.
-    /// Example: "FUNCTION add(a, b)" - the '(' before parameters
+    ///     Token representing '(' - opening parenthesis.
+    ///     Used for function parameter lists.
+    ///     Example: "FUNCTION add(a, b)" - the '(' before parameters
     /// </summary>
     public class ParenthesisOpen : Token
     {

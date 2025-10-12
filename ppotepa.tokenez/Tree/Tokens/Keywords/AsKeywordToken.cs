@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the AS keyword for renaming loop variables.
-    /// Used to rename automatic index variables in CYCLE loops.
-    /// Example: CYCLE IN collection AS item { ... }
+    ///     Token representing the AS keyword for renaming loop variables.
+    ///     Used to rename automatic index variables in CYCLE loops.
+    ///     Example: CYCLE IN collection AS item { ... }
     /// </summary>
     public class AsKeywordToken : Token, IKeyWordToken
     {

@@ -8,12 +8,12 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the RETURN keyword.
-    /// Used to return a value from a function or return void.
-    /// Examples: 
-    /// - "RETURN 42" - returns a value 
-    /// - "RETURN x + y" - returns an expression
-    /// - "RETURN" - void return (no value)
+    ///     Token representing the RETURN keyword.
+    ///     Used to return a value from a function or return void.
+    ///     Examples:
+    ///     - "RETURN 42" - returns a value
+    ///     - "RETURN x + y" - returns an expression
+    ///     - "RETURN" - void return (no value)
     /// </summary>
     public class ReturnKeywordToken : Token, IKeyWordToken
     {

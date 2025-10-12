@@ -11,8 +11,8 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes NET:: method call syntax for direct .NET framework access.
-    /// Handles syntax like: NET::System.Console.WriteLine("Hello")
+    ///     Processes NET:: method call syntax for direct .NET framework access.
+    ///     Handles syntax like: NET::System.Console.WriteLine("Hello")
     /// </summary>
     internal class NetMethodCallProcessor : ITokenProcessor
     {
@@ -31,37 +31,35 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             var netToken = token as NetKeywordToken;
-            var currentToken = netToken.Next;
+            var currentToken = netToken!.Next;
 
             // Check if using # shorthand (no ::) or NET:: syntax
-            bool isShorthand = netToken.RawToken.Text == "#";
+            var isShorthand = netToken.RawToken.Text == "#";
 
             if (!isShorthand)
             {
                 // Expect namespace operator :: for NET syntax
-                if (!(currentToken is NamespaceOperatorToken))
-                {
+                if (currentToken is not NamespaceOperatorToken)
                     throw new Exception($"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
-                }
                 currentToken = currentToken.Next;
             }
 
             // Parse the fully qualified .NET path (e.g., System.Console.WriteLine or Console.WriteLine)
-            string fullPath = ParseDotPath(ref currentToken);
+            var fullPath = ParseDotPath(ref currentToken);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] Parsed .NET path: {fullPath}");
             Console.ResetColor();
 
             // Check for open parenthesis for parameters
-            if (!(currentToken is ParenthesisOpen))
-            {
-                throw new Exception($"Expected opening parenthesis after .NET method name '{fullPath}', got {currentToken?.GetType().Name}");
-            }
+            if (currentToken is not ParenthesisOpen)
+                throw new Exception(
+                    $"Expected opening parenthesis after .NET method name '{fullPath}', got {currentToken?.GetType().Name}");
 
             // Parse method arguments
             var arguments = ParseArguments(ref currentToken);
@@ -71,7 +69,7 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ResetColor();
 
             // Create the .NET method call statement
-            var netMethodCall = new NetMethodCallStatement(fullPath, arguments)
+            NetMethodCallStatement netMethodCall = new(fullPath, arguments)
             {
                 StartToken = netToken
             };
@@ -80,7 +78,8 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(netMethodCall);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Registered .NET method call to '{fullPath}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] Registered .NET method call to '{fullPath}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             return new TokenProcessingResult
@@ -91,12 +90,12 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Parses a dot-separated path like System.Console.WriteLine
-        /// Preserves original casing for .NET type/method names
+        ///     Parses a dot-separated path like System.Console.WriteLine
+        ///     Preserves original casing for .NET type/method names
         /// </summary>
         private string ParseDotPath(ref Token token)
         {
-            var pathParts = new List<string>();
+            List<string> pathParts = [];
 
             while (token is IdentifierToken identifierToken)
             {
@@ -106,73 +105,58 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // Check if next token is a dot
                 if (token is DotToken)
-                {
                     token = token.Next; // Skip the dot
-                }
                 else
-                {
                     break;
-                }
             }
 
-            if (pathParts.Count == 0)
-            {
-                throw new Exception("Expected at least one identifier in .NET path");
-            }
-
-            return string.Join(".", pathParts);
+            return pathParts.Count == 0
+                ? throw new Exception("Expected at least one identifier in .NET path")
+                : string.Join(".", pathParts);
         }
 
         /// <summary>
-        /// Parses method arguments inside parentheses
+        ///     Parses method arguments inside parentheses
         /// </summary>
         private List<Expression> ParseArguments(ref Token token)
         {
-            var arguments = new List<Expression>();
+            List<Expression> arguments = [];
 
             // Skip opening parenthesis
             token = token.Next;
 
             // Parse arguments until we hit closing parenthesis
-            while (!(token is ParenthesisClosed))
+            while (token is not ParenthesisClosed)
             {
                 // Handle empty argument list
-                if (token is ParenthesisClosed)
-                    break;
+                if (token is ParenthesisClosed) break;
 
                 // Parse single argument expression
-                Expression arg = ParseArgumentExpression(ref token);
+                var arg = ParseArgumentExpression(ref token);
                 arguments.Add(arg);
 
                 // Handle comma for multiple arguments
                 if (token is CommaSeparatorToken)
-                {
                     token = token.Next;
-                }
-                else if (!(token is ParenthesisClosed))
-                {
+                else if (token is not ParenthesisClosed)
                     throw new Exception($"Expected comma or closing parenthesis, got {token?.GetType().Name}");
-                }
             }
 
             // Skip closing parenthesis
-            if (token is ParenthesisClosed)
-            {
-                token = token.Next;
-            }
+            if (token is ParenthesisClosed) token = token.Next;
 
             return arguments;
         }
 
         /// <summary>
-        /// Parses a single argument expression (string literal, number, identifier, etc.)
+        ///     Parses a single argument expression (string literal, number, identifier, etc.)
         /// </summary>
         private Expression ParseArgumentExpression(ref Token token)
         {
             // Handle string literals
             if (token is StringLiteralToken stringToken)
             {
-                var expr = new StringLiteralExpression(stringToken);
+                StringLiteralExpression expr = new(stringToken);
                 token = token.Next;
                 return expr;
             }
@@ -180,7 +164,7 @@ namespace ppotepa.tokenez.Tree.Builders
             // Handle numeric literals
             if (token is ValueToken valueToken)
             {
-                var expr = new LiteralExpression(valueToken);
+                LiteralExpression expr = new(valueToken);
                 token = token.Next;
                 return expr;
             }
@@ -188,12 +172,13 @@ namespace ppotepa.tokenez.Tree.Builders
             // Handle identifiers (variables, parameters)
             if (token is IdentifierToken identToken)
             {
-                var expr = new IdentifierExpression(identToken);
+                IdentifierExpression expr = new(identToken);
                 token = token.Next;
                 return expr;
             }
 
-            throw new NotImplementedException($"Expression type {token?.GetType().Name} not yet supported in .NET method call arguments");
+            throw new NotImplementedException(
+                $"Expression type {token?.GetType().Name} not yet supported in .NET method call arguments");
         }
     }
 }

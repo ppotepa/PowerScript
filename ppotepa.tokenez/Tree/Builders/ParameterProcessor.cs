@@ -8,21 +8,21 @@ using ppotepa.tokenez.Tree.Tokens.Operators;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes function parameter lists.
-    /// Handles the tokens between opening and closing parentheses in function declarations.
-    /// Validates parameter syntax: TYPE identifier [, TYPE identifier]*
+    ///     Processes function parameter lists.
+    ///     Handles the tokens between opening and closing parentheses in function declarations.
+    ///     Validates parameter syntax: TYPE identifier [, TYPE identifier]*
     /// </summary>
     internal class ParameterProcessor
     {
         /// <summary>
-        /// Processes all parameters from opening parenthesis to closing parenthesis.
-        /// Returns the parameter list and the next token after the closing parenthesis.
+        ///     Processes all parameters from opening parenthesis to closing parenthesis.
+        ///     Returns the parameter list and the next token after the closing parenthesis.
         /// </summary>
         public (FunctionParametersToken Parameters, Token NextToken) ProcessParameters(Token startToken)
         {
-            var parameters = new FunctionParametersToken();
+            FunctionParametersToken parameters = new();
             var currentToken = startToken;
-            int paramSafetyCounter = 0;
+            var paramSafetyCounter = 0;
 
             // Process until we hit the closing parenthesis
             while (currentToken is not ParenthesisClosed)
@@ -31,10 +31,12 @@ namespace ppotepa.tokenez.Tree.Builders
                 if (paramSafetyCounter > 100)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"[ERROR] Exceeded 100 iterations in ProcessParameters. Possible endless loop in parameter list.");
+                    Console.WriteLine(
+                        "[ERROR] Exceeded 100 iterations in ProcessParameters. Possible endless loop in parameter list.");
                     Console.ResetColor();
                     break;
                 }
+
                 // Try to parse a type-identifier pair (e.g., "INT x")
                 if (TryProcessTypeAndIdentifier(currentToken, parameters, out var nextToken))
                 {
@@ -43,48 +45,40 @@ namespace ppotepa.tokenez.Tree.Builders
                     // After a parameter, expect either comma (more params) or closing parenthesis
                     if (currentToken is CommaSeparatorToken)
                     {
-                        currentToken = currentToken.Next;  // Skip comma and continue
+                        currentToken = currentToken.Next; // Skip comma and continue
                         continue;
                     }
 
-                    if (currentToken is ParenthesisClosed)
-                    {
-                        break;  // End of parameter list
-                    }
+                    if (currentToken is ParenthesisClosed) break; // End of parameter list
 
                     // Neither comma nor closing parenthesis - syntax error
                     ThrowUnexpectedTokenException(currentToken);
                 }
 
                 // Empty parameter list case
-                if (currentToken is ParenthesisClosed)
-                {
-                    break;
-                }
+                if (currentToken is ParenthesisClosed) break;
 
                 // Invalid token in parameter list
                 ThrowUnexpectedTokenException(currentToken);
             }
 
             // Return collected parameters and token after closing parenthesis
-            if (currentToken is ParenthesisClosed)
-            {
-                return (parameters, currentToken.Next);
-            }
+            if (currentToken is ParenthesisClosed) return (parameters, currentToken.Next);
 
             ThrowUnexpectedTokenException(currentToken);
             return default;
         }
 
         /// <summary>
-        /// Attempts to parse a type-identifier pair (e.g., "INT x" or "INT CHAIN numbers").
-        /// Supports composite types like INT CHAIN, PREC CHAIN, CHAR CHAIN.
-        /// Returns true if successfully parsed, false if token is not a type.
+        ///     Attempts to parse a type-identifier pair (e.g., "INT x" or "INT CHAIN numbers").
+        ///     Supports composite types like INT CHAIN, PREC CHAIN, CHAR CHAIN.
+        ///     Returns true if successfully parsed, false if token is not a type.
         /// </summary>
         private bool TryProcessTypeAndIdentifier(Token token, FunctionParametersToken parameters, out Token nextToken)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
+            Console.WriteLine(
+                $"[DEBUG] TryProcessTypeAndIdentifier: token={token.GetType().Name} '{token.RawToken?.Text}'");
             Console.ResetColor();
 
             // First token must be a type (INT, PREC, CHAR, STRING, etc.)
@@ -92,15 +86,13 @@ namespace ppotepa.tokenez.Tree.Builders
             {
                 // If it's an identifier where we expect a type, it's an invalid type name
                 if (token is IdentifierToken)
-                {
                     throw new UnexpectedTokenException(
                         token,
-                        $"Invalid parameter type '{token.RawToken.Text}'. Valid types are: INT, PREC, CHAR, STRING, CHAIN",
+                        $"Invalid parameter type '{token.RawToken?.Text}'. Valid types are: INT, PREC, CHAR, STRING, CHAIN",
                         typeof(IntToken)
                     );
-                }
 
-                nextToken = null;
+                nextToken = null!;
                 return false;
             }
 
@@ -120,9 +112,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
             // Current token should now be the identifier (parameter name)
             if (currentToken is not IdentifierToken identifierToken)
-            {
                 throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
-            }
 
             // Add parameter to the list (using the base type token for now)
             parameters.Declarations.Add(new ParameterDeclaration(typeToken, identifierToken));
@@ -131,7 +121,7 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Throws a formatted exception for unexpected tokens in parameter lists.
+        ///     Throws a formatted exception for unexpected tokens in parameter lists.
         /// </summary>
         private static void ThrowUnexpectedTokenException(Token token)
         {

@@ -1,15 +1,15 @@
 namespace ppotepa.tokenez.Logging
 {
     /// <summary>
-    /// Static logger service provider.
-    /// Provides global access to the logger instance.
+    ///     Static logger service provider.
+    ///     Provides global access to the logger instance.
     /// </summary>
     public static class LoggerService
     {
         private static ILogger _logger = new ConsoleLogger();
 
         /// <summary>
-        /// Gets or sets the current logger implementation.
+        ///     Gets or sets the current logger implementation.
         /// </summary>
         public static ILogger Logger
         {
@@ -18,7 +18,7 @@ namespace ppotepa.tokenez.Logging
         }
 
         /// <summary>
-        /// Sets the logger to a console logger.
+        ///     Sets the logger to a console logger.
         /// </summary>
         public static void UseConsoleLogger()
         {
@@ -26,7 +26,7 @@ namespace ppotepa.tokenez.Logging
         }
 
         /// <summary>
-        /// Sets the logger to a null logger (no output).
+        ///     Sets the logger to a null logger (no output).
         /// </summary>
         public static void UseNullLogger()
         {
@@ -34,7 +34,7 @@ namespace ppotepa.tokenez.Logging
         }
 
         /// <summary>
-        /// Enables or disables logging globally.
+        ///     Enables or disables logging globally.
         /// </summary>
         public static void SetEnabled(bool enabled)
         {

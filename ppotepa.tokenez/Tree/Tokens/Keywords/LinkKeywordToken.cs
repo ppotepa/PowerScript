@@ -7,10 +7,10 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing 'LINK' - the library/file import keyword.
-    /// Used to import external libraries or files into the current context.
-    /// Example: "LINK System" or "LINK `path/to/file.ps`"
-    /// Must appear at the top of the script before any other statements.
+    ///     Token representing 'LINK' - the library/file import keyword.
+    ///     Used to import external libraries or files into the current context.
+    ///     Example: "LINK System" or "LINK `path/to/file.ps`"
+    ///     Must appear at the top of the script before any other statements.
     /// </summary>
     public class LinkKeywordToken : Token, IKeyWordToken
     {

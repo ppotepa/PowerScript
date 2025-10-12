@@ -1,7 +1,7 @@
 namespace ppotepa.tokenez.Logging
 {
     /// <summary>
-    /// Log level enumeration for categorizing log messages.
+    ///     Log level enumeration for categorizing log messages.
     /// </summary>
     public enum LogLevel
     {

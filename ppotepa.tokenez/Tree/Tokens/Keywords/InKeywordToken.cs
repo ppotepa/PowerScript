@@ -6,8 +6,8 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the IN keyword for collection iteration.
-    /// Used in CYCLE loops: CYCLE IN collection { ... }
+    ///     Token representing the IN keyword for collection iteration.
+    ///     Used in CYCLE loops: CYCLE IN collection { ... }
     /// </summary>
     public class InKeywordToken : Token, IKeyWordToken
     {

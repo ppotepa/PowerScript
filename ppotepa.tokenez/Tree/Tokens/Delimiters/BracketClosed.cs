@@ -5,9 +5,9 @@ using ppotepa.tokenez.Tree.Tokens.Scoping;
 namespace ppotepa.tokenez.Tree.Tokens.Delimiters
 {
     /// <summary>
-    /// Token representing ']' - closing square bracket.
-    /// Used to close function return type declarations.
-    /// Example: "FUNCTION add(a, b)[INT]" - the ']' after return type
+    ///     Token representing ']' - closing square bracket.
+    ///     Used to close function return type declarations.
+    ///     Example: "FUNCTION add(a, b)[INT]" - the ']' after return type
     /// </summary>
     public class BracketClosed : Token
     {

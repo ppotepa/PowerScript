@@ -1,5 +1,7 @@
+
 using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
+using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
@@ -12,22 +14,15 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes CYCLE keyword for loops.
-    /// Syntax: 
-    ///   Count-based: CYCLE 5 { ... } or CYCLE 10 AS i { ... }
-    ///   Collection-based: CYCLE IN collection { ... } or CYCLE IN collection AS variableName { ... }
-    /// Automatic index variables: A, B, C, D, ... based on nesting level (when AS is not specified)
+    ///     Processes CYCLE keyword for loops.
+    ///     Syntax:
+    ///     Count-based: CYCLE 5 { ... } or CYCLE 10 AS i { ... }
+    ///     Collection-based: CYCLE IN collection { ... } or CYCLE IN collection AS variableName { ... }
+    ///     Automatic index variables: A, B, C, D, ... based on nesting level (when AS is not specified)
     /// </summary>
-    internal class CycleLoopProcessor : ITokenProcessor
+    internal class CycleLoopProcessor(ScopeBuilder scopeBuilder) : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-        private readonly ScopeBuilder _scopeBuilder;
-
-        public CycleLoopProcessor(ExpectationValidator validator, ScopeBuilder scopeBuilder)
-        {
-            _validator = validator;
-            _scopeBuilder = scopeBuilder;
-        }
+        private readonly ScopeBuilder _scopeBuilder = scopeBuilder;
 
         public bool CanProcess(Token token)
         {
@@ -36,10 +31,11 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            LoggerService.Logger.Info($"[CycleLoopProcessor] Processing CYCLE loop in scope '{context.CurrentScope.ScopeName}'");
+            LoggerService.Logger.Info(
+                $"[CycleLoopProcessor] Processing CYCLE loop in scope '{context.CurrentScope.ScopeName}'");
 
-            var cycleToken = token as CycleKeywordToken;
-            var currentToken = cycleToken!.Next;
+            CycleKeywordToken? cycleToken = token as CycleKeywordToken;
+            Token? currentToken = cycleToken!.Next;
 
             Expression collectionExpression;
             string loopVariableName;
@@ -67,7 +63,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     if (currentToken is not IdentifierToken customNameToken)
                     {
-                        throw new Exception($"Expected identifier after AS keyword, got {currentToken?.GetType().Name}");
+                        throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
                     }
 
                     loopVariableName = customNameToken.RawToken!.Text;
@@ -99,7 +95,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     if (currentToken is not IdentifierToken customNameToken)
                     {
-                        throw new Exception($"Expected identifier after AS keyword, got {currentToken?.GetType().Name}");
+                        throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
                     }
 
                     loopVariableName = customNameToken.RawToken!.Text;
@@ -112,28 +108,35 @@ namespace ppotepa.tokenez.Tree.Builders
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[CycleLoopProcessor] Automatic loop variable: {loopVariableName} (nesting level {nestingLevel})");
+                    Console.WriteLine(
+                        $"[CycleLoopProcessor] Automatic loop variable: {loopVariableName} (nesting level {nestingLevel})");
                     Console.ResetColor();
                 }
             }
             else
             {
-                throw new Exception($"Expected number (count-based) or IN keyword (collection-based) after CYCLE, got {currentToken?.GetType().Name}");
+                throw new UnexpectedTokenException(currentToken, typeof(ValueToken), typeof(InKeywordToken));
             }
 
             // Expect opening brace for loop body
             if (currentToken is not ScopeStartToken)
             {
-                throw new Exception($"Expected {{ to start loop body, got {currentToken?.GetType().Name}");
+                if (currentToken == null)
+                {
+                    throw new UnexpectedTokenException(cycleToken, "Unexpected end of tokens, expected { to start loop body", typeof(ScopeStartToken));
+                }
+                throw new UnexpectedTokenException(currentToken, typeof(ScopeStartToken));
             }
 
             // Create the loop statement
-            var loopStatement = new CycleLoopStatement(collectionExpression, loopVariableName, nestingLevel);
-            loopStatement.StartToken = cycleToken;
-            loopStatement.IsCountBased = isCountBased;
+            CycleLoopStatement loopStatement = new(collectionExpression, loopVariableName, nestingLevel)
+            {
+                StartToken = cycleToken,
+                IsCountBased = isCountBased
+            };
 
             // Create a new scope for the loop body
-            var loopScope = new Scope($"CYCLE_{loopVariableName}")
+            Scope loopScope = new($"CYCLE_{loopVariableName}")
             {
                 Type = ScopeType.Block,
                 OuterScope = context.CurrentScope
@@ -143,7 +146,7 @@ namespace ppotepa.tokenez.Tree.Builders
             loopScope.AddDynamicVariable(loopVariableName);
 
             // Create a new context with incremented cycle nesting depth for nested loops
-            var loopContext = context.Clone();
+            ProcessingContext loopContext = context.Clone();
             loopContext.CurrentScope = loopScope;
             loopContext.CycleNestingDepth = context.CycleNestingDepth + 1;
 
@@ -155,7 +158,8 @@ namespace ppotepa.tokenez.Tree.Builders
             // Add the loop statement to the current scope
             context.CurrentScope.Statements.Add(loopStatement);
 
-            LoggerService.Logger.Success($"[CycleLoopProcessor] Registered CYCLE loop with variable '{loopVariableName}' in scope '{context.CurrentScope.ScopeName}'");
+            LoggerService.Logger.Success(
+                $"[CycleLoopProcessor] Registered CYCLE loop with variable '{loopVariableName}' in scope '{context.CurrentScope.ScopeName}'");
 
             // Find the closing brace to continue processing
             Token? nextToken = currentToken;
@@ -163,19 +167,31 @@ namespace ppotepa.tokenez.Tree.Builders
             while (nextToken != null && braceDepth > 0)
             {
                 nextToken = nextToken.Next;
-                if (nextToken is ScopeStartToken) braceDepth++;
-                if (nextToken is ScopeEndToken) braceDepth--;
+                if (nextToken is ScopeStartToken)
+                {
+                    braceDepth++;
+                }
+
+                if (nextToken is ScopeEndToken)
+                {
+                    braceDepth--;
+                }
+            }
+
+            if (nextToken == null)
+            {
+                throw new UnexpectedTokenException(cycleToken, "Unmatched braces in CYCLE loop - missing closing }", typeof(ScopeEndToken));
             }
 
             return new TokenProcessingResult
             {
-                NextToken = nextToken?.Next,
+                NextToken = nextToken.Next ?? nextToken,
                 ShouldValidateExpectations = false
             };
         }
 
         /// <summary>
-        /// Parses the collection expression (identifier, function call, or property access)
+        ///     Parses the collection expression (identifier, function call, or property access)
         /// </summary>
         private Expression ParseCollectionExpression(ref Token? token)
         {
@@ -185,7 +201,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 if (identifierToken.Next is ParenthesisOpen)
                 {
                     // Function call returning a collection
-                    var funcCallExpr = new FunctionCallExpression
+                    FunctionCallExpression funcCallExpr = new()
                     {
                         FunctionName = identifierToken
                     };
@@ -196,7 +212,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     // TODO: Parse function call arguments
 
                     // Skip to )
-                    while (token != null && token is not ParenthesisClosed)
+                    while (token is not null and not ParenthesisClosed)
                     {
                         token = token.Next;
                     }
@@ -208,22 +224,19 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     return funcCallExpr;
                 }
-                else
-                {
-                    // Simple collection variable
-                    var expr = new IdentifierExpression(identifierToken);
-                    token = token.Next;
-                    return expr;
-                }
+
+                // Simple collection variable
+                IdentifierExpression expr = new(identifierToken);
+                token = token.Next;
+                return expr;
             }
-            else
-            {
-                throw new NotImplementedException($"Collection expression type {token?.GetType().Name} not yet supported in CYCLE loops");
-            }
+
+            throw new NotImplementedException(
+                $"Collection expression type {token?.GetType().Name} not yet supported in CYCLE loops");
         }
 
         /// <summary>
-        /// Calculates the nesting level of loops by counting parent CYCLE loops
+        ///     Calculates the nesting level of loops by counting parent CYCLE loops
         /// </summary>
         private int CalculateLoopNestingLevel(Scope currentScope)
         {
@@ -233,13 +246,14 @@ namespace ppotepa.tokenez.Tree.Builders
             while (scope != null)
             {
                 // Count how many CYCLE loops are in parent scopes
-                foreach (var statement in scope.Statements)
+                foreach (Statement statement in scope.Statements)
                 {
                     if (statement is CycleLoopStatement)
                     {
                         level++;
                     }
                 }
+
                 scope = scope.OuterScope;
             }
 
@@ -247,8 +261,8 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Gets the automatic index variable name based on nesting level
-        /// Level 0 = 'A', Level 1 = 'B', Level 2 = 'C', etc.
+        ///     Gets the automatic index variable name based on nesting level
+        ///     Level 0 = 'A', Level 1 = 'B', Level 2 = 'C', etc.
         /// </summary>
         private string GetAutomaticIndexName(int nestingLevel)
         {
@@ -257,13 +271,11 @@ namespace ppotepa.tokenez.Tree.Builders
                 char indexChar = (char)('A' + nestingLevel);
                 return indexChar.ToString();
             }
-            else
-            {
-                // For deep nesting, use AA, AB, AC, etc.
-                int firstChar = (nestingLevel / 26) - 1;
-                int secondChar = nestingLevel % 26;
-                return $"{(char)('A' + firstChar)}{(char)('A' + secondChar)}";
-            }
+
+            // For deep nesting, use AA, AB, AC, etc.
+            int firstChar = (nestingLevel / 26) - 1;
+            int secondChar = nestingLevel % 26;
+            return $"{(char)('A' + firstChar)}{(char)('A' + secondChar)}";
         }
     }
 }

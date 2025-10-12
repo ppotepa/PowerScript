@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Represents the EXECUTE keyword token for running external PowerScript files.
-    /// Syntax: EXECUTE "filename.ps"
-    /// Example: EXECUTE "utils.ps"
+    ///     Represents the EXECUTE keyword token for running external PowerScript files.
+    ///     Syntax: EXECUTE "filename.ps"
+    ///     Example: EXECUTE "utils.ps"
     /// </summary>
     public class ExecuteKeywordToken : Token, IKeyWordToken
     {

@@ -6,9 +6,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords.Types
 {
     /// <summary>
-    /// Token representing 'STRING' - equivalent to 'CHAR CHAIN'.
-    /// Used for string literals and text data.
-    /// Example: "VAR STRING name = "Hello"" or "FUNCTION getName()[STRING]"
+    ///     Token representing 'STRING' - equivalent to 'CHAR CHAIN'.
+    ///     Used for string literals and text data.
+    ///     Example: "VAR STRING name = "Hello"" or "FUNCTION getName()[STRING]"
     /// </summary>
     public class StringToken : Token, IKeyWordToken, IBaseTypeToken
     {

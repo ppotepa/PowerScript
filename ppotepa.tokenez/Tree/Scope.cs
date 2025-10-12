@@ -1,33 +1,38 @@
 ﻿#nullable enable
+using System.Collections;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
-using System.Collections;
 
 namespace ppotepa.tokenez.Tree
 {
     /// <summary>
-    /// Defines the type of scope.
-    /// </summary>
-    public enum ScopeType
-    {
-        Root,       // The root/global scope
-        Function,   // A function scope (requires RETURN statement)
-        Block       // A generic block scope (if/while/etc - future use)
-    }
-
-    /// <summary>
-    /// Represents a lexical scope in the code.
-    /// Scopes can be nested and contain declarations, statements, and references to outer scopes.
+    ///     Represents a lexical scope in the code.
+    ///     Scopes can be nested and contain declarations, statements, and references to outer scopes.
     /// </summary>
     public class Scope
     {
-        public Scope? _outerScope = default;
+        /// <summary>Track which variables are dynamically typed (FLEX)</summary>
+        private readonly HashSet<string> _dynamicVariables = [];
+
+        /// <summary>Track variable types for static type checking</summary>
+        private readonly Dictionary<string, Type> _variableTypes = [];
+
+        public Scope? _outerScope;
 
         /// <summary>Declarations (functions, variables) made in this scope</summary>
         public Dictionary<string, Declaration> Decarations = [];
 
+        public Scope(string scopeName)
+        {
+            ScopeName = scopeName;
+        }
+
+        public Scope()
+        {
+        }
+
         /// <summary>Statements executed in this scope</summary>
-        public List<Statement> Statements { get; set; } = new();
+        public List<Statement> Statements { get; set; } = [];
 
         /// <summary>Whether this scope contains a RETURN statement (required for function scopes)</summary>
         public bool HasReturn { get; set; }
@@ -38,18 +43,6 @@ namespace ppotepa.tokenez.Tree
         /// <summary>For function scopes, reference back to the function declaration</summary>
         public FunctionDeclaration? FunctionDeclaration { get; set; }
 
-        /// <summary>Track which variables are dynamically typed (FLEX)</summary>
-        private HashSet<string> _dynamicVariables = new HashSet<string>();
-
-        /// <summary>Track variable types for static type checking</summary>
-        private Dictionary<string, Type> _variableTypes = new Dictionary<string, Type>();
-
-        public Scope(string scopeName)
-        {
-            this.ScopeName = scopeName;
-        }
-
-        public Scope() { }
         public IEnumerator? Enumerator { get; set; }
 
         public Scope? InnerScope { get; set; }
@@ -67,30 +60,25 @@ namespace ppotepa.tokenez.Tree
 
         public override string ToString()
         {
-            if (OuterScope is null)
+            if (OuterScope is null) return ScopeName ?? "UnnamedScope";
+
+            var result = string.Empty;
+            var current = this;
+            do
             {
-                return ScopeName ?? "UnnamedScope";
-            }
-            else
-            {
-                string result = string.Empty;
-                Scope current = this;
-                do
-                {
-                    result = $"{result}.{ScopeName}";
-                }
-                while (current.OuterScope is null);
-                return result;
-            }
+                result = $"{result}.{ScopeName}";
+            } while (current.OuterScope is null);
+
+            return result;
         }
 
         /// <summary>
-        /// Visualizes the scope tree structure with indentation.
-        /// Shows scope name, type, declarations, statements, and nested scopes.
+        ///     Visualizes the scope tree structure with indentation.
+        ///     Shows scope name, type, declarations, statements, and nested scopes.
         /// </summary>
         public void Visualize(int depth = 0)
         {
-            string indent = new string(' ', depth * 2);
+            string indent = new(' ', depth * 2);
 
             // Scope header
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -108,10 +96,9 @@ namespace ppotepa.tokenez.Tree
 
                     // If it's a function declaration, visualize its scope
                     if (decl.Value is FunctionDeclaration funcDecl && funcDecl.Scope != null)
-                    {
                         funcDecl.Scope.Visualize(depth + 2);
-                    }
                 }
+
                 Console.ResetColor();
             }
 
@@ -126,13 +113,9 @@ namespace ppotepa.tokenez.Tree
                     if (stmt is ReturnStatement retStmt)
                     {
                         if (retStmt.ReturnValue != null)
-                        {
                             Console.WriteLine($"{indent}│      Returns: {retStmt.ReturnValue.ExpressionType}");
-                        }
                         else
-                        {
                             Console.WriteLine($"{indent}│      Returns: void");
-                        }
                     }
                     // TODO: Re-implement PRINT statement
                     // else if (stmt is PrintStatement printStmt)
@@ -143,6 +126,7 @@ namespace ppotepa.tokenez.Tree
                     //     }
                     // }
                 }
+
                 Console.ResetColor();
             }
 
@@ -155,14 +139,11 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Inner scope (if exists)
-            if (InnerScope != null)
-            {
-                InnerScope.Visualize(depth + 1);
-            }
+            InnerScope?.Visualize(depth + 1);
         }
 
         /// <summary>
-        /// Registers a variable as dynamically typed (FLEX)
+        ///     Registers a variable as dynamically typed (FLEX)
         /// </summary>
         public void AddDynamicVariable(string name)
         {
@@ -173,22 +154,18 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Checks if a variable is dynamically typed
+        ///     Checks if a variable is dynamically typed
         /// </summary>
         public bool IsDynamicVariable(string name)
         {
-            if (_dynamicVariables.Contains(name))
-                return true;
+            if (_dynamicVariables.Contains(name)) return true;
 
             // Check parent scope
-            if (_outerScope != null)
-                return _outerScope.IsDynamicVariable(name);
-
-            return false;
+            return _outerScope != null ? _outerScope.IsDynamicVariable(name) : false;
         }
 
         /// <summary>
-        /// Registers the type of a statically typed variable
+        ///     Registers the type of a statically typed variable
         /// </summary>
         public void RegisterVariableType(string name, Type type)
         {
@@ -199,36 +176,29 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Gets the declared type of a variable
+        ///     Gets the declared type of a variable
         /// </summary>
         public Type? GetVariableType(string name)
         {
-            if (_variableTypes.TryGetValue(name, out var type))
-                return type;
+            if (_variableTypes.TryGetValue(name, out var type)) return type;
 
             // Check parent scope
-            if (_outerScope != null)
-                return _outerScope.GetVariableType(name);
-
-            return null;
+            return _outerScope?.GetVariableType(name);
         }
 
         /// <summary>
-        /// Validates type assignment for statically typed variables
+        ///     Validates type assignment for statically typed variables
         /// </summary>
         public bool ValidateTypeAssignment(string variableName, Type valueType)
         {
             // Dynamic variables can accept any type
-            if (IsDynamicVariable(variableName))
-                return true;
+            if (IsDynamicVariable(variableName)) return true;
 
             // Get the declared type
             var declaredType = GetVariableType(variableName);
             if (declaredType == null)
-            {
                 // Variable not found - might be a new declaration
                 return true;
-            }
 
             // Check type compatibility
             return declaredType.IsAssignableFrom(valueType) || valueType.IsAssignableFrom(declaredType);

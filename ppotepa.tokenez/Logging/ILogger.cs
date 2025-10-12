@@ -1,44 +1,44 @@
 namespace ppotepa.tokenez.Logging
 {
     /// <summary>
-    /// Interface for logging services.
-    /// Allows interchangeable logger implementations.
+    ///     Interface for logging services.
+    ///     Allows interchangeable logger implementations.
     /// </summary>
     public interface ILogger
     {
         /// <summary>
-        /// Logs a debug message (gray color in console).
+        ///     Gets or sets whether logging is enabled.
+        /// </summary>
+        bool IsEnabled { get; set; }
+
+        /// <summary>
+        ///     Logs a debug message (gray color in console).
         /// </summary>
         void Debug(string message);
 
         /// <summary>
-        /// Logs an informational message (cyan color in console).
+        ///     Logs an informational message (cyan color in console).
         /// </summary>
         void Info(string message);
 
         /// <summary>
-        /// Logs a warning message (yellow color in console).
+        ///     Logs a warning message (yellow color in console).
         /// </summary>
         void Warning(string message);
 
         /// <summary>
-        /// Logs an error message (red color in console).
+        ///     Logs an error message (red color in console).
         /// </summary>
         void Error(string message);
 
         /// <summary>
-        /// Logs a success message (green color in console).
+        ///     Logs a success message (green color in console).
         /// </summary>
         void Success(string message);
 
         /// <summary>
-        /// Logs a message with specified log level.
+        ///     Logs a message with specified log level.
         /// </summary>
         void Log(LogLevel level, string message);
-
-        /// <summary>
-        /// Gets or sets whether logging is enabled.
-        /// </summary>
-        bool IsEnabled { get; set; }
     }
 }

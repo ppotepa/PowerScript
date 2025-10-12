@@ -6,15 +6,14 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the FUNCTION keyword.
-    /// Starts a function declaration.
-    /// Example: "FUNCTION add(a, b) { ... }"
+    ///     Token representing the FUNCTION keyword.
+    ///     Starts a function declaration.
+    ///     Example: "FUNCTION add(a, b) { ... }"
     /// </summary>
     public class FunctionToken : Token, IKeyWordToken
     {
         public FunctionToken()
         {
-
         }
 
         public FunctionToken(RawToken rawToken) : base(rawToken)

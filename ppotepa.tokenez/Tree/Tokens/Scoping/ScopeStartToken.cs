@@ -5,8 +5,8 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Scoping
 {
     /// <summary>
-    /// Token representing '{' - the start of a scope/block.
-    /// Used to begin function bodies and other code blocks.
+    ///     Token representing '{' - the start of a scope/block.
+    ///     Used to begin function bodies and other code blocks.
     /// </summary>
     public class ScopeStartToken : Token
     {
@@ -19,7 +19,8 @@ namespace ppotepa.tokenez.Tree.Tokens.Scoping
         }
 
         /// <summary>After '{', expect PRINT, RETURN, FLEX, or nested FUNCTION declarations</summary>
-        public override Type[] Expectations => [
+        public override Type[] Expectations =>
+        [
             typeof(PrintKeywordToken),
             typeof(ReturnKeywordToken),
             typeof(FlexKeywordToken),

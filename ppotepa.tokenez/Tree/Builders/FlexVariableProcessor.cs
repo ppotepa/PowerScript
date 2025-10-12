@@ -1,5 +1,6 @@
 using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Builders.Interfaces;
+using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
@@ -13,18 +14,11 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes FLEX keyword for dynamic variable declarations.
-    /// Syntax: FLEX variableName = expression
+    ///     Processes FLEX keyword for dynamic variable declarations.
+    ///     Syntax: FLEX variableName = expression
     /// </summary>
     internal class FlexVariableProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public FlexVariableProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
-
         public bool CanProcess(Token token)
         {
             return token is FlexKeywordToken;
@@ -32,15 +26,16 @@ namespace ppotepa.tokenez.Tree.Builders
 
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
-            LoggerService.Logger.Info($"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
+            LoggerService.Logger.Info(
+                $"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
 
-            var flexToken = token as FlexKeywordToken;
-            var currentToken = flexToken!.Next;
+            FlexKeywordToken? flexToken = token as FlexKeywordToken;
+            Token? currentToken = flexToken!.Next;
 
             // Expect identifier (variable name)
             if (currentToken is not IdentifierToken identifierToken)
             {
-                throw new Exception($"Expected variable name after FLEX keyword, got {currentToken?.GetType().Name}");
+                throw new UnexpectedTokenException(currentToken!, typeof(IdentifierToken));
             }
 
             string variableName = identifierToken.RawToken!.Text;
@@ -53,12 +48,12 @@ namespace ppotepa.tokenez.Tree.Builders
             {
                 // Parse array index assignment
                 currentToken = currentToken.Next; // Move past '['
-                var indexExpr = ParseExpression(ref currentToken);
+                Expression indexExpr = ParseExpression(ref currentToken);
 
                 // Expect closing bracket
                 if (currentToken is not BracketClosed)
                 {
-                    throw new Exception($"Expected ']' after array index but found {currentToken?.GetType().Name}");
+                    throw new UnexpectedTokenException(currentToken!, typeof(BracketClosed));
                 }
 
                 currentToken = currentToken.Next; // Skip ']'
@@ -66,25 +61,28 @@ namespace ppotepa.tokenez.Tree.Builders
                 // Expect assignment operator
                 if (currentToken is not EqualsToken)
                 {
-                    throw new Exception($"Expected = after array index, got {currentToken?.GetType().Name}");
+                    throw new UnexpectedTokenException(currentToken!, typeof(EqualsToken));
                 }
 
                 currentToken = currentToken.Next;
 
                 // Parse the value expression
-                Expression? valueExpr = ParseExpression(ref currentToken);
+                Expression valueExpr = ParseExpression(ref currentToken);
 
                 // Create an ArrayAssignmentStatement
-                var arrayAssignStmt = new ArrayAssignmentStatement(identifierToken, indexExpr, valueExpr);
-                arrayAssignStmt.StartToken = flexToken;
+                ArrayAssignmentStatement arrayAssignStmt = new(identifierToken, indexExpr, valueExpr)
+                {
+                    StartToken = flexToken
+                };
 
                 context.CurrentScope.Statements.Add(arrayAssignStmt);
 
-                LoggerService.Logger.Success($"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
+                LoggerService.Logger.Success(
+                    $"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
 
                 return new TokenProcessingResult
                 {
-                    NextToken = currentToken,
+                    NextToken = currentToken!,
                     ShouldValidateExpectations = false
                 };
             }
@@ -92,58 +90,61 @@ namespace ppotepa.tokenez.Tree.Builders
             // Expect assignment operator
             if (currentToken is not EqualsToken)
             {
-                throw new Exception($"Expected = after variable name '{variableName}', got {currentToken?.GetType().Name}");
+                throw new UnexpectedTokenException(currentToken!, typeof(EqualsToken));
             }
 
             currentToken = currentToken.Next;
 
             // Parse the initialization expression
-            Expression? initExpression = ParseExpression(ref currentToken);
+            Expression initExpression = ParseExpression(ref currentToken);
 
             // Create variable declaration
-            var variableDecl = new VariableDeclaration(null, identifierToken); // No type token for FLEX variables
+            VariableDeclaration variableDecl = new(identifierToken); // No type token for FLEX variables
 
             // Create variable declaration statement
-            var statement = new VariableDeclarationStatement(variableDecl, initExpression, isDynamic: true);
-            statement.StartToken = flexToken;
+            VariableDeclarationStatement statement = new(variableDecl, initExpression, true)
+            {
+                StartToken = flexToken
+            };
 
             // Add to current scope
             context.CurrentScope.Statements.Add(statement);
             context.CurrentScope.AddDynamicVariable(variableName);
 
-            LoggerService.Logger.Success($"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
+            LoggerService.Logger.Success(
+                $"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
             return new TokenProcessingResult
             {
-                NextToken = currentToken,
+                NextToken = currentToken!,
                 ShouldValidateExpectations = false
             };
         }
 
 
         /// <summary>
-        /// Parses an expression with support for binary operations.
-        /// Handles operator precedence: * / before + -
+        ///     Parses an expression with support for binary operations.
+        ///     Handles operator precedence: * / before + -
         /// </summary>
-        private Expression? ParseExpression(ref Token? token)
+        private Expression ParseExpression(ref Token? token)
         {
             // Parse additive expression (lowest precedence)
             return ParseAdditiveExpression(ref token);
         }
 
         /// <summary>
-        /// Parses addition and subtraction (left-to-right)
+        ///     Parses addition and subtraction (left-to-right)
         /// </summary>
         private Expression ParseAdditiveExpression(ref Token? token)
         {
-            var left = ParseMultiplicativeExpression(ref token);
+            Expression left = ParseMultiplicativeExpression(ref token);
 
             while (token is PlusToken or MinusToken)
             {
-                var operatorToken = token;
+                Token operatorToken = token;
                 token = token.Next;
 
-                var right = ParseMultiplicativeExpression(ref token);
+                Expression right = ParseMultiplicativeExpression(ref token);
 
                 left = new BinaryExpression(left, operatorToken, right);
             }
@@ -152,18 +153,18 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Parses multiplication and division (left-to-right)
+        ///     Parses multiplication and division (left-to-right)
         /// </summary>
         private Expression ParseMultiplicativeExpression(ref Token? token)
         {
-            var left = ParsePrimaryExpression(ref token);
+            Expression left = ParsePrimaryExpression(ref token);
 
             while (token is MultiplyToken or DivideToken)
             {
-                var operatorToken = token;
+                Token operatorToken = token;
                 token = token.Next;
 
-                var right = ParsePrimaryExpression(ref token);
+                Expression right = ParsePrimaryExpression(ref token);
 
                 left = new BinaryExpression(left, operatorToken, right);
             }
@@ -172,7 +173,7 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        /// Parses primary expressions: literals, identifiers, function calls, parentheses
+        ///     Parses primary expressions: literals, identifiers, function calls, parentheses
         /// </summary>
         private Expression ParsePrimaryExpression(ref Token? token)
         {
@@ -182,23 +183,24 @@ namespace ppotepa.tokenez.Tree.Builders
                 token = token.Next; // Skip '('
 
                 // Recursively parse the expression inside parentheses
-                var innerExpr = ParseExpression(ref token);
+                Expression innerExpr = ParseExpression(ref token);
 
                 // Expect closing parenthesis
                 if (token is not ParenthesisClosed)
                 {
-                    throw new Exception($"Expected ')' but found {token?.GetType().Name}");
+                    throw new UnexpectedTokenException(token!, typeof(ParenthesisClosed));
                 }
 
                 token = token.Next; // Skip ')'
                 return innerExpr;
             }
-            else if (token is BracketOpen)
+
+            if (token is BracketOpen)
             {
                 // Array literal: [1, 2, 3, 4]
                 token = token.Next; // Move past '['
 
-                var elements = new List<Expression>();
+                List<Expression> elements = [];
 
                 // Handle empty array []
                 if (token is BracketClosed)
@@ -211,7 +213,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 while (token != null)
                 {
                     // Parse element expression
-                    var elementExpr = ParsePrimaryExpression(ref token);
+                    Expression elementExpr = ParsePrimaryExpression(ref token);
                     elements.Add(elementExpr);
 
                     // Check for comma or closing bracket
@@ -231,56 +233,60 @@ namespace ppotepa.tokenez.Tree.Builders
                     }
                     else
                     {
-                        throw new Exception($"Expected ',' or ']' in array literal, got {token?.GetType().Name}");
+                        throw new UnexpectedTokenException(token!, typeof(CommaToken), typeof(BracketClosed));
                     }
                 }
 
                 if (token is not BracketClosed)
                 {
-                    throw new Exception($"Expected ']' to close array literal, got {token?.GetType().Name}");
+                    throw new UnexpectedTokenException(token!, typeof(BracketClosed));
                 }
 
                 token = token.Next; // Move past ']'
                 return new ArrayLiteralExpression(elements);
             }
-            else if (token is ChainToken)
+
+            if (token is ChainToken)
             {
                 // CHAIN keyword for array creation: CHAIN <size>
                 token = token.Next; // Move past CHAIN
 
                 if (token is not ValueToken sizeToken)
                 {
-                    throw new Exception($"Expected array size after CHAIN keyword, got {token?.GetType().Name}");
+                    throw new UnexpectedTokenException(token!, typeof(ValueToken));
                 }
 
-                var expr = new ArrayCreationExpression(sizeToken);
+                ArrayCreationExpression expr = new(sizeToken);
                 token = token.Next;
                 return expr;
             }
-            else if (token is ValueToken valueToken)
+
+            if (token is ValueToken valueToken)
             {
-                var expr = new LiteralExpression(valueToken);
+                LiteralExpression expr = new(valueToken);
                 token = token.Next;
                 return expr;
             }
-            else if (token is StringLiteralToken stringToken)
+
+            if (token is StringLiteralToken stringToken)
             {
-                var expr = new StringLiteralExpression(stringToken);
+                StringLiteralExpression expr = new(stringToken);
                 token = token.Next;
                 return expr;
             }
-            else if (token is IdentifierToken identifierToken)
+
+            if (token is IdentifierToken identifierToken)
             {
                 // Check if it's an array index access
                 if (identifierToken.Next is BracketOpen)
                 {
                     token = identifierToken.Next.Next; // Move past '[' to index expression
-                    var indexExpr = ParseExpression(ref token);
+                    Expression indexExpr = ParseExpression(ref token);
 
                     // Expect closing bracket
                     if (token is not BracketClosed)
                     {
-                        throw new Exception($"Expected ']' after array index but found {token?.GetType().Name}");
+                        throw new UnexpectedTokenException(token!, typeof(BracketClosed));
                     }
 
                     token = token.Next; // Skip ']'
@@ -292,19 +298,20 @@ namespace ppotepa.tokenez.Tree.Builders
                     };
                 }
                 // Check if it's a function call
-                else if (identifierToken.Next is ParenthesisOpen)
+
+                if (identifierToken.Next is ParenthesisOpen)
                 {
-                    var funcCallExpr = new FunctionCallExpression
+                    FunctionCallExpression funcCallExpr = new()
                     {
                         FunctionName = identifierToken
                     };
                     token = identifierToken.Next; // Move to (
                     token = token!.Next; // Move past (
 
-                    // TODO: Parse function call arguments
+                    // Parse function call arguments - not implemented yet
 
                     // Skip to )
-                    while (token != null && token is not ParenthesisClosed)
+                    while (token is not null and not ParenthesisClosed)
                     {
                         token = token.Next;
                     }
@@ -316,18 +323,14 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     return funcCallExpr;
                 }
-                else
-                {
-                    var expr = new IdentifierExpression(identifierToken);
-                    token = token.Next;
-                    return expr;
-                }
+
+                IdentifierExpression expr = new(identifierToken);
+                token = token.Next;
+                return expr;
             }
-            else
-            {
-                throw new NotImplementedException($"Expression type {token?.GetType().Name} not yet supported in FLEX variable initialization");
-            }
+
+            throw new NotImplementedException(
+                $"Expression type {token?.GetType().Name} not yet supported in FLEX variable initialization");
         }
     }
 }
-

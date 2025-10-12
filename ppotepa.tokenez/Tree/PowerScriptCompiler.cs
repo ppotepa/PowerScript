@@ -1,36 +1,32 @@
+#nullable enable
 using ppotepa.tokenez.Logging;
+using ppotepa.tokenez.Tree.Diagnostics;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
-using ppotepa.tokenez.Tree.Diagnostics;
 using ppotepa.tokenez.Tree.Tokens.Operators;
-using TreeExpression = ppotepa.tokenez.Tree.Expressions.Expression;
-using TreeBinaryExpression = ppotepa.tokenez.Tree.Expressions.BinaryExpression;
-using TreeLiteralExpression = ppotepa.tokenez.Tree.Expressions.LiteralExpression;
-using TreeIdentifierExpression = ppotepa.tokenez.Tree.Expressions.IdentifierExpression;
-using TreeStringLiteralExpression = ppotepa.tokenez.Tree.Expressions.StringLiteralExpression;
-using SysExpression = System.Linq.Expressions.Expression;
-using ParameterExpression = System.Linq.Expressions.ParameterExpression;
 using System.Reflection;
+using ParameterExpression = System.Linq.Expressions.ParameterExpression;
+using SysExpression = System.Linq.Expressions.Expression;
+using TreeBinaryExpression = ppotepa.tokenez.Tree.Expressions.BinaryExpression;
+using TreeExpression = ppotepa.tokenez.Tree.Expressions.Expression;
+using TreeIdentifierExpression = ppotepa.tokenez.Tree.Expressions.IdentifierExpression;
+using TreeLiteralExpression = ppotepa.tokenez.Tree.Expressions.LiteralExpression;
+using TreeStringLiteralExpression = ppotepa.tokenez.Tree.Expressions.StringLiteralExpression;
 
 namespace ppotepa.tokenez.Tree
 {
     /// <summary>
-    /// Compiles PowerScript token trees into executable .NET Lambda expressions.
-    /// Handles function compilation, parameter binding, and expression tree building.
+    ///     Compiles PowerScript token trees into executable .NET Lambda expressions.
+    ///     Handles function compilation, parameter binding, and expression tree building.
     /// </summary>
-    public class PowerScriptCompiler
+    public class PowerScriptCompiler(TokenTree tree)
     {
-        private readonly TokenTree _tree;
-        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
-
-        public PowerScriptCompiler(TokenTree tree)
-        {
-            _tree = tree ?? throw new ArgumentNullException(nameof(tree));
-        }
+        private readonly TokenTree _tree = tree ?? throw new ArgumentNullException(nameof(tree));
+        private readonly Dictionary<string, object> _variables = [];
 
         /// <summary>
-        /// Compiles all functions in the root scope and executes them.
-        /// Also runs diagnostic analysis to provide warnings and suggestions.
+        ///     Compiles all functions in the root scope and executes them.
+        ///     Also runs diagnostic analysis to provide warnings and suggestions.
         /// </summary>
         public void CompileAndExecute()
         {
@@ -42,10 +38,10 @@ namespace ppotepa.tokenez.Tree
             LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
             // Iterate through all function declarations in root scope
-            foreach (var decl in _tree.RootScope.Decarations.Values.OfType<FunctionDeclaration>())
+            foreach (FunctionDeclaration decl in _tree.RootScope!.Decarations.Values.OfType<FunctionDeclaration>())
             {
-                var funcName = decl.Identifier.RawToken.Text;
-                var funcScope = decl.Scope;
+                string funcName = decl.Identifier.RawToken.Text;
+                Scope funcScope = decl.Scope;
 
                 LoggerService.Logger.Warning($"📦 Compiling function: {funcName}");
 
@@ -66,7 +62,7 @@ namespace ppotepa.tokenez.Tree
                 LoggerService.Logger.Info("║       EXECUTING ROOT STATEMENTS        ║");
                 LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
-                foreach (var stmt in _tree.RootScope.Statements)
+                foreach (Statement stmt in _tree.RootScope.Statements)
                 {
                     try
                     {
@@ -81,7 +77,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Executes a statement (like PRINT, NET method calls, or EXECUTE).
+        ///     Executes a statement (like PRINT, NET method calls, or EXECUTE).
         /// </summary>
         private void ExecuteStatement(Statement stmt)
         {
@@ -91,20 +87,20 @@ namespace ppotepa.tokenez.Tree
                 if (printStmt.Expression is TemplateStringExpression templateExpr)
                 {
                     // Evaluate template string with variable interpolation
-                    var result = EvaluateTemplateString(templateExpr);
+                    string result = EvaluateTemplateString(templateExpr);
                     Console.WriteLine(result);
                 }
                 else if (printStmt.Expression is TreeStringLiteralExpression stringExpr)
                 {
                     // Remove quotes from string literal
-                    var text = stringExpr.Value.RawToken.Text.Trim('"');
+                    string text = stringExpr.Value.RawToken.Text.Trim('"');
                     Console.WriteLine(text);
                 }
                 else if (printStmt.Expression is IdentifierExpression identExpr)
                 {
                     // Print variable value
-                    var varName = identExpr.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-                    if (_variables.TryGetValue(varName, out var value))
+                    string varName = identExpr.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+                    if (_variables.TryGetValue(varName, out object? value))
                     {
                         Console.WriteLine(value);
                     }
@@ -121,7 +117,7 @@ namespace ppotepa.tokenez.Tree
                 else if (printStmt.Expression is IndexExpression indexExpr)
                 {
                     // Evaluate array index access and print
-                    var value = EvaluateExpressionValue(indexExpr);
+                    object value = EvaluateExpressionValue(indexExpr);
                     Console.WriteLine(value);
                 }
                 else
@@ -161,12 +157,12 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Executes a variable declaration (FLEX x = value).
+        ///     Executes a variable declaration (FLEX x = value).
         /// </summary>
         private void ExecuteVariableDeclaration(VariableDeclarationStatement varStmt)
         {
-            var varName = varStmt.Declaration.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-            var value = EvaluateExpressionValue(varStmt.InitialValue);
+            string varName = varStmt.Declaration.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+            object value = EvaluateExpressionValue(varStmt.InitialValue);
 
             _variables[varName] = value;
 
@@ -174,23 +170,23 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Executes an array element assignment (FLEX arr[index] = value).
+        ///     Executes an array element assignment (FLEX arr[index] = value).
         /// </summary>
         private void ExecuteArrayAssignment(ArrayAssignmentStatement arrayAssignStmt)
         {
-            var arrayName = arrayAssignStmt.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+            string arrayName = arrayAssignStmt.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant() ?? "";
 
-            if (!_variables.TryGetValue(arrayName, out var arrayObj))
+            if (!_variables.TryGetValue(arrayName, out object? arrayObj))
             {
                 throw new Exception($"Array '{arrayName}' not found");
             }
 
             // Evaluate the index
-            var indexValue = EvaluateExpressionValue(arrayAssignStmt.IndexExpression);
+            object indexValue = EvaluateExpressionValue(arrayAssignStmt.IndexExpression);
             int index = Convert.ToInt32(ConvertToNumber(indexValue));
 
             // Evaluate the value to assign
-            var value = EvaluateExpressionValue(arrayAssignStmt.ValueExpression);
+            object value = EvaluateExpressionValue(arrayAssignStmt.ValueExpression);
 
             // Assign to array
             if (arrayObj is List<object> list)
@@ -199,6 +195,7 @@ namespace ppotepa.tokenez.Tree
                 {
                     throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})");
                 }
+
                 list[index] = value;
             }
             else if (arrayObj is double[] doubleArray)
@@ -207,6 +204,7 @@ namespace ppotepa.tokenez.Tree
                 {
                     throw new Exception($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
                 }
+
                 doubleArray[index] = ConvertToNumber(value);
             }
             else
@@ -218,14 +216,14 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Evaluates a template string by replacing @variable references with their runtime values.
-        /// Example: `Hello @name` where name = "World" -> "Hello World"
+        ///     Evaluates a template string by replacing @variable references with their runtime values.
+        ///     Example: `Hello @name` where name = "World" -> "Hello World"
         /// </summary>
         private string EvaluateTemplateString(TemplateStringExpression templateExpr)
         {
-            var result = "";
+            string result = "";
 
-            foreach (var part in templateExpr.Template.Parts)
+            foreach (Tokens.Values.TemplatePart? part in templateExpr.Template.Parts)
             {
                 if (part.IsLiteral)
                 {
@@ -235,8 +233,8 @@ namespace ppotepa.tokenez.Tree
                 else
                 {
                     // Look up the variable value
-                    var varName = part.Text.ToUpperInvariant();
-                    if (_variables.TryGetValue(varName, out var value))
+                    string varName = part.Text.ToUpperInvariant();
+                    if (_variables.TryGetValue(varName, out object? value))
                     {
                         result += value.ToString();
                     }
@@ -254,7 +252,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Executes an IF statement by evaluating the condition and executing the appropriate branch.
+        ///     Executes an IF statement by evaluating the condition and executing the appropriate branch.
         /// </summary>
         private void ExecuteIfStatement(IfStatement ifStmt)
         {
@@ -268,9 +266,9 @@ namespace ppotepa.tokenez.Tree
             if (conditionResult)
             {
                 // Execute THEN branch
-                LoggerService.Logger.Info($"[EXEC] Executing THEN branch");
+                LoggerService.Logger.Info("[EXEC] Executing THEN branch");
 
-                foreach (var stmt in ifStmt.ThenScope.Statements)
+                foreach (Statement stmt in ifStmt.ThenScope.Statements)
                 {
                     ExecuteStatement(stmt);
                 }
@@ -278,9 +276,9 @@ namespace ppotepa.tokenez.Tree
             else if (ifStmt.ElseScope != null)
             {
                 // Execute ELSE branch
-                LoggerService.Logger.Info($"[EXEC] Executing ELSE branch");
+                LoggerService.Logger.Info("[EXEC] Executing ELSE branch");
 
-                foreach (var stmt in ifStmt.ElseScope.Statements)
+                foreach (Statement stmt in ifStmt.ElseScope.Statements)
                 {
                     ExecuteStatement(stmt);
                 }
@@ -288,7 +286,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Evaluates a condition expression to a boolean result.
+        ///     Evaluates a condition expression to a boolean result.
         /// </summary>
         private bool EvaluateCondition(Expression condition)
         {
@@ -296,11 +294,11 @@ namespace ppotepa.tokenez.Tree
             if (condition is BinaryExpression binaryExpr)
             {
                 // Get left and right values
-                var left = EvaluateExpressionValue(binaryExpr.Left);
-                var right = EvaluateExpressionValue(binaryExpr.Right);
+                object left = EvaluateExpressionValue(binaryExpr.Left);
+                object right = EvaluateExpressionValue(binaryExpr.Right);
 
                 // Get operator string from token
-                var op = binaryExpr.Operator.RawToken?.Text ?? "";
+                string op = binaryExpr.Operator.RawToken?.Text ?? "";
 
                 // Perform comparison based on operator
                 return op switch
@@ -320,19 +318,18 @@ namespace ppotepa.tokenez.Tree
             {
                 bool leftResult = EvaluateCondition(logicalExpr.Left);
 
-                var op = logicalExpr.Operator.RawToken?.Text ?? "";
+                string op = logicalExpr.Operator.RawToken?.Text ?? "";
 
                 if (op == "AND")
                 {
                     // Short-circuit evaluation for AND
-                    if (!leftResult) return false;
-                    return EvaluateCondition(logicalExpr.Right);
+                    return !leftResult ? false : EvaluateCondition(logicalExpr.Right);
                 }
-                else if (op == "OR")
+
+                if (op == "OR")
                 {
                     // Short-circuit evaluation for OR
-                    if (leftResult) return true;
-                    return EvaluateCondition(logicalExpr.Right);
+                    return leftResult ? true : EvaluateCondition(logicalExpr.Right);
                 }
 
                 throw new Exception($"Unknown logical operator: {op}");
@@ -342,17 +339,17 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Evaluates an expression to get its runtime value.
+        ///     Evaluates an expression to get its runtime value.
         /// </summary>
         private object EvaluateExpressionValue(Expression expr)
         {
             if (expr is ArrayLiteralExpression arrayLiteralExpr)
             {
                 // Create array from literal values
-                var array = new List<object>();
-                foreach (var elementExpr in arrayLiteralExpr.Elements)
+                List<object> array = [];
+                foreach (TreeExpression? elementExpr in arrayLiteralExpr.Elements)
                 {
-                    var elementValue = EvaluateExpressionValue(elementExpr);
+                    object elementValue = EvaluateExpressionValue(elementExpr);
                     array.Add(elementValue);
                 }
 
@@ -364,89 +361,74 @@ namespace ppotepa.tokenez.Tree
             if (expr is ArrayCreationExpression arrayCreationExpr)
             {
                 // Create array with specified size
-                var sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
+                string sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
                 int size = int.Parse(sizeText);
 
                 // Create a List<object> initialized with zeros
-                var array = new List<object>(size);
+                List<object> array = new(size);
                 for (int i = 0; i < size; i++)
                 {
                     array.Add(0.0);
                 }
+
                 return array;
             }
 
             if (expr is TreeStringLiteralExpression stringLiteralExpr)
             {
                 // String literal - remove quotes
-                var text = stringLiteralExpr.Value.RawToken?.Text ?? "";
+                string text = stringLiteralExpr.Value.RawToken?.Text ?? "";
                 return text.Trim('"');
             }
 
             if (expr is LiteralExpression literalExpr)
             {
                 // Parse the literal value
-                var text = literalExpr.Value.RawToken?.Text ?? "";
-                if (int.TryParse(text, out int intValue))
-                    return intValue;
-                if (double.TryParse(text, out double doubleValue))
-                    return doubleValue;
-                return text;
+                string text = literalExpr.Value.RawToken?.Text ?? "";
+                return int.TryParse(text, out int intValue) ? intValue :
+                    double.TryParse(text, out double doubleValue) ? doubleValue : text;
             }
 
             if (expr is IndexExpression indexExpr)
             {
                 // Array index access
-                var arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
-                if (!_variables.TryGetValue(arrayName, out var arrayObj))
+                string? arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
+                if (string.IsNullOrEmpty(arrayName) || !_variables.TryGetValue(arrayName, out object? arrayObj))
                 {
                     throw new Exception($"Array not found: {arrayName}");
                 }
 
                 // Evaluate the index expression
-                var indexValue = EvaluateExpressionValue(indexExpr.Index);
+                object indexValue = EvaluateExpressionValue(indexExpr.Index);
                 int index = Convert.ToInt32(ConvertToNumber(indexValue));
 
                 // Support different array types
-                if (arrayObj is List<object> list)
-                {
-                    if (index < 0 || index >= list.Count)
-                    {
-                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})");
-                    }
-                    return list[index];
-                }
-                else if (arrayObj is double[] doubleArray)
-                {
-                    if (index < 0 || index >= doubleArray.Length)
-                    {
-                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
-                    }
-                    return doubleArray[index];
-                }
-                else if (arrayObj is object[] objArray)
-                {
-                    if (index < 0 || index >= objArray.Length)
-                    {
-                        throw new Exception($"Index {index} out of range for array {arrayName} (size: {objArray.Length})");
-                    }
-                    return objArray[index];
-                }
-                else
-                {
-                    throw new Exception($"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})");
-                }
+                return arrayObj is List<object> list
+                    ? index < 0 || index >= list.Count
+                        ? throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})")
+                        : list[index]
+                    : arrayObj is double[] doubleArray
+                    ? index < 0 || index >= doubleArray.Length
+                        ? throw new Exception(
+                            $"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})")
+                        : (object)doubleArray[index]
+                    : arrayObj is object[] objArray
+                        ? index < 0 || index >= objArray.Length
+                            ? throw new Exception(
+                                $"Index {index} out of range for array {arrayName} (size: {objArray.Length})")
+                            : objArray[index]
+                        : throw new Exception($"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})");
             }
 
             if (expr is IdentifierExpression identifierExpr)
             {
                 // Look up variable value
-                var varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
-                if (_variables.TryGetValue(varName, out var value))
+                string? varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
+                if (string.IsNullOrEmpty(varName) || !_variables.TryGetValue(varName, out object? value))
                 {
-                    return value;
+                    throw new Exception($"Variable not found: {varName}");
                 }
-                throw new Exception($"Variable not found: {varName}");
+                return value;
             }
 
             if (expr is BinaryExpression binaryExpr)
@@ -459,12 +441,12 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Evaluates a binary expression (e.g., a + b, x * y).
+        ///     Evaluates a binary expression (e.g., a + b, x * y).
         /// </summary>
         private object EvaluateBinaryExpression(BinaryExpression expr)
         {
-            var left = EvaluateExpressionValue(expr.Left);
-            var right = EvaluateExpressionValue(expr.Right);
+            object left = EvaluateExpressionValue(expr.Left);
+            object right = EvaluateExpressionValue(expr.Right);
 
             // Convert to numeric values
             double leftNum = ConvertToNumber(left);
@@ -473,64 +455,69 @@ namespace ppotepa.tokenez.Tree
             // Perform the operation based on operator type
             if (expr.Operator is PlusToken)
             {
-                var result = leftNum + rightNum;
+                double result = leftNum + rightNum;
                 LoggerService.Logger.Debug($"[EXEC] {leftNum} + {rightNum} = {result}");
                 return result;
             }
-            else if (expr.Operator is MinusToken)
+
+            if (expr.Operator is MinusToken)
             {
-                var result = leftNum - rightNum;
+                double result = leftNum - rightNum;
                 LoggerService.Logger.Debug($"[EXEC] {leftNum} - {rightNum} = {result}");
                 return result;
             }
-            else if (expr.Operator is MultiplyToken)
+
+            if (expr.Operator is MultiplyToken)
             {
-                var result = leftNum * rightNum;
+                double result = leftNum * rightNum;
                 LoggerService.Logger.Debug($"[EXEC] {leftNum} * {rightNum} = {result}");
                 return result;
             }
-            else if (expr.Operator is DivideToken)
+
+            if (expr.Operator is DivideToken)
             {
                 if (rightNum == 0)
                 {
                     throw new Exception("Division by zero");
                 }
-                var result = leftNum / rightNum;
+
+                double result = leftNum / rightNum;
                 LoggerService.Logger.Debug($"[EXEC] {leftNum} / {rightNum} = {result}");
                 return result;
             }
-            else
-            {
-                throw new Exception($"Unknown binary operator: {expr.Operator.GetType().Name}");
-            }
+
+            throw new Exception($"Unknown binary operator: {expr.Operator.GetType().Name}");
         }
 
         /// <summary>
-        /// Converts a value to a number (double).
+        ///     Converts a value to a number (double).
         /// </summary>
         private double ConvertToNumber(object value)
         {
-            if (value is int intValue)
-                return intValue;
-            if (value is double doubleValue)
-                return doubleValue;
-            if (double.TryParse(value.ToString(), out double result))
-                return result;
-
-            throw new Exception($"Cannot convert '{value}' to number");
+            return value is int intValue
+                ? intValue
+                : value is double doubleValue
+                    ? doubleValue
+                    : double.TryParse(value.ToString(), out double result)
+                        ? result
+                        : throw new Exception($"Cannot convert '{value}' to number");
         }
 
         /// <summary>
-        /// Compares two values and returns -1, 0, or 1.
+        ///     Compares two values and returns -1, 0, or 1.
         /// </summary>
         private int CompareValues(object left, object right)
         {
             // Try numeric comparison
             if (left is int leftInt && right is int rightInt)
+            {
                 return leftInt.CompareTo(rightInt);
+            }
 
             if (left is double leftDouble && right is double rightDouble)
+            {
                 return leftDouble.CompareTo(rightDouble);
+            }
 
             // Try numeric conversion
             if (double.TryParse(left.ToString(), out double leftNum) &&
@@ -544,14 +531,14 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Executes a function call by looking up the function declaration and running its body.
+        ///     Executes a function call by looking up the function declaration and running its body.
         /// </summary>
         private void ExecuteFunctionCall(FunctionCallStatement funcCallStmt)
         {
             LoggerService.Logger.Info($"[EXEC] Calling function: {funcCallStmt.FunctionName}()");
 
             // Find the function declaration in the root scope
-            if (!_tree.RootScope.Decarations.TryGetValue(funcCallStmt.FunctionName, out var declaration))
+            if (!_tree.RootScope!.Decarations.TryGetValue(funcCallStmt.FunctionName, out Declaration? declaration))
             {
                 throw new Exception($"Function not found: {funcCallStmt.FunctionName}");
             }
@@ -562,74 +549,79 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Execute all statements in the function's scope
-            foreach (var stmt in functionDecl.Scope.Statements)
+            foreach (Statement stmt in functionDecl.Scope.Statements)
             {
                 ExecuteStatement(stmt);
             }
         }
 
         /// <summary>
-        /// Executes a CYCLE loop (count-based or collection-based).
+        ///     Executes a CYCLE loop (count-based or collection-based).
         /// </summary>
         private void ExecuteCycleLoop(CycleLoopStatement cycleStmt)
         {
             if (cycleStmt.IsCountBased)
             {
                 // Count-based loop: CYCLE 5 AS i { ... }
-                var countValue = EvaluateExpressionValue(cycleStmt.CollectionExpression);
+                object countValue = EvaluateExpressionValue(cycleStmt.CollectionExpression);
 
                 if (!int.TryParse(countValue.ToString(), out int count))
                 {
                     throw new Exception($"CYCLE count must be a number, got: {countValue}");
                 }
 
-                LoggerService.Logger.Info($"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
+                LoggerService.Logger.Info(
+                    $"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
 
                 // Execute the loop body 'count' times
                 for (int i = 0; i < count; i++)
                 {
                     // Set the loop variable to the current index
-                    var varName = cycleStmt.LoopVariableName.ToUpperInvariant();
+                    string varName = cycleStmt.LoopVariableName.ToUpperInvariant();
                     _variables[varName] = i;
 
                     LoggerService.Logger.Debug($"[EXEC] CYCLE iteration {i}, {varName} = {i}");
 
                     // Execute all statements in the loop body
-                    foreach (var stmt in cycleStmt.LoopBody.Statements)
+                    if (cycleStmt.LoopBody != null)
                     {
-                        ExecuteStatement(stmt);
+                        foreach (Statement stmt in cycleStmt.LoopBody.Statements)
+                        {
+                            ExecuteStatement(stmt);
+                        }
                     }
                 }
 
-                LoggerService.Logger.Info($"[EXEC] CYCLE loop completed");
+                LoggerService.Logger.Info("[EXEC] CYCLE loop completed");
             }
             else
             {
                 // Collection-based loop: CYCLE IN items AS item { ... }
                 // TODO: Implement collection-based loops
-                throw new NotImplementedException("Collection-based CYCLE loops not yet implemented. Use count-based: CYCLE 5 { ... }");
+                throw new NotImplementedException(
+                    "Collection-based CYCLE loops not yet implemented. Use count-based: CYCLE 5 { ... }");
             }
         }
 
         /// <summary>
-        /// Executes a NET:: method call using reflection.
+        ///     Executes a NET:: method call using reflection.
         /// </summary>
         private void ExecuteNetMethodCall(NetMethodCallStatement netStmt)
         {
             try
             {
                 // Parse the method path: System.Console.WriteLine or Console.WriteLine
-                var parts = netStmt.FullMethodPath.Split('.');
+                string[] parts = netStmt.FullMethodPath.Split('.');
                 if (parts.Length < 2)
                 {
                     throw new Exception($"Invalid NET method path: {netStmt.FullMethodPath}");
                 }
 
                 // The last part is the method name
-                var methodName = parts[^1];
+                string methodName = parts[^1];
 
                 // Everything before is the type name
-                var typeName = string.Join(".", parts[..^1]);
+                string typeName = string.Join(".", parts[..^1]);
 
                 // Try to resolve the type using DotNetLinker (which knows about linked namespaces)
                 Type? type = _tree.DotNetLinker.ResolveType(typeName);
@@ -649,10 +641,13 @@ namespace ppotepa.tokenez.Tree
                 // If still not found, search in all loaded assemblies
                 if (type == null)
                 {
-                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                     {
                         type = assembly.GetType(typeName);
-                        if (type != null) break;
+                        if (type != null)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -662,8 +657,8 @@ namespace ppotepa.tokenez.Tree
                 }
 
                 // Evaluate arguments and determine their types
-                var args = new object?[netStmt.Arguments.Count];
-                var argTypes = new Type[netStmt.Arguments.Count];
+                object?[] args = new object?[netStmt.Arguments.Count];
+                Type[] argTypes = new Type[netStmt.Arguments.Count];
 
                 for (int i = 0; i < netStmt.Arguments.Count; i++)
                 {
@@ -672,21 +667,23 @@ namespace ppotepa.tokenez.Tree
                 }
 
                 // Find the method with matching parameter types
-                var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance, null, argTypes, null);
+                MethodInfo? method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance,
+                    null, argTypes, null);
 
                 if (method == null)
                 {
                     // Try without exact parameter matching - get all methods and find best match
-                    var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                                     .Where(m => m.Name == methodName)
-                                     .ToArray();
+                    MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                        .Where(m => m.Name == methodName)
+                        .ToArray();
 
                     // Find method with matching parameter count
                     method = methods.FirstOrDefault(m => m.GetParameters().Length == args.Length);
 
                     if (method == null)
                     {
-                        throw new Exception($"Method not found: {methodName} on type {typeName} with {args.Length} parameter(s)");
+                        throw new Exception(
+                            $"Method not found: {methodName} on type {typeName} with {args.Length} parameter(s)");
                     }
                 }
 
@@ -709,7 +706,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Evaluates an expression to get its runtime value.
+        ///     Evaluates an expression to get its runtime value.
         /// </summary>
         private object? EvaluateExpression(TreeExpression expr)
         {
@@ -718,24 +715,23 @@ namespace ppotepa.tokenez.Tree
                 // Remove quotes from string literal
                 return stringExpr.Value.RawToken.Text.Trim('"');
             }
-            else if (expr is TreeLiteralExpression literalExpr)
+
+            if (expr is TreeLiteralExpression literalExpr)
             {
-                var text = literalExpr.Value.RawToken.Text;
+                string text = literalExpr.Value.RawToken.Text;
 
                 // Try to parse as number
-                if (int.TryParse(text, out int intValue))
-                    return intValue;
-                if (double.TryParse(text, out double doubleValue))
-                    return doubleValue;
-
-                return text;
+                return int.TryParse(text, out int intValue) ? intValue :
+                    double.TryParse(text, out double doubleValue) ? doubleValue : text;
             }
-            else if (expr is TreeIdentifierExpression identifierExpr)
+
+            if (expr is TreeIdentifierExpression identifierExpr)
             {
                 // TODO: Look up identifier value in scope
                 return identifierExpr.Identifier.RawToken.Text;
             }
-            else if (expr is TreeBinaryExpression binaryExpr)
+
+            if (expr is TreeBinaryExpression binaryExpr)
             {
                 // TODO: Evaluate binary expressions
                 throw new Exception("Binary expressions in NET calls not yet supported");
@@ -745,15 +741,15 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Compiles a single function declaration.
+        ///     Compiles a single function declaration.
         /// </summary>
         private void CompileFunction(FunctionDeclaration decl)
         {
-            var funcName = decl.Identifier.RawToken.Text;
-            var funcScope = decl.Scope;
+            string funcName = decl.Identifier.RawToken.Text;
+            Scope funcScope = decl.Scope;
 
             // Get the return statement
-            var returnStmt = funcScope.Statements.OfType<ReturnStatement>().FirstOrDefault();
+            ReturnStatement? returnStmt = funcScope.Statements.OfType<ReturnStatement>().FirstOrDefault();
             if (returnStmt == null)
             {
                 LoggerService.Logger.Warning($"  ⚠ No return statement found in {funcName}");
@@ -761,7 +757,7 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Build parameter expressions
-            var parameters = decl.Parameters.Select(p =>
+            List<ParameterExpression> parameters = decl.Parameters.Select(p =>
                 SysExpression.Parameter(typeof(int), p.Identifier.RawToken.Text)
             ).ToList();
 
@@ -770,52 +766,55 @@ namespace ppotepa.tokenez.Tree
             {
                 // Void return
                 LoggerService.Logger.Info($"  → Function {funcName} returns VOID");
-                var voidLambda = SysExpression.Lambda(
+                System.Linq.Expressions.LambdaExpression voidLambda = SysExpression.Lambda(
                     SysExpression.Empty(),
                     parameters
                 );
-                var compiledVoid = voidLambda.Compile();
-                LoggerService.Logger.Success($"  ✓ Compiled as void function");
+                Delegate compiledVoid = voidLambda.Compile();
+                LoggerService.Logger.Success("  ✓ Compiled as void function");
             }
             else
             {
                 // Value return - compile and execute
-                var bodyExpression = BuildExpression(returnStmt.ReturnValue, parameters);
+                SysExpression bodyExpression = BuildExpression(returnStmt.ReturnValue, parameters);
 
                 if (parameters.Count == 0)
                 {
                     // Parameterless function - can execute immediately
-                    var lambda = SysExpression.Lambda<Func<int>>(bodyExpression);
-                    var compiled = lambda.Compile();
+                    System.Linq.Expressions.Expression<Func<int>> lambda = SysExpression.Lambda<Func<int>>(bodyExpression);
+                    Func<int> compiled = lambda.Compile();
 
                     LoggerService.Logger.Info($"  → Lambda: () => {GetExpressionDescription(returnStmt.ReturnValue)}");
 
                     // Execute the function
-                    var result = compiled();
+                    int result = compiled();
                     LoggerService.Logger.Success($"  ✓ Executed: {funcName}() = {result}");
                 }
                 else if (parameters.Count == 2)
                 {
                     // Two-parameter function
-                    var lambda = SysExpression.Lambda<Func<int, int, int>>(bodyExpression, parameters);
-                    var compiled = lambda.Compile();
+                    System.Linq.Expressions.Expression<Func<int, int, int>> lambda = SysExpression.Lambda<Func<int, int, int>>(bodyExpression, parameters);
+                    Func<int, int, int> compiled = lambda.Compile();
 
-                    LoggerService.Logger.Info($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
+                    LoggerService.Logger.Info(
+                        $"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
 
                     // Example execution with test values
-                    var result = compiled(10, 5);
+                    int result = compiled(10, 5);
                     LoggerService.Logger.Success($"  ✓ Compiled and tested: {funcName}(10, 5) = {result}");
                 }
                 else
                 {
-                    LoggerService.Logger.Info($"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
-                    LoggerService.Logger.Success($"  ✓ Compiled successfully (execution requires {parameters.Count} parameters)");
+                    LoggerService.Logger.Info(
+                        $"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
+                    LoggerService.Logger.Success(
+                        $"  ✓ Compiled successfully (execution requires {parameters.Count} parameters)");
                 }
             }
         }
 
         /// <summary>
-        /// Builds a .NET Expression from a PowerScript expression.
+        ///     Builds a .NET Expression from a PowerScript expression.
         /// </summary>
         private SysExpression BuildExpression(TreeExpression expr, List<ParameterExpression> parameters)
         {
@@ -836,12 +835,12 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Builds a binary operation expression.
+        ///     Builds a binary operation expression.
         /// </summary>
         private SysExpression BuildBinaryExpression(TreeBinaryExpression binary, List<ParameterExpression> parameters)
         {
-            var left = BuildExpression(binary.Left, parameters);
-            var right = BuildExpression(binary.Right, parameters);
+            SysExpression left = BuildExpression(binary.Left, parameters);
+            SysExpression right = BuildExpression(binary.Right, parameters);
 
             return binary.Operator.RawToken.Text switch
             {
@@ -854,7 +853,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Gets a human-readable description of an expression.
+        ///     Gets a human-readable description of an expression.
         /// </summary>
         private string GetExpressionDescription(TreeExpression expr)
         {
@@ -862,28 +861,29 @@ namespace ppotepa.tokenez.Tree
             {
                 TreeLiteralExpression literal => literal.Value.RawToken.Text,
                 TreeIdentifierExpression ident => ident.Identifier.RawToken.Text,
-                TreeBinaryExpression binary => $"{GetExpressionDescription(binary.Left)} {binary.Operator.RawToken.Text} {GetExpressionDescription(binary.Right)}",
-                _ => expr.ExpressionType.ToString()
+                TreeBinaryExpression binary =>
+                    $"{GetExpressionDescription(binary.Left)} {binary.Operator.RawToken.Text} {GetExpressionDescription(binary.Right)}",
+                _ => expr.ExpressionType
             };
         }
 
         /// <summary>
-        /// Executes an external PowerScript file using the interpreter.
+        ///     Executes an external PowerScript file using the interpreter.
         /// </summary>
         private void ExecuteScriptFile(string filePath)
         {
             try
             {
                 // Import the interpreter namespace here to avoid circular dependencies
-                var interpreterType = Type.GetType("ppotepa.tokenez.Interpreter.PowerScriptInterpreter, ppotepa.tokenez");
+                Type? interpreterType = Type.GetType("ppotepa.tokenez.Interpreter.PowerScriptInterpreter, ppotepa.tokenez");
                 if (interpreterType == null)
                 {
                     throw new Exception("PowerScriptInterpreter type not found. Cannot execute external scripts.");
                 }
 
                 // Create an instance using the CreateNew static method
-                var createNewMethod = interpreterType.GetMethod("CreateNew", BindingFlags.Public | BindingFlags.Static);
-                var interpreter = createNewMethod?.Invoke(null, null);
+                MethodInfo? createNewMethod = interpreterType.GetMethod("CreateNew", BindingFlags.Public | BindingFlags.Static);
+                object? interpreter = createNewMethod?.Invoke(null, null);
 
                 if (interpreter == null)
                 {
@@ -891,7 +891,8 @@ namespace ppotepa.tokenez.Tree
                 }
 
                 // Call ExecuteFile method
-                var executeFileMethod = interpreterType.GetMethod("ExecuteFile", BindingFlags.Public | BindingFlags.Instance);
+                MethodInfo? executeFileMethod =
+                    interpreterType.GetMethod("ExecuteFile", BindingFlags.Public | BindingFlags.Instance);
                 executeFileMethod?.Invoke(interpreter, new object[] { filePath });
             }
             catch (Exception ex)
@@ -901,7 +902,7 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Runs diagnostic analysis and displays warnings, errors, and suggestions.
+        ///     Runs diagnostic analysis and displays warnings, errors, and suggestions.
         /// </summary>
         private void RunDiagnosticAnalysis()
         {
@@ -909,8 +910,8 @@ namespace ppotepa.tokenez.Tree
             LoggerService.Logger.Info("║           DIAGNOSTIC ANALYSIS          ║");
             LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
 
-            var analyzer = new DiagnosticAnalyzer();
-            var diagnostics = analyzer.Analyze(_tree.RootScope, _tree.Tokens);
+            DiagnosticAnalyzer analyzer = new();
+            List<Diagnostic> diagnostics = analyzer.Analyze(_tree.RootScope!, _tree.Tokens!);
 
             if (diagnostics.Count == 0)
             {
@@ -919,18 +920,21 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Group diagnostics by severity
-            var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
-            var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning).ToList();
-            var suggestions = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion).ToList();
-            var info = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info).ToList();
+            List<Diagnostic> errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+            List<Diagnostic> warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning).ToList();
+            List<Diagnostic> suggestions = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion).ToList();
+            List<Diagnostic> info = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info).ToList();
 
             // Display errors first
             if (errors.Any())
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERRORS:");
-                foreach (var error in errors)
+                foreach (Diagnostic? error in errors)
+                {
                     Console.WriteLine($"  {error}");
+                }
+
                 Console.WriteLine();
                 Console.ResetColor();
             }
@@ -940,8 +944,11 @@ namespace ppotepa.tokenez.Tree
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("WARNINGS:");
-                foreach (var warning in warnings)
+                foreach (Diagnostic? warning in warnings)
+                {
                     Console.WriteLine($"  {warning}");
+                }
+
                 Console.WriteLine();
                 Console.ResetColor();
             }
@@ -951,26 +958,33 @@ namespace ppotepa.tokenez.Tree
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("SUGGESTIONS:");
-                foreach (var suggestion in suggestions)
+                foreach (Diagnostic? suggestion in suggestions)
+                {
                     Console.WriteLine($"  {suggestion}");
+                }
+
                 Console.WriteLine();
                 Console.ResetColor();
             }
 
             // Finally info (only show if verbose or if there are no other diagnostics)
-            if (info.Any() && (errors.Count + warnings.Count + suggestions.Count == 0))
+            if (info.Any() && errors.Count + warnings.Count + suggestions.Count == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine("INFO:");
-                foreach (var infoItem in info)
+                foreach (Diagnostic? infoItem in info)
+                {
                     Console.WriteLine($"  {infoItem}");
+                }
+
                 Console.WriteLine();
                 Console.ResetColor();
             }
 
             // Summary
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"📊 Analysis complete: {errors.Count} errors, {warnings.Count} warnings, {suggestions.Count} suggestions");
+            Console.WriteLine(
+                $"📊 Analysis complete: {errors.Count} errors, {warnings.Count} warnings, {suggestions.Count} suggestions");
             Console.ResetColor();
         }
     }

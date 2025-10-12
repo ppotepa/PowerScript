@@ -1,18 +1,18 @@
 ﻿namespace ppotepa.tokenez.Tree.Tokens.Raw
 {
     /// <summary>
-    /// Represents a raw lexical token (text fragment from source code).
-    /// This is the lowest-level token before semantic classification.
-    /// Stores both the original text (with casing) and normalized version.
+    ///     Represents a raw lexical token (text fragment from source code).
+    ///     This is the lowest-level token before semantic classification.
+    ///     Stores both the original text (with casing) and normalized version.
     /// </summary>
     public class RawToken
     {
         private RawToken(string @string)
         {
             // Store original text preserving case
-            this.OriginalText = @string.Trim();
+            OriginalText = @string.Trim();
             // Normalize: trim whitespace and uppercase for comparison
-            this.Text = this.OriginalText.ToUpper();
+            Text = OriginalText.ToUpper();
         }
 
         /// <summary>The original token text (trimmed, preserving case)</summary>
@@ -22,29 +22,28 @@
         public string Text { get; }
 
         /// <summary>
-        /// Processed version with spacing around delimiters.
-        /// Ensures delimiters are separated from other tokens.
-        /// Example: "add(a,b)" -> "add ( a , b )"
+        ///     Processed version with spacing around delimiters.
+        ///     Ensures delimiters are separated from other tokens.
+        ///     Example: "add(a,b)" -> "add ( a , b )"
         /// </summary>
-        public string Processed
-        {
-            get
-            {
-                return Text
-                    .Replace("  ", " ")      // Collapse multiple spaces
-                    .Replace("(", "( ")       // Space after (
-                    .Replace(")", " )")      // Space before )
-                    .Replace("[", "[ ")       // Space after [
-                    .Replace("]", " ]")      // Space before ]
-                    .Trim();
-            }
-        }
+        public string Processed =>
+            Text
+                .Replace("  ", " ") // Collapse multiple spaces
+                .Replace("(", "( ") // Space after (
+                .Replace(")", " )") // Space before )
+                .Replace("[", "[ ") // Space after [
+                .Replace("]", " ]") // Space before ]
+                .Trim();
 
         /// <summary>Factory method to create a RawToken from source text</summary>
         internal static RawToken Create(string @string)
-            => new(@string);
+        {
+            return new RawToken(@string);
+        }
 
         public override string ToString()
-            => $"rawToken: {Text}";
+        {
+            return $"rawToken: {Text}";
+        }
     }
 }

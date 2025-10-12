@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Application Messages -->
+  <data name="App_Welcome" xml:space="preserve">
+    <value>Welcome to PowerScript Interactive Shell!</value>
+  </data>
+  <data name="App_Version" xml:space="preserve">
+    <value>
+PowerScript Interpreter v2.0
+Build Date: October 2025
+Runtime: .NET 8.0
+Language: PowerScript
+
+Features:
+  ✓ Interactive REPL Shell
+  ✓ Script File Execution
+  ✓ .NET Framework Integration
+  ✓ Function Compilation
+  ✓ Multi-line Input Support
+  ✓ Command History
+</value>
+  </data>
+  <data name="App_Goodbye" xml:space="preserve">
+    <value>
+Goodbye!</value>
+  </data>
+  
+  <!-- Shell Messages -->
+  <data name="Shell_Banner" xml:space="preserve">
+    <value>╔════════════════════════════════════════════════════════════════╗
+║              POWERSCRIPT INTERACTIVE SHELL v2.0                ║
+║          A .NET Wrapper Language Interpreter (REPL)            ║
+╚════════════════════════════════════════════════════════════════╝</value>
+  </data>
+  <data name="Shell_Welcome" xml:space="preserve">
+    <value>
+Welcome to PowerScript Interactive Shell!</value>
+  </data>
+  <data name="Shell_Help_Hint" xml:space="preserve">
+    <value>Type 'HELP' for available commands, 'EXIT' to quit.</value>
+  </data>
+  <data name="Shell_Code_Hint" xml:space="preserve">
+    <value>Enter PowerScript code directly at the prompt.
+</value>
+  </data>
+  <data name="Shell_History_Title" xml:space="preserve">
+    <value>
+Command History:</value>
+  </data>
+  <data name="Shell_History_Empty" xml:space="preserve">
+    <value>  (empty)</value>
+  </data>
+  
+  <!-- Script Execution -->
+  <data name="Script_Executing" xml:space="preserve">
+    <value>
+[SCRIPT MODE] Executing: {0}
+</value>
+  </data>
+  <data name="Script_Success" xml:space="preserve">
+    <value>
+✓ Script execution completed successfully.</value>
+  </data>
+  <data name="Script_Error" xml:space="preserve">
+    <value>
+✗ Script execution failed: {0}</value>
+  </data>
+  
+  <!-- Link Statements -->
+  <data name="Link_Namespace" xml:space="preserve">
+    <value>[LINK] Linking .NET namespace: {0}</value>
+  </data>
+  <data name="Link_File" xml:space="preserve">
+    <value>[LINK] Linking file: {0}</value>
+  </data>
+  <data name="Link_Already_Linked" xml:space="preserve">
+    <value>[LINK] File already linked, skipping: {0}</value>
+  </data>
+  <data name="Link_Loading" xml:space="preserve">
+    <value>[LINK] Loading PowerScript file: {0}</value>
+  </data>
+  <data name="Link_Error" xml:space="preserve">
+    <value>[LINK] Error linking file '{0}': {1}</value>
+  </data>
+  <data name="Link_Library_Registered" xml:space="preserve">
+    <value>[DEBUG] Registered well-known library link: {0}</value>
+  </data>
+  <data name="Link_File_Registered" xml:space="preserve">
+    <value>[DEBUG] Registered file link: {0}</value>
+  </data>
+  <data name="Link_Best_Practice" xml:space="preserve">
+    <value>[LINK] Note: PowerScript file linking is best done via PowerScriptInterpreter.LinkLibrary()</value>
+  </data>
+  <data name="Link_Suggestion" xml:space="preserve">
+    <value>[LINK] Add this to your code before execution: interpreter.LinkLibrary("{0}")</value>
+  </data>
+  
+  <!-- Token Tree -->
+  <data name="TokenTree_Building" xml:space="preserve">
+    <value>
+=== Building Token Tree ===</value>
+  </data>
+  <data name="TokenTree_Processing" xml:space="preserve">
+    <value>Processing: '{0}'
+</value>
+  </data>
+  <data name="TokenTree_Tokens_Created" xml:space="preserve">
+    <value>Tokens created: {0}</value>
+  </data>
+  <data name="TokenTree_Tokens_Linked" xml:space="preserve">
+    <value>Tokens linked</value>
+  </data>
+  <data name="TokenTree_Scope_Complete" xml:space="preserve">
+    <value>Scope creation complete
+</value>
+  </data>
+  
+  <!-- Compilation -->
+  <data name="Compile_Compiling" xml:space="preserve">
+    <value>📦 Compiling function: {0}</value>
+  </data>
+  <data name="Compile_Success" xml:space="preserve">
+    <value>✓ Compilation successful</value>
+  </data>
+  <data name="Compile_Error" xml:space="preserve">
+    <value>✗ Compilation failed: {0}</value>
+  </data>
+  
+  <!-- Scope Management -->
+  <data name="Scope_Variable_Registered" xml:space="preserve">
+    <value>[Scope] Registered variable '{0}' with type '{1}' in scope '{2}'</value>
+  </data>
+  
+  <!-- Errors -->
+  <data name="Error_Execution" xml:space="preserve">
+    <value>Execution error: {0}</value>
+  </data>
+  
+  <!-- Warnings -->
+  <data name="Warning_StdLib_Link_Failed" xml:space="preserve">
+    <value>[WARNING] Could not link StdLib.ps: {0}</value>
+  </data>
+  
+  <!-- Debug Messages -->
+  <data name="Debug_LinkProcessor" xml:space="preserve">
+    <value>[DEBUG] LinkStatementProcessor: Processing LINK token '{0}' at depth {1}</value>
+  </data>
+  <data name="Debug_VariableDeclaration" xml:space="preserve">
+    <value>[DEBUG] VariableDeclarationProcessor: Processing VAR token in scope '{0}'</value>
+  </data>
+  
+  <!-- Standard Library -->
+  <data name="StdLib_Summary" xml:space="preserve">
+    <value>Standard Library Loaded:
+  • Math: ADD, SUBTRACT, MULTIPLY, DIVIDE, MOD, POW
+  • String: CONCAT, LENGTH, SUBSTRING, TOUPPER, TOLOWER, TRIM
+  • I/O: PRINT, PRINTLN, READ
+  • .NET Access: NET::Namespace.Class.Method(args)
+</value>
+  </data>
+  
+  <!-- Help System -->
+  <data name="Help_Title" xml:space="preserve">
+    <value>╔══════════════════════════════════════════════════════════════╗
+║                    POWERSCRIPT HELP                          ║
+╚══════════════════════════════════════════════════════════════╝</value>
+  </data>
+  <data name="Help_Commands" xml:space="preserve">
+    <value>
+Built-in Shell Commands:
+  HELP            Show this help message
+  EXIT, QUIT      Exit the interpreter
+  CLEAR, CLS      Clear the screen
+  HISTORY         Show command history
+  VERSION         Show version information
+  ABOUT           About PowerScript
+</value>
+  </data>
+  <data name="Help_Syntax" xml:space="preserve">
+    <value>
+PowerScript Syntax:
+  PRINT "text"                    Print output
+  VAR name = value                 Declare variable
+  VAR INT name = value             Declare typed variable
+  NET::System.Console.WriteLine()  Call .NET methods
+  EXECUTE "file.ps"                Execute script file
+  FUNCTION name(params) { ... }    Define function
+  RETURN expression                Return from function
+</value>
+  </data>
+  <data name="Help_Examples" xml:space="preserve">
+    <value>
+Examples:
+  PS&gt; PRINT "Hello, World!"
+  PS&gt; VAR x = 10
+  PS&gt; VAR INT count = 5
+  PS&gt; NET::System.Console.WriteLine("From .NET!")
+  PS&gt; EXECUTE "myscript.ps"
+  PS&gt; FUNCTION ADD(INT a, INT b) { RETURN a + b }
+</value>
+  </data>
+  <data name="Help_About_Title" xml:space="preserve">
+    <value>╔══════════════════════════════════════════════════════════════╗
+║                  ABOUT POWERSCRIPT                           ║
+╚══════════════════════════════════════════════════════════════╝</value>
+  </data>
+  <data name="Help_About_Content" xml:space="preserve">
+    <value>
+PowerScript is a .NET wrapper language with an interactive
+interpreter shell. It provides direct access to the .NET
+Framework through a simple, PowerShell-like syntax.
+
+Key Features:
+  • Direct .NET method invocation via NET:: syntax
+  • Function compilation to Lambda expressions
+  • Script file execution and imports
+  • Interactive REPL for rapid development
+  • PowerShell-like command interface
+
+Architecture:
+  • Token-based lexical analysis
+  • AST construction and traversal
+  • Reflection-based .NET integration
+  • Expression tree compilation
+  • Persistent interpreter session
+</value>
+  </data>
+</root>

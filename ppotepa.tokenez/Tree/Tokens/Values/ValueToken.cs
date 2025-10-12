@@ -4,8 +4,8 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Values
 {
     /// <summary>
-    /// Token representing a literal value (number, string, etc.).
-    /// Examples: 42, "hello", 3.14
+    ///     Token representing a literal value (number, string, etc.).
+    ///     Examples: 42, "hello", 3.14
     /// </summary>
     public class ValueToken : Token
     {

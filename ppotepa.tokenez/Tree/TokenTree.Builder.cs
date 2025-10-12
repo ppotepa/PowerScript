@@ -5,19 +5,19 @@ using ppotepa.tokenez.Tree.Tokens.Base;
 namespace ppotepa.tokenez.Tree
 {
     /// <summary>
-    /// Partial class that handles the initialization and coordination of the token tree building process.
-    /// Uses dependency injection pattern to set up processors, validators, and builders.
+    ///     Partial class that handles the initialization and coordination of the token tree building process.
+    ///     Uses dependency injection pattern to set up processors, validators, and builders.
     /// </summary>
     public partial class TokenTree
     {
-        private readonly ScopeBuilder _scopeBuilder;
-        private readonly TokenProcessorRegistry _registry;
-        private readonly ExpectationValidator _validator;
         private readonly DotNetLinker _dotNetLinker;
+        private readonly TokenProcessorRegistry _registry;
+        private readonly ScopeBuilder _scopeBuilder;
+        private readonly ExpectationValidator _validator;
 
         /// <summary>
-        /// Initializes the token tree builder with all necessary processors.
-        /// Sets up the processing pipeline following Single Responsibility Principle.
+        ///     Initializes the token tree builder with all necessary processors.
+        ///     Sets up the processing pipeline following Single Responsibility Principle.
         /// </summary>
         public TokenTree()
         {
@@ -30,28 +30,28 @@ namespace ppotepa.tokenez.Tree
             _scopeBuilder = new ScopeBuilder(_registry, _validator);
 
             // Create specialized processors for different token types
-            var parameterProcessor = new ParameterProcessor();
-            var functionProcessor = new FunctionProcessor(parameterProcessor, _validator);
-            var functionCallProcessor = new FunctionCallProcessor();
-            var linkProcessor = new LinkStatementProcessor(_dotNetLinker);
-            var flexVariableProcessor = new FlexVariableProcessor(_validator);
-            var cycleLoopProcessor = new CycleLoopProcessor(_validator, _scopeBuilder);
-            var ifStatementProcessor = new IfStatementProcessor(_validator, _scopeBuilder);
-            var returnProcessor = new ReturnStatementProcessor(_validator);
-            var printProcessor = new PrintStatementProcessor(_validator);
-            var executeProcessor = new ExecuteCommandProcessor(_validator);
-            var netMethodCallProcessor = new NetMethodCallProcessor(_validator);
-            var variableDeclarationProcessor = new VariableDeclarationProcessor(_validator);
-            var scopeProcessor = new ScopeProcessor(_registry, _validator, _scopeBuilder);
+            ParameterProcessor parameterProcessor = new();
+            FunctionProcessor functionProcessor = new(parameterProcessor, _validator);
+            FunctionCallProcessor functionCallProcessor = new();
+            LinkStatementProcessor linkProcessor = new(_dotNetLinker);
+            FlexVariableProcessor flexVariableProcessor = new();
+            CycleLoopProcessor cycleLoopProcessor = new(_scopeBuilder);
+            IfStatementProcessor ifStatementProcessor = new(_validator, _scopeBuilder);
+            ReturnStatementProcessor returnProcessor = new(_validator);
+            PrintStatementProcessor printProcessor = new(_validator);
+            ExecuteCommandProcessor executeProcessor = new(_validator);
+            NetMethodCallProcessor netMethodCallProcessor = new(_validator);
+            VariableDeclarationProcessor variableDeclarationProcessor = new(_validator);
+            ScopeProcessor scopeProcessor = new(_registry, _validator, _scopeBuilder);
 
             // Register all processors with the central registry
             // LINK processor should be registered first since LINK statements must come at the top
             _registry.Register(linkProcessor);
             _registry.Register(functionProcessor);
             _registry.Register(functionCallProcessor); // Function calls (identifier followed by parentheses)
-            _registry.Register(flexVariableProcessor);  // FLEX variable declarations
-            _registry.Register(cycleLoopProcessor);     // CYCLE loops
-            _registry.Register(ifStatementProcessor);   // IF conditional statements
+            _registry.Register(flexVariableProcessor); // FLEX variable declarations
+            _registry.Register(cycleLoopProcessor); // CYCLE loops
+            _registry.Register(ifStatementProcessor); // IF conditional statements
             _registry.Register(returnProcessor);
             _registry.Register(printProcessor);
             _registry.Register(executeProcessor);
@@ -61,8 +61,8 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        /// Creates and builds a scope hierarchy starting from the given token.
-        /// Delegates to ScopeBuilder which uses the processor registry to handle different token types.
+        ///     Creates and builds a scope hierarchy starting from the given token.
+        ///     Delegates to ScopeBuilder which uses the processor registry to handle different token types.
         /// </summary>
         /// <param name="currentToken">The token to start building from</param>
         /// <param name="scope">The parent scope</param>
@@ -70,7 +70,8 @@ namespace ppotepa.tokenez.Tree
         /// <param name="iteration">Iteration count (deprecated, kept for compatibility)</param>
         /// <param name="parenthesisDepth">Parenthesis depth (deprecated, kept for compatibility)</param>
         /// <returns>The built scope with all nested scopes and declarations</returns>
-        public Scope CreateScope(Token currentToken, Scope scope, int depth = 0, int iteration = 0, int parenthesisDepth = 0)
+        public Scope CreateScope(Token currentToken, Scope scope, int depth = 0, int iteration = 0,
+            int parenthesisDepth = 0)
         {
             return _scopeBuilder.BuildScope(currentToken, scope, depth);
         }

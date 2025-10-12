@@ -5,9 +5,9 @@ using ppotepa.tokenez.Tree.Tokens.Raw;
 namespace ppotepa.tokenez.Tree.Tokens.Operators
 {
     /// <summary>
-    /// Token representing the dot operator.
-    /// Used for member access in .NET paths.
-    /// Example: "System.Console.WriteLine"
+    ///     Token representing the dot operator.
+    ///     Used for member access in .NET paths.
+    ///     Example: "System.Console.WriteLine"
     /// </summary>
     public class DotToken : Token
     {

@@ -1,17 +1,16 @@
 using ppotepa.tokenez.Tree.Tokens.Base;
-using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Interfaces;
 using ppotepa.tokenez.Tree.Tokens.Raw;
 
 namespace ppotepa.tokenez.Tree.Tokens.Keywords
 {
     /// <summary>
-    /// Token representing the CYCLE keyword for loops.
-    /// CYCLE is PowerScript's foreach equivalent with automatic index variables.
-    /// Examples:
-    /// - CYCLE IN collection { ... }  // Uses 'a' as automatic index
-    /// - CYCLE IN collection AS item { ... }  // Renamed to 'item'
-    /// - Nested: outer uses 'a', inner uses 'b', etc.
+    ///     Token representing the CYCLE keyword for loops.
+    ///     CYCLE is PowerScript's foreach equivalent with automatic index variables.
+    ///     Examples:
+    ///     - CYCLE IN collection { ... }  // Uses 'a' as automatic index
+    ///     - CYCLE IN collection AS item { ... }  // Renamed to 'item'
+    ///     - Nested: outer uses 'a', inner uses 'b', etc.
     /// </summary>
     public class CycleKeywordToken : Token, IKeyWordToken
     {

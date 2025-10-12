@@ -12,13 +12,13 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes VAR keyword tokens for variable declarations.
-    /// Responsible for:
-    /// - Parsing variable name (required)
-    /// - Parsing optional type declaration (INT, etc.)
-    /// - Parsing equals sign and initial value expression
-    /// - Checking for duplicate declarations in current scope
-    /// - Registering variable declaration in scope
+    ///     Processes VAR keyword tokens for variable declarations.
+    ///     Responsible for:
+    ///     - Parsing variable name (required)
+    ///     - Parsing optional type declaration (INT, etc.)
+    ///     - Parsing equals sign and initial value expression
+    ///     - Checking for duplicate declarations in current scope
+    ///     - Registering variable declaration in scope
     /// </summary>
     internal class VariableDeclarationProcessor : ITokenProcessor
     {
@@ -37,16 +37,17 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] VariableDeclarationProcessor: Processing VAR token in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] VariableDeclarationProcessor: Processing VAR token in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             var varToken = token as VarKeywordToken;
-            Token currentToken = varToken!.Next!;
+            var currentToken = varToken!.Next!;
 
             // Determine if we have explicit type or inferred type
             // Syntax: VAR x = 10         (inferred)
             //     OR: VAR INT x = 10     (explicit)
-            
+
             Token? typeToken = null;
             Token identifierToken;
 
@@ -59,34 +60,28 @@ namespace ppotepa.tokenez.Tree.Builders
 
             // Next token must be an identifier (variable name)
             if (currentToken is not IdentifierToken)
-            {
-                throw new InvalidOperationException($"Expected identifier after VAR{(typeToken != null ? " " + typeToken.RawToken?.Text : "")}, found {currentToken.GetType().Name}");
-            }
+                throw new InvalidOperationException(
+                    $"Expected identifier after VAR{(typeToken != null ? " " + typeToken.RawToken?.Text : "")}, found {currentToken.GetType().Name}");
 
             identifierToken = currentToken;
-            string variableName = identifierToken.RawToken?.Text ?? "";
+            var variableName = identifierToken.RawToken?.Text ?? "";
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[DEBUG] Variable name: {variableName}");
-            if (typeToken != null)
-            {
-                Console.WriteLine($"[DEBUG] Variable type: {typeToken.RawToken?.Text}");
-            }
+            if (typeToken != null) Console.WriteLine($"[DEBUG] Variable type: {typeToken.RawToken?.Text}");
             Console.ResetColor();
 
             // Check for duplicate declarations in current scope
             if (context.CurrentScope.Decarations.ContainsKey(variableName))
-            {
-                throw new InvalidOperationException($"Variable '{variableName}' is already declared in scope '{context.CurrentScope.ScopeName}'");
-            }
+                throw new InvalidOperationException(
+                    $"Variable '{variableName}' is already declared in scope '{context.CurrentScope.ScopeName}'");
 
             currentToken = identifierToken.Next!;
 
             // Expect equals sign
             if (currentToken is not EqualsToken)
-            {
-                throw new InvalidOperationException($"Expected '=' after variable name '{variableName}', found {currentToken.GetType().Name}");
-            }
+                throw new InvalidOperationException(
+                    $"Expected '=' after variable name '{variableName}', found {currentToken.GetType().Name}");
 
             currentToken = currentToken.Next!;
 
@@ -111,27 +106,21 @@ namespace ppotepa.tokenez.Tree.Builders
             }
             else
             {
-                throw new InvalidOperationException($"Expected value, string, or identifier after '=' in variable declaration, found {currentToken.GetType().Name}");
+                throw new InvalidOperationException(
+                    $"Expected value, string, or identifier after '=' in variable declaration, found {currentToken.GetType().Name}");
             }
 
             // Create the variable declaration
-            VariableDeclaration declaration;
-            if (typeToken != null)
-            {
-                declaration = new VariableDeclaration(typeToken, identifierToken);
-            }
-            else
-            {
-                declaration = new VariableDeclaration(identifierToken);
-            }
-
+            var declaration = typeToken != null
+                ? new VariableDeclaration(typeToken, identifierToken)
+                : new VariableDeclaration(identifierToken);
             declaration.InitialValue = initialValue;
 
             // Register the declaration in the scope
             context.CurrentScope.Decarations.Add(variableName, declaration);
 
             // Create and register the statement
-            var statement = new VariableDeclarationStatement(declaration, initialValue)
+            VariableDeclarationStatement statement = new(declaration, initialValue)
             {
                 StartToken = varToken
             };
@@ -139,7 +128,8 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(statement);
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"[DEBUG] ✓ Registered variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] ✓ Registered variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             return TokenProcessingResult.Continue(currentToken);

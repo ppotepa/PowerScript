@@ -1,8 +1,8 @@
 ﻿namespace ppotepa.tokenez.Tree.Tokens.Interfaces
 {
     /// <summary>
-    /// Interface for value tokens (literals like numbers, strings).
-    /// Provides access to the value representation.
+    ///     Interface for value tokens (literals like numbers, strings).
+    ///     Provides access to the value representation.
     /// </summary>
     public interface IValue
     {

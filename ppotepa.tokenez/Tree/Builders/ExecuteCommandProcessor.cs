@@ -7,8 +7,8 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Builders
 {
     /// <summary>
-    /// Processes EXECUTE commands for running external PowerScript files.
-    /// Syntax: EXECUTE "filename.ps"
+    ///     Processes EXECUTE commands for running external PowerScript files.
+    ///     Syntax: EXECUTE "filename.ps"
     /// </summary>
     internal class ExecuteCommandProcessor : ITokenProcessor
     {
@@ -27,7 +27,8 @@ namespace ppotepa.tokenez.Tree.Builders
         public TokenProcessingResult Process(Token token, ProcessingContext context)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] ExecuteCommandProcessor: Processing EXECUTE command in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] ExecuteCommandProcessor: Processing EXECUTE command in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             var executeToken = token as ExecuteKeywordToken;
@@ -52,7 +53,7 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ResetColor();
 
             // Create and register the execute statement
-            var executeStatement = new ExecuteStatement(filePath)
+            ExecuteStatement executeStatement = new(filePath)
             {
                 StartToken = executeToken
             };
@@ -60,7 +61,8 @@ namespace ppotepa.tokenez.Tree.Builders
             context.CurrentScope.Statements.Add(executeStatement);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"[DEBUG] Registered EXECUTE statement for file '{filePath}' in scope '{context.CurrentScope.ScopeName}'");
+            Console.WriteLine(
+                $"[DEBUG] Registered EXECUTE statement for file '{filePath}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
             return new TokenProcessingResult

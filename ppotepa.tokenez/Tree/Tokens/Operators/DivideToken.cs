@@ -6,8 +6,8 @@ using ppotepa.tokenez.Tree.Tokens.Values;
 namespace ppotepa.tokenez.Tree.Tokens.Operators
 {
     /// <summary>
-    /// Token representing the '/' division operator.
-    /// Used in binary expressions: a / b
+    ///     Token representing the '/' division operator.
+    ///     Used in binary expressions: a / b
     /// </summary>
     public class DivideToken : Token
     {
