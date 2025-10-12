@@ -19,10 +19,72 @@ namespace ppotepa.tokenez.Tree
     ///     Compiles PowerScript token trees into executable .NET Lambda expressions.
     ///     Handles function compilation, parameter binding, and expression tree building.
     /// </summary>
-    public class PowerScriptCompiler(TokenTree tree)
+    public class PowerScriptCompiler : IPowerScriptCompiler
     {
-        private readonly TokenTree _tree = tree ?? throw new ArgumentNullException(nameof(tree));
+        private readonly TokenTree _tree;
         private readonly Dictionary<string, object> _variables = [];
+
+        public PowerScriptCompiler(TokenTree tree)
+        {
+            _tree = tree ?? throw new ArgumentNullException(nameof(tree));
+        }
+
+        /// <summary>
+        ///     Executes the provided scope and returns the result.
+        /// </summary>
+        public object? Execute(Scope scope)
+        {
+            object? result = null;
+
+            // Execute all statements in the scope
+            foreach (Statement stmt in scope.Statements)
+            {
+                try
+                {
+                    ExecuteStatement(stmt);
+
+                    // If the statement returns a value, capture it
+                    if (stmt is ReturnStatement returnStmt && returnStmt.ReturnValue != null)
+                    {
+                        result = EvaluateExpressionValue(returnStmt.ReturnValue);
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LoggerService.Logger.Error($"✗ Execution failed: {ex.Message}");
+                    throw;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Registers a function in the root scope.
+        /// </summary>
+        public void RegisterFunction(string functionName, FunctionDeclaration declaration)
+        {
+            if (string.IsNullOrWhiteSpace(functionName))
+                throw new ArgumentException("Function name cannot be null or empty.", nameof(functionName));
+
+            if (declaration == null)
+                throw new ArgumentNullException(nameof(declaration));
+
+            _tree.RootScope!.Decarations[functionName] = declaration;
+        }
+
+        /// <summary>
+        ///     Checks if a function is registered in the root scope.
+        /// </summary>
+        public bool IsFunctionRegistered(string functionName)
+        {
+            if (string.IsNullOrWhiteSpace(functionName))
+                return false;
+
+            return _tree.RootScope!.Decarations.ContainsKey(functionName) &&
+                   _tree.RootScope.Decarations[functionName] is FunctionDeclaration;
+        }
 
         /// <summary>
         ///     Compiles all functions in the root scope and executes them.

@@ -6,7 +6,7 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Context information passed through the token processing pipeline.
     ///     Maintains state about the current scope, depth, and function context during processing.
     /// </summary>
-    internal class ProcessingContext(Scope currentScope, int depth)
+    public class ProcessingContext(Scope currentScope, int depth)
     {
         /// <summary>Current scope being built</summary>
         public Scope CurrentScope { get; set; } = currentScope;

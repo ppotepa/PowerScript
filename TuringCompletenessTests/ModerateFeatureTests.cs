@@ -13,7 +13,9 @@ namespace TuringCompletenessTests
         [SetUp]
         public void Setup()
         {
-            _interpreter = new PowerScriptInterpreter();
+#pragma warning disable CS0618 // Type or member is obsolete
+            _interpreter = PowerScriptInterpreter.CreateNew();
+#pragma warning restore CS0618
 
             // Link the standard library
             string stdLibPath = Path.Combine("..", "..", "..", "..", "ppotepa.tokenez", "Libs", "StdLib.ps");

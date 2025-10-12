@@ -30,6 +30,8 @@ namespace ppotepa.tokenez.Tree
             { "LINK", typeof(LinkKeywordToken) }, // Library/file import keyword
             { "FUNCTION", typeof(FunctionToken) }, // Function declaration keyword
             { "RETURN", typeof(ReturnKeywordToken) }, // Return statement keyword
+            { "RETURNS", typeof(ReturnsKeywordToken) }, // Returns keyword (alt syntax)
+            { "WITH", typeof(WithKeywordToken) }, // With keyword (alt syntax)
             { "PRINT", typeof(PrintKeywordToken) }, // Print statement keyword
             { "EXECUTE", typeof(ExecuteKeywordToken) }, // Execute script file keyword
             { "NET", typeof(NetKeywordToken) }, // .NET access keyword
@@ -75,7 +77,7 @@ namespace ppotepa.tokenez.Tree
         public Token[]? Tokens { get; private set; }
 
         /// <summary>The .NET linker for resolving types from linked namespaces</summary>
-        public DotNetLinker DotNetLinker => _dotNetLinker;
+        public IDotNetLinker DotNetLinker => _dotNetLinker;
 
         /// <summary>
         ///     Creates the token tree from a user prompt.
@@ -89,7 +91,8 @@ namespace ppotepa.tokenez.Tree
             LoggerService.Logger.Info("");
 
             // Step 1: Convert raw text tokens into strongly-typed token objects
-            Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select(ToToken)];
+            LoggerService.Logger.Debug($"Raw tokens count: {prompt.RawTokens.Length}");
+            Token[] tokens = [.. new RawTokenCollection(prompt.RawTokens).Select((token, index) => ToToken(token, index))];
             LoggerService.Logger.Info($"Tokens created: {tokens.Length}");
 
             // Step 2: Link all tokens with Previous/Next references for easy navigation

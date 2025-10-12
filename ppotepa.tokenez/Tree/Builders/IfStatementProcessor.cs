@@ -17,9 +17,9 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     SQL-style syntax: IF condition { ... } or IF condition { ... } ELSE { ... }
     ///     Supports: >, <, >=, <=, ==, !=, AND, OR
     /// </summary>
-    internal class IfStatementProcessor(ScopeBuilder scopeBuilder) : ITokenProcessor
+    internal class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
     {
-        private readonly ScopeBuilder _scopeBuilder = scopeBuilder;
+        private readonly IScopeBuilder _scopeBuilder = scopeBuilder;
 
         public bool CanProcess(Token token)
         {
@@ -55,8 +55,11 @@ namespace ppotepa.tokenez.Tree.Builders
 
             LoggerService.Logger.Debug($"IfStatementProcessor: Created THEN scope: {thenScopeName}");
 
-            // Build the THEN scope body
-            _scopeBuilder.BuildScope(currentToken, thenScope, context.Depth + 1);
+            // Build the THEN scope body - use context.Clone() to preserve function context
+            var thenContext = context.Clone();
+            thenContext.CurrentScope = thenScope;
+            thenContext.Depth = context.Depth + 1;
+            _scopeBuilder.BuildScope(currentToken, thenScope, thenContext);
 
             Scope? elseScope = null;
 
@@ -81,8 +84,11 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 LoggerService.Logger.Debug($"IfStatementProcessor: Created ELSE scope: {elseScopeName}");
 
-                // Build the ELSE scope body
-                _scopeBuilder.BuildScope(currentToken, elseScope, context.Depth + 1);
+                // Build the ELSE scope body - use context.Clone() to preserve function context
+                var elseContext = context.Clone();
+                elseContext.CurrentScope = elseScope;
+                elseContext.Depth = context.Depth + 1;
+                _scopeBuilder.BuildScope(currentToken, elseScope, elseContext);
             }
 
             // Create the IF statement

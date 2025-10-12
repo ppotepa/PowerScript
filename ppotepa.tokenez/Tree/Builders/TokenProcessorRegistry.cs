@@ -8,7 +8,7 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Implements the Chain of Responsibility pattern - processors are tried in registration order.
     ///     This allows adding new token types without modifying existing code.
     /// </summary>
-    internal class TokenProcessorRegistry
+    public class TokenProcessorRegistry : ITokenProcessorRegistry
     {
         private readonly List<ITokenProcessor> _processors = [];
 

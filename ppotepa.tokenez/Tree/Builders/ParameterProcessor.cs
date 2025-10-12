@@ -42,7 +42,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     currentToken = nextToken;
 
                     // After a parameter, expect either comma (more params) or closing parenthesis
-                    if (currentToken is CommaSeparatorToken)
+                    if (currentToken is CommaToken)
                     {
                         currentToken = currentToken.Next; // Skip comma and continue
                         continue;
@@ -124,7 +124,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 token,
                 "Unexpected token in parameters list",
                 typeof(ITypeToken),
-                typeof(CommaSeparatorToken),
+                typeof(CommaToken),
                 typeof(ParenthesisClosed));
         }
     }

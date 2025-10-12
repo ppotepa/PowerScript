@@ -60,7 +60,7 @@ namespace ppotepa.tokenez
         {
             try
             {
-                var interpreter = PowerScriptInterpreter.CreateNew();
+                var interpreter = _serviceProvider!.GetRequiredService<IPowerScriptInterpreter>();
                 return interpreter.ExecuteFile(filename);
             }
             catch (Exception ex)
@@ -77,7 +77,7 @@ namespace ppotepa.tokenez
         {
             try
             {
-                var interpreter = PowerScriptInterpreter.CreateNew();
+                var interpreter = _serviceProvider!.GetRequiredService<IPowerScriptInterpreter>();
                 return interpreter.ExecuteCode(code);
             }
             catch (Exception ex)
@@ -125,8 +125,15 @@ namespace ppotepa.tokenez
             // Register custom logger service
             services.AddSingleton(typeof(Logging.ILogger), typeof(ConsoleLogger));
 
+            // Register PowerScript core services
+            RegisterPowerScriptServices(services);
+
             // Build service provider
             _serviceProvider = services.BuildServiceProvider();
+
+            // Initialize the token processor registry with all processors
+            var initAction = _serviceProvider.GetRequiredService<Action<IServiceProvider>>();
+            initAction(_serviceProvider);
 
             // Initialize LoggerService with the custom logger
             var customLogger = _serviceProvider.GetRequiredService<Logging.ILogger>();
@@ -136,6 +143,67 @@ namespace ppotepa.tokenez
             var localizerFactory = _serviceProvider.GetRequiredService<IStringLocalizerFactory>();
             var localizer = localizerFactory.Create("Messages", typeof(Program).Assembly.GetName().Name!);
             LocalizationService.Initialize(localizer);
+        }
+
+        /// <summary>
+        ///     Registers all PowerScript-specific services in the DI container
+        /// </summary>
+        private static void RegisterPowerScriptServices(ServiceCollection services)
+        {
+            // Core infrastructure - Singletons (shared across application)
+            services.AddSingleton<DotNet.IDotNetLinker, DotNet.DotNetLinker>();
+
+            // Step 1: Create empty registry (will be populated later)
+            var registry = new Tree.Builders.TokenProcessorRegistry();
+            services.AddSingleton<Tree.Builders.ITokenProcessorRegistry>(registry);
+
+            // Step 2: Create ScopeBuilder with the registry
+            services.AddSingleton<Tree.Builders.IScopeBuilder>(provider =>
+            {
+                var reg = provider.GetRequiredService<Tree.Builders.ITokenProcessorRegistry>();
+                return new Tree.Builders.ScopeBuilder(reg);
+            });
+
+            // Step 3: Populate the registry with all processors (using a lazy factory pattern)
+            services.AddSingleton<Action<IServiceProvider>>(provider =>
+            {
+                return (sp) =>
+                {
+                    var reg = sp.GetRequiredService<Tree.Builders.ITokenProcessorRegistry>();
+                    var dotNetLinker = sp.GetRequiredService<DotNet.IDotNetLinker>();
+                    var scopeBuilder = sp.GetRequiredService<Tree.Builders.IScopeBuilder>();
+
+                    // Create parameter processor (helper, not a token processor)
+                    var parameterProcessor = new Tree.Builders.ParameterProcessor();
+
+                    // Register all token processors
+                    reg.Register(new Tree.Builders.FunctionProcessor(parameterProcessor));
+                    reg.Register(new Tree.Builders.FunctionCallProcessor());
+                    reg.Register(new Tree.Builders.LinkStatementProcessor(dotNetLinker));
+                    reg.Register(new Tree.Builders.FlexVariableProcessor());
+                    reg.Register(new Tree.Builders.CycleLoopProcessor(scopeBuilder));
+                    reg.Register(new Tree.Builders.IfStatementProcessor(scopeBuilder));
+                    reg.Register(new Tree.Builders.ReturnStatementProcessor());
+                    reg.Register(new Tree.Builders.PrintStatementProcessor());
+                    reg.Register(new Tree.Builders.ExecuteCommandProcessor());
+                    reg.Register(new Tree.Builders.NetMethodCallProcessor());
+                    reg.Register(new Tree.Builders.VariableDeclarationProcessor());
+                    reg.Register(new Tree.Builders.ScopeProcessor(reg, scopeBuilder));
+                };
+            });
+
+            // Transient services (new instance per request)
+            services.AddTransient<IPowerScriptInterpreter, PowerScriptInterpreter>();
+
+            services.AddTransient<Tree.IPowerScriptCompiler>(provider =>
+            {
+                var reg = provider.GetRequiredService<Tree.Builders.ITokenProcessorRegistry>();
+                var dotNetLinker = provider.GetRequiredService<DotNet.IDotNetLinker>();
+                var scopeBuilder = provider.GetRequiredService<Tree.Builders.IScopeBuilder>();
+                var tokenTree = new Tree.TokenTree(reg, dotNetLinker, scopeBuilder);
+                return new Tree.PowerScriptCompiler(tokenTree);
+            });
+            services.AddTransient<Tree.TokenTree>();
         }
     }
 }

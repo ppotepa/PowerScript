@@ -20,9 +20,9 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Collection-based: CYCLE IN collection { ... } or CYCLE IN collection AS variableName { ... }
     ///     Automatic index variables: A, B, C, D, ... based on nesting level (when AS is not specified)
     /// </summary>
-    internal class CycleLoopProcessor(ScopeBuilder scopeBuilder) : ITokenProcessor
+    internal class CycleLoopProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
     {
-        private readonly ScopeBuilder _scopeBuilder = scopeBuilder;
+        private readonly IScopeBuilder _scopeBuilder = scopeBuilder;
 
         public bool CanProcess(Token token)
         {

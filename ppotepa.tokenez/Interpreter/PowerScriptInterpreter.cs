@@ -2,6 +2,8 @@ using System.Text;
 using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Prompt;
 using ppotepa.tokenez.Tree;
+using ppotepa.tokenez.Tree.Builders;
+using ppotepa.tokenez.DotNet;
 
 namespace ppotepa.tokenez.Interpreter
 {
@@ -9,11 +11,28 @@ namespace ppotepa.tokenez.Interpreter
     ///     Core interpreter for PowerScript language that handles script execution.
     ///     Can execute code from strings or files, maintaining a global execution context.
     /// </summary>
-    public class PowerScriptInterpreter
+    public class PowerScriptInterpreter : IPowerScriptInterpreter
     {
         private readonly Dictionary<string, TokenTree> _compiledScripts = [];
         private readonly List<string> _linkedLibraries = [];
         private string? _linkedLibraryCode;
+
+        private readonly ITokenProcessorRegistry _registry;
+        private readonly IDotNetLinker _dotNetLinker;
+        private readonly IScopeBuilder _scopeBuilder;
+
+        /// <summary>
+        ///     Initializes a new PowerScriptInterpreter with dependency injection.
+        /// </summary>
+        public PowerScriptInterpreter(
+            ITokenProcessorRegistry registry,
+            IDotNetLinker dotNetLinker,
+            IScopeBuilder scopeBuilder)
+        {
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            _dotNetLinker = dotNetLinker ?? throw new ArgumentNullException(nameof(dotNetLinker));
+            _scopeBuilder = scopeBuilder ?? throw new ArgumentNullException(nameof(scopeBuilder));
+        }
 
         /// <summary>
         ///     Links a library file to be included with all script executions.
@@ -75,7 +94,7 @@ namespace ppotepa.tokenez.Interpreter
 
                 // Create prompt and build token tree
                 UserPrompt prompt = new(fullCode);
-                var tree = new TokenTree().Create(prompt);
+                var tree = new TokenTree(_registry, _dotNetLinker, _scopeBuilder).Create(prompt);
 
                 // Compile and execute
                 PowerScriptCompiler compiler = new(tree);
@@ -86,7 +105,8 @@ namespace ppotepa.tokenez.Interpreter
             catch (Exception ex)
             {
                 LoggerService.Logger.Error($"Execution error: {ex.Message}");
-                return null;
+                LoggerService.Logger.Error($"Stack trace: {ex.StackTrace}");
+                throw;
             }
         }
 
@@ -228,11 +248,33 @@ namespace ppotepa.tokenez.Interpreter
         }
 
         /// <summary>
-        ///     Creates a new interpreter instance.
+        ///     Creates a new interpreter instance (deprecated - use DI instead).
+        ///     This method is kept for backward compatibility but creates dependencies manually.
         /// </summary>
+        [Obsolete("Use dependency injection instead. This method creates dependencies manually.")]
         public static PowerScriptInterpreter CreateNew()
         {
-            return new PowerScriptInterpreter();
+            // Create dependencies manually for backward compatibility
+            var registry = new TokenProcessorRegistry();
+            var dotNetLinker = new DotNet.DotNetLinker();
+            var scopeBuilder = new ScopeBuilder(registry);
+
+            // Register all processors
+            var parameterProcessor = new ParameterProcessor();
+            registry.Register(new FunctionProcessor(parameterProcessor));
+            registry.Register(new FunctionCallProcessor());
+            registry.Register(new LinkStatementProcessor(dotNetLinker));
+            registry.Register(new FlexVariableProcessor());
+            registry.Register(new CycleLoopProcessor(scopeBuilder));
+            registry.Register(new IfStatementProcessor(scopeBuilder));
+            registry.Register(new ReturnStatementProcessor());
+            registry.Register(new PrintStatementProcessor());
+            registry.Register(new ExecuteCommandProcessor());
+            registry.Register(new NetMethodCallProcessor());
+            registry.Register(new VariableDeclarationProcessor());
+            registry.Register(new ScopeProcessor(registry, scopeBuilder));
+
+            return new PowerScriptInterpreter(registry, dotNetLinker, scopeBuilder);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace ppotepa.tokenez.Prompt
     /// </summary>
     public class UserPrompt(string prompt)
     {
-        private RawToken[] _rawTokens = [];
+        private RawToken[]? _rawTokens = null;
 
         /// <summary>
         ///     The original user code

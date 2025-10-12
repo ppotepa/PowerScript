@@ -7,7 +7,7 @@ namespace ppotepa.tokenez.Tree.Builders.Interfaces
     ///     Implements the Strategy pattern - each token type can have its own processor.
     ///     Processors are registered in a registry and invoked when matching tokens are encountered.
     /// </summary>
-    internal interface ITokenProcessor
+    public interface ITokenProcessor
     {
         /// <summary>
         ///     Determines if this processor can handle the given token.

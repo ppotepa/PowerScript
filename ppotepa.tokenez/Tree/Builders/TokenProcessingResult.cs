@@ -6,7 +6,7 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Result of processing a token.
     ///     Indicates which token to process next and any side effects (scope changes, validation requirements).
     /// </summary>
-    internal class TokenProcessingResult
+    public class TokenProcessingResult
     {
         /// <summary>The next token to continue processing from</summary>
         public required Token NextToken { get; init; }

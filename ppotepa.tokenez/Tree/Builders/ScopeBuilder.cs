@@ -7,8 +7,15 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Builds scope hierarchies by processing tokens sequentially.
     ///     Uses a processor registry pattern to delegate token-specific logic to specialized processors.
     /// </summary>
-    internal class ScopeBuilder(TokenProcessorRegistry registry)
+    public class ScopeBuilder : IScopeBuilder
     {
+        private readonly ITokenProcessorRegistry _registry;
+
+        public ScopeBuilder(ITokenProcessorRegistry registry)
+        {
+            _registry = registry;
+        }
+
         /// <summary>
         ///     Builds a complete scope by processing tokens from start to end.
         ///     Each token is checked for a matching processor; if found, the processor handles it.
@@ -52,7 +59,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // Check if any processor can handle this token (even without expectations)
                 // This allows processors like FunctionCallProcessor to handle identifiers followed by parentheses
-                Interfaces.ITokenProcessor? processor = registry.GetProcessor(currentToken);
+                Interfaces.ITokenProcessor? processor = _registry.GetProcessor(currentToken);
                 if (processor != null)
                 {
                     LoggerService.Logger.Debug(

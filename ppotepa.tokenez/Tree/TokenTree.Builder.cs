@@ -10,52 +10,22 @@ namespace ppotepa.tokenez.Tree
     /// </summary>
     public partial class TokenTree
     {
-        private readonly DotNetLinker _dotNetLinker;
-        private readonly TokenProcessorRegistry _registry;
-        private readonly ScopeBuilder _scopeBuilder;
+        private readonly IDotNetLinker _dotNetLinker;
+        private readonly ITokenProcessorRegistry _registry;
+        private readonly IScopeBuilder _scopeBuilder;
 
         /// <summary>
-        ///     Initializes the token tree builder with all necessary processors.
-        ///     Sets up the processing pipeline following Single Responsibility Principle.
+        ///     Initializes the token tree builder with all necessary dependencies via constructor injection.
+        ///     Follows Dependency Injection and Inversion of Control principles.
         /// </summary>
-        public TokenTree()
+        public TokenTree(
+            ITokenProcessorRegistry registry,
+            IDotNetLinker dotNetLinker,
+            IScopeBuilder scopeBuilder)
         {
-            // Create core infrastructure
-            _registry = new TokenProcessorRegistry();
-            _dotNetLinker = new DotNetLinker();
-
-            // Create the scope builder first (needed by ScopeProcessor)
-            _scopeBuilder = new ScopeBuilder(_registry);
-
-            // Create specialized processors for different token types
-            ParameterProcessor parameterProcessor = new();
-            FunctionProcessor functionProcessor = new(parameterProcessor);
-            FunctionCallProcessor functionCallProcessor = new();
-            LinkStatementProcessor linkProcessor = new(_dotNetLinker);
-            FlexVariableProcessor flexVariableProcessor = new();
-            CycleLoopProcessor cycleLoopProcessor = new(_scopeBuilder);
-            IfStatementProcessor ifStatementProcessor = new(_scopeBuilder);
-            ReturnStatementProcessor returnProcessor = new();
-            PrintStatementProcessor printProcessor = new();
-            ExecuteCommandProcessor executeProcessor = new();
-            NetMethodCallProcessor netMethodCallProcessor = new();
-            VariableDeclarationProcessor variableDeclarationProcessor = new();
-            ScopeProcessor scopeProcessor = new(_registry, _scopeBuilder);
-
-            // Register all processors with the central registry
-            // LINK processor should be registered first since LINK statements must come at the top
-            _registry.Register(linkProcessor);
-            _registry.Register(functionProcessor);
-            _registry.Register(functionCallProcessor); // Function calls (identifier followed by parentheses)
-            _registry.Register(flexVariableProcessor); // FLEX variable declarations
-            _registry.Register(cycleLoopProcessor); // CYCLE loops
-            _registry.Register(ifStatementProcessor); // IF conditional statements
-            _registry.Register(returnProcessor);
-            _registry.Register(printProcessor);
-            _registry.Register(executeProcessor);
-            _registry.Register(netMethodCallProcessor);
-            _registry.Register(variableDeclarationProcessor);
-            _registry.Register(scopeProcessor);
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            _dotNetLinker = dotNetLinker ?? throw new ArgumentNullException(nameof(dotNetLinker));
+            _scopeBuilder = scopeBuilder ?? throw new ArgumentNullException(nameof(scopeBuilder));
         }
 
         /// <summary>

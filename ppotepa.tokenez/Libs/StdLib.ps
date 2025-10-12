@@ -1,50 +1,46 @@
-// PowerScript Standard Library
-// This library contains common utility functions
-
-// Link .NET System namespace for Console operations
 LINK System
 
-// ============================================================
-// OUTPUT FUNCTIONS - Using INT as generic parameter type
-// Note: .NET Console.WriteLine accepts any object, so INT works as placeholder
-// ============================================================
-
-FUNCTION out(INT value)[] {
+FUNCTION out(INT value)[INT]{
     #Console.WriteLine(value)
+    RETURN 0
 }
 
-FUNCTION outln(INT value)[] {
+FUNCTION outln(INT value)[INT]{
     #Console.WriteLine(value)
+    RETURN 0
 }
 
-FUNCTION outNum(INT number)[] {
+FUNCTION outNum(INT number)[INT]{
     #Console.WriteLine(number)
+    RETURN 0
 }
 
-FUNCTION outStr(STRING text)[] {
+FUNCTION outStr(STRING text)[INT]{
     #Console.WriteLine(text)
+    RETURN 0
 }
 
-// Print multiple values on same line (simulated)
-FUNCTION outMulti(INT a, INT b)[] {
+FUNCTION outMulti(INT a, INT b)[INT]{
     #Console.WriteLine(a)
     #Console.WriteLine(b)
+    RETURN 0
 }
 
-FUNCTION outThree(INT a, INT b, INT c)[] {
+FUNCTION outThree(INT a, INT b, INT c)[INT]{
     #Console.WriteLine(a)
     #Console.WriteLine(b)
     #Console.WriteLine(c)
+    RETURN 0
 }
 
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-
-FUNCTION newline(INT dummy)[] {
+FUNCTION newline(INT dummy)[INT]{
     #Console.WriteLine("")
+    RETURN 0
 }
 
-FUNCTION space(INT dummy)[] {
+FUNCTION space(INT dummy)[INT]{
     #Console.Write(" ")
+    RETURN 0
 }
+
+

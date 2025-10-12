@@ -9,7 +9,7 @@ namespace ppotepa.tokenez.DotNet;
 ///     Supports linking namespaces via LINK statements and resolving types
 ///     with or without full namespace paths.
 /// </summary>
-public class DotNetLinker
+public class DotNetLinker : IDotNetLinker
 {
     private readonly HashSet<string> _linkedNamespaces = [];
     private readonly Dictionary<string, Assembly> _loadedAssemblies = [];
@@ -157,6 +157,14 @@ public class DotNetLinker
         }
 
         return null;
+    }
+
+    /// <summary>
+    ///     Gets all linked assemblies.
+    /// </summary>
+    public IReadOnlyCollection<Assembly> GetLinkedAssemblies()
+    {
+        return _loadedAssemblies.Values.ToList().AsReadOnly();
     }
 
     /// <summary>
