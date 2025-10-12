@@ -31,18 +31,18 @@ namespace ppotepa.tokenez.Tree
 
             // Create specialized processors for different token types
             ParameterProcessor parameterProcessor = new();
-            FunctionProcessor functionProcessor = new(parameterProcessor, _validator);
+            FunctionProcessor functionProcessor = new(parameterProcessor);
             FunctionCallProcessor functionCallProcessor = new();
             LinkStatementProcessor linkProcessor = new(_dotNetLinker);
             FlexVariableProcessor flexVariableProcessor = new();
             CycleLoopProcessor cycleLoopProcessor = new(_scopeBuilder);
-            IfStatementProcessor ifStatementProcessor = new(_validator, _scopeBuilder);
-            ReturnStatementProcessor returnProcessor = new(_validator);
-            PrintStatementProcessor printProcessor = new(_validator);
-            ExecuteCommandProcessor executeProcessor = new(_validator);
-            NetMethodCallProcessor netMethodCallProcessor = new(_validator);
-            VariableDeclarationProcessor variableDeclarationProcessor = new(_validator);
-            ScopeProcessor scopeProcessor = new(_registry, _validator, _scopeBuilder);
+            IfStatementProcessor ifStatementProcessor = new(_scopeBuilder);
+            ReturnStatementProcessor returnProcessor = new();
+            PrintStatementProcessor printProcessor = new();
+            ExecuteCommandProcessor executeProcessor = new();
+            NetMethodCallProcessor netMethodCallProcessor = new();
+            VariableDeclarationProcessor variableDeclarationProcessor = new();
+            ScopeProcessor scopeProcessor = new(_registry, _scopeBuilder);
 
             // Register all processors with the central registry
             // LINK processor should be registered first since LINK statements must come at the top

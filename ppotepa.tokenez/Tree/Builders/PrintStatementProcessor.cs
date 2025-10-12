@@ -18,12 +18,6 @@ namespace ppotepa.tokenez.Tree.Builders
     /// </summary>
     internal class PrintStatementProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public PrintStatementProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
 
         public bool CanProcess(Token token)
         {

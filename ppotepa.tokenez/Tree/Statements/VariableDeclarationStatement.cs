@@ -6,24 +6,17 @@ namespace ppotepa.tokenez.Tree.Statements
     ///     Represents a variable declaration statement.
     ///     Supports both statically typed (INT x = 10) and dynamically typed (FLEX x = 10) variables.
     /// </summary>
-    public class VariableDeclarationStatement : Statement
+    public class VariableDeclarationStatement(VariableDeclaration declaration, Expression initialValue,
+            bool isDynamic = false) : Statement
     {
-        public VariableDeclarationStatement(VariableDeclaration declaration, Expression initialValue,
-            bool isDynamic = false)
-        {
-            Declaration = declaration;
-            InitialValue = initialValue;
-            IsDynamic = isDynamic;
-        }
-
         /// <summary>The variable declaration (name, type)</summary>
-        public VariableDeclaration Declaration { get; set; }
+        public VariableDeclaration Declaration { get; set; } = declaration;
 
         /// <summary>The initial value expression</summary>
-        public Expression InitialValue { get; set; }
+        public Expression InitialValue { get; set; } = initialValue;
 
         /// <summary>Whether this is a dynamically-typed FLEX variable</summary>
-        public bool IsDynamic { get; set; }
+        public bool IsDynamic { get; set; } = isDynamic;
 
         public override string StatementType => IsDynamic ? "FLEX" : "VAR";
 

@@ -17,16 +17,9 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     - Creating function scope
     ///     - Registering function declaration in parent scope
     /// </summary>
-    internal class FunctionProcessor : ITokenProcessor
+    internal class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenProcessor
     {
-        private readonly ParameterProcessor _parameterProcessor;
-        private readonly ExpectationValidator _validator;
-
-        public FunctionProcessor(ParameterProcessor parameterProcessor, ExpectationValidator validator)
-        {
-            _parameterProcessor = parameterProcessor;
-            _validator = validator;
-        }
+        private readonly ParameterProcessor _parameterProcessor = parameterProcessor;
 
         public bool CanProcess(Token token)
         {

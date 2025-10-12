@@ -2,14 +2,9 @@
 
 namespace ppotepa.tokenez.Tree.Tokens.Raw
 {
-    internal class RawTokenCollection : ICollection<RawToken>
+    internal class RawTokenCollection(RawToken[] tokens) : ICollection<RawToken>
     {
-        private RawToken[] _tokens;
-
-        public RawTokenCollection(RawToken[] tokens)
-        {
-            _tokens = tokens;
-        }
+        private RawToken[] _tokens = tokens;
 
         private IEnumerator Enumerator => _tokens.GetEnumerator();
 

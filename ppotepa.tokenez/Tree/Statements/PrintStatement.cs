@@ -6,15 +6,10 @@ namespace ppotepa.tokenez.Tree.Statements
     ///     Represents a PRINT statement that outputs text or expression values to the console.
     ///     Example: PRINT "Hello World" or PRINT ADD(5, 3)
     /// </summary>
-    public class PrintStatement : Statement
+    public class PrintStatement(Expression expression) : Statement
     {
-        public PrintStatement(Expression expression)
-        {
-            Expression = expression;
-        }
-
         /// <summary>The expression to print (can be string literal, function call, variable, etc.)</summary>
-        public Expression Expression { get; set; }
+        public Expression Expression { get; set; } = expression;
 
         public override string StatementType => "PRINT";
 

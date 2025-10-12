@@ -6,23 +6,17 @@ namespace ppotepa.tokenez.Tree.Statements
     ///     Represents a direct call to a .NET framework method.
     ///     Example: NET::System.Console.WriteLine("Hello")
     /// </summary>
-    public class NetMethodCallStatement : Statement
+    public class NetMethodCallStatement(string fullMethodPath, List<Expression>? arguments = null) : Statement
     {
-        public NetMethodCallStatement(string fullMethodPath, List<Expression> arguments)
-        {
-            FullMethodPath = fullMethodPath;
-            Arguments = arguments ?? [];
-        }
-
         /// <summary>
         ///     The fully qualified .NET method path (e.g., "System.Console.WriteLine")
         /// </summary>
-        public string FullMethodPath { get; }
+        public string FullMethodPath { get; } = fullMethodPath;
 
         /// <summary>
         ///     The arguments to pass to the method
         /// </summary>
-        public List<Expression> Arguments { get; }
+        public List<Expression> Arguments { get; } = arguments ?? [];
 
         public override string StatementType => "NET_METHOD_CALL";
 

@@ -4,17 +4,12 @@ namespace ppotepa.tokenez.Tree.Statements
     ///     Represents an EXECUTE command to run an external PowerScript file.
     ///     Syntax: EXECUTE "filename.ps"
     /// </summary>
-    public class ExecuteStatement : Statement
+    public class ExecuteStatement(string filePath) : Statement
     {
-        public ExecuteStatement(string filePath)
-        {
-            FilePath = filePath;
-        }
-
         /// <summary>
         ///     Path to the script file to execute
         /// </summary>
-        public string FilePath { get; }
+        public string FilePath { get; } = filePath;
 
         /// <summary>Statement type identifier</summary>
         public override string StatementType => "EXECUTE";

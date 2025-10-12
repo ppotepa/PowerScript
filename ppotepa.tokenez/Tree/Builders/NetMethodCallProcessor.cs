@@ -16,12 +16,6 @@ namespace ppotepa.tokenez.Tree.Builders
     /// </summary>
     internal class NetMethodCallProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public NetMethodCallProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
 
         public bool CanProcess(Token token)
         {

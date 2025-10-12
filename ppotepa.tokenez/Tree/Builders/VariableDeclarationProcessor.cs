@@ -22,12 +22,6 @@ namespace ppotepa.tokenez.Tree.Builders
     /// </summary>
     internal class VariableDeclarationProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public VariableDeclarationProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
 
         public bool CanProcess(Token token)
         {

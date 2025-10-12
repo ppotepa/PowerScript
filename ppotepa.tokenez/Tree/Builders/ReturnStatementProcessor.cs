@@ -21,12 +21,6 @@ namespace ppotepa.tokenez.Tree.Builders
     /// </summary>
     internal class ReturnStatementProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public ReturnStatementProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
 
         public bool CanProcess(Token token)
         {

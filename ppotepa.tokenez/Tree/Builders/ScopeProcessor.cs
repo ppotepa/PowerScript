@@ -14,18 +14,10 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     - Validating that function scopes contain a RETURN statement
     ///     - Managing function context entry/exit
     /// </summary>
-    internal class ScopeProcessor : ITokenProcessor
+    internal class ScopeProcessor(TokenProcessorRegistry registry, ScopeBuilder scopeBuilder) : ITokenProcessor
     {
-        private readonly TokenProcessorRegistry _registry;
-        private readonly ScopeBuilder _scopeBuilder;
-        private readonly ExpectationValidator _validator;
-
-        public ScopeProcessor(TokenProcessorRegistry registry, ExpectationValidator validator, ScopeBuilder scopeBuilder)
-        {
-            _registry = registry;
-            _validator = validator;
-            _scopeBuilder = scopeBuilder;
-        }
+        private readonly TokenProcessorRegistry _registry = registry;
+        private readonly ScopeBuilder _scopeBuilder = scopeBuilder;
 
         public bool CanProcess(Token token)
         {

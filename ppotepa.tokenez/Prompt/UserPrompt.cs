@@ -6,33 +6,19 @@ namespace ppotepa.tokenez.Prompt
     ///     Represents user input code that will be tokenized.
     ///     User code defines functions directly at root scope, which serves as a standard library.
     /// </summary>
-    public class UserPrompt
+    public class UserPrompt(string prompt)
     {
-        private readonly string[] _commandLineArgs;
-        private RawToken[] _rawTokens;
-
-        /// <summary>
-        ///     Creates a new user prompt.
-        /// </summary>
-        /// <param name="prompt">The user's code input</param>
-        /// <param name="commandLineArgs">Command line arguments (reserved for future use)</param>
-        public UserPrompt(string prompt, string[]? commandLineArgs = null)
-        {
-            Prompt = prompt;
-            _commandLineArgs = commandLineArgs ?? Array.Empty<string>();
-            _rawTokens = Array.Empty<RawToken>();
-            WrappedPrompt = prompt; // No wrapping needed - root scope is the standard library
-        }
+        private RawToken[] _rawTokens = [];
 
         /// <summary>
         ///     The original user code
         /// </summary>
-        public string Prompt { get; }
+        public string Prompt { get; } = prompt;
 
         /// <summary>
         ///     The code to process (same as Prompt - no wrapping)
         /// </summary>
-        public string WrappedPrompt { get; }
+        public string WrappedPrompt { get; } = prompt; // No wrapping needed - root scope is the standard library
 
         /// <summary>
         ///     Lazily tokenizes the wrapped prompt into raw tokens.

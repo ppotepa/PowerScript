@@ -6,12 +6,8 @@ namespace ppotepa.tokenez.Tree
     ///     Represents a function declaration.
     ///     Example: "FUNCTION add(a, b) { ... }" or "FUNCTION multiply(INT A, INT B)[INT] { ... }"
     /// </summary>
-    public class FunctionDeclaration : Declaration
+    public class FunctionDeclaration(Token identifier) : Declaration(identifier)
     {
-        public FunctionDeclaration(Token identifier) : base(identifier)
-        {
-        }
-
         /// <summary>List of parameter declarations for this function</summary>
         public List<Declaration> Parameters { get; set; } = [];
 

@@ -16,16 +16,9 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     SQL-style syntax: IF condition { ... } or IF condition { ... } ELSE { ... }
     ///     Supports: >, <, >=, <=, ==, !=, AND, OR
     /// </summary>
-    internal class IfStatementProcessor : ITokenProcessor
+    internal class IfStatementProcessor(ScopeBuilder scopeBuilder) : ITokenProcessor
     {
-        private readonly ScopeBuilder _scopeBuilder;
-        private readonly ExpectationValidator _validator;
-
-        public IfStatementProcessor(ExpectationValidator validator, ScopeBuilder scopeBuilder)
-        {
-            _validator = validator;
-            _scopeBuilder = scopeBuilder;
-        }
+        private readonly ScopeBuilder _scopeBuilder = scopeBuilder;
 
         public bool CanProcess(Token token)
         {

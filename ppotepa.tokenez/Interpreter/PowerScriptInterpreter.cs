@@ -75,7 +75,7 @@ namespace ppotepa.tokenez.Interpreter
                 if (_linkedLibraryCode != null) fullCode = _linkedLibraryCode + "\n" + expandedCode;
 
                 // Create prompt and build token tree
-                UserPrompt prompt = new(fullCode, Array.Empty<string>());
+                UserPrompt prompt = new(fullCode);
                 var tree = new TokenTree().Create(prompt);
 
                 // Compile and execute

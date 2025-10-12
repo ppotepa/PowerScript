@@ -20,17 +20,11 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     - Supporting both .NET namespaces (System) and PowerScript files ("file.ps")
     ///     - Integrating with DotNetLinker for .NET namespace resolution
     /// </summary>
-    internal class LinkStatementProcessor : ITokenProcessor
+    internal class LinkStatementProcessor(DotNetLinker dotNetLinker) : ITokenProcessor
     {
-        private readonly DotNetLinker _dotNetLinker;
-        private readonly HashSet<string> _linkedFiles;
+        private readonly DotNetLinker _dotNetLinker = dotNetLinker;
+        private readonly HashSet<string> _linkedFiles = [];
         private readonly ILogger _logger = LoggerService.Logger;
-
-        public LinkStatementProcessor(DotNetLinker dotNetLinker)
-        {
-            _dotNetLinker = dotNetLinker;
-            _linkedFiles = [];
-        }
 
         public bool CanProcess(Token token)
         {

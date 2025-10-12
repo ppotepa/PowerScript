@@ -7,18 +7,11 @@ namespace ppotepa.tokenez.Tree.Statements
     ///     SQL-style syntax: IF condition { ... } or IF condition { ... } ELSE { ... }
     ///     Supports AND/OR operators and comparison operators (>, <, >=, <=, ==, !=)
     /// </summary>
-    public class IfStatement : Statement
+    public class IfStatement(Expression condition, Scope thenScope, Scope? elseScope = null) : Statement
     {
-        public IfStatement(Expression condition, Scope thenScope, Scope? elseScope = null)
-        {
-            Condition = condition;
-            ThenScope = thenScope;
-            ElseScope = elseScope;
-        }
-
-        public Expression Condition { get; }
-        public Scope ThenScope { get; }
-        public Scope? ElseScope { get; }
+        public Expression Condition { get; } = condition;
+        public Scope ThenScope { get; } = thenScope;
+        public Scope? ElseScope { get; } = elseScope;
 
         public override string StatementType => "IF_CONDITIONAL";
 

@@ -1,4 +1,5 @@
 using ppotepa.tokenez.Tree.Builders.Interfaces;
+using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
 using ppotepa.tokenez.Tree.Tokens.Keywords;
@@ -12,12 +13,6 @@ namespace ppotepa.tokenez.Tree.Builders
     /// </summary>
     internal class ExecuteCommandProcessor : ITokenProcessor
     {
-        private readonly ExpectationValidator _validator;
-
-        public ExecuteCommandProcessor(ExpectationValidator validator)
-        {
-            _validator = validator;
-        }
 
         public bool CanProcess(Token token)
         {
@@ -45,7 +40,7 @@ namespace ppotepa.tokenez.Tree.Builders
             }
             else
             {
-                throw new Exception("EXECUTE command requires a string literal file path");
+                throw new UnexpectedTokenException(nextToken!, typeof(StringLiteralToken));
             }
 
             Console.ForegroundColor = ConsoleColor.DarkGray;

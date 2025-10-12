@@ -3,23 +3,14 @@ namespace ppotepa.tokenez.Tree.Diagnostics
     /// <summary>
     ///     Represents a diagnostic message (error, warning, suggestion) from the compiler.
     /// </summary>
-    public class Diagnostic
-    {
-        public Diagnostic(DiagnosticSeverity severity, string code, string message, string location = "",
+    public class Diagnostic(DiagnosticSeverity severity, string code, string message, string location = "",
             string suggestion = "")
-        {
-            Severity = severity;
-            Code = code;
-            Message = message;
-            Location = location;
-            Suggestion = suggestion;
-        }
-
-        public DiagnosticSeverity Severity { get; set; }
-        public string Code { get; set; }
-        public string Message { get; set; }
-        public string Location { get; set; }
-        public string Suggestion { get; set; }
+    {
+        public DiagnosticSeverity Severity { get; set; } = severity;
+        public string Code { get; set; } = code;
+        public string Message { get; set; } = message;
+        public string Location { get; set; } = location;
+        public string Suggestion { get; set; } = suggestion;
 
         public override string ToString()
         {

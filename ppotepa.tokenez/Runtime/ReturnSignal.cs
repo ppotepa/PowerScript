@@ -4,13 +4,9 @@ namespace ppotepa.tokenez.Runtime
     ///     Special exception used to implement RETURN statement control flow.
     ///     When a RETURN statement executes, it throws this to unwind the call stack.
     /// </summary>
-    public class ReturnSignal : Exception
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1064:Exceptions should be public")]
+    public class ReturnSignal(object? value = null) : Exception
     {
-        public ReturnSignal(object? value = null)
-        {
-            Value = value;
-        }
-
-        public object? Value { get; }
+        public object? Value { get; } = value;
     }
 }

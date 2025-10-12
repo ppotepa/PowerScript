@@ -5,15 +5,10 @@ namespace ppotepa.tokenez.Tree.Exceptions
     ///     All functions in this language must explicitly return a value.
     ///     This is validated when the function scope ends (at '}').
     /// </summary>
-    public class MissingReturnStatementException : Exception
+    public class MissingReturnStatementException(Scope scope)
+        : Exception($"Function scope '{scope.ScopeName}' is missing a RETURN statement")
     {
-        public MissingReturnStatementException(Scope scope)
-            : base($"Function scope '{scope.ScopeName}' is missing a RETURN statement")
-        {
-            Scope = scope;
-        }
-
         /// <summary>The scope that is missing the RETURN statement</summary>
-        public Scope Scope { get; }
+        public Scope Scope { get; } = scope;
     }
 }
