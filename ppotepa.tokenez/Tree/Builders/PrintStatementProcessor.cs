@@ -60,7 +60,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
                     // Expect closing bracket
                     if (currentToken is not BracketClosed)
-                        throw new Exception($"Expected ']' after array index but found {currentToken?.GetType().Name}");
+                        throw new InvalidOperationException($"Expected ']' after array index but found {currentToken?.GetType().Name}");
 
                     expression = new IndexExpression
                     {
@@ -128,7 +128,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 return expr;
             }
 
-            throw new Exception($"Expected expression but found {currentToken?.GetType().Name}");
+            throw new InvalidOperationException($"Expected expression but found {currentToken?.GetType().Name}");
         }
     }
 }

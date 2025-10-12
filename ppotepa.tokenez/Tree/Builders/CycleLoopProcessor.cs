@@ -178,22 +178,19 @@ namespace ppotepa.tokenez.Tree.Builders
                 }
             }
 
-            if (nextToken == null)
-            {
-                throw new UnexpectedTokenException(cycleToken, "Unmatched braces in CYCLE loop - missing closing }", typeof(ScopeEndToken));
-            }
-
-            return new TokenProcessingResult
-            {
-                NextToken = nextToken.Next ?? nextToken,
-                ShouldValidateExpectations = false
-            };
+            return nextToken == null
+                ? throw new UnexpectedTokenException(cycleToken, "Unmatched braces in CYCLE loop - missing closing }", typeof(ScopeEndToken))
+                : new TokenProcessingResult
+                {
+                    NextToken = nextToken.Next ?? nextToken,
+                    ShouldValidateExpectations = false
+                };
         }
 
         /// <summary>
         ///     Parses the collection expression (identifier, function call, or property access)
         /// </summary>
-        private Expression ParseCollectionExpression(ref Token? token)
+        private static Expression ParseCollectionExpression(ref Token? token)
         {
             if (token is IdentifierToken identifierToken)
             {
@@ -209,7 +206,7 @@ namespace ppotepa.tokenez.Tree.Builders
                     token = identifierToken.Next; // Move to (
                     token = token!.Next; // Move past (
 
-                    // TODO: Parse function call arguments
+                    // Function call arguments are not yet supported in CYCLE loops
 
                     // Skip to )
                     while (token is not null and not ParenthesisClosed)
@@ -236,35 +233,10 @@ namespace ppotepa.tokenez.Tree.Builders
         }
 
         /// <summary>
-        ///     Calculates the nesting level of loops by counting parent CYCLE loops
-        /// </summary>
-        private int CalculateLoopNestingLevel(Scope currentScope)
-        {
-            int level = 0;
-            Scope? scope = currentScope;
-
-            while (scope != null)
-            {
-                // Count how many CYCLE loops are in parent scopes
-                foreach (Statement statement in scope.Statements)
-                {
-                    if (statement is CycleLoopStatement)
-                    {
-                        level++;
-                    }
-                }
-
-                scope = scope.OuterScope;
-            }
-
-            return level;
-        }
-
-        /// <summary>
         ///     Gets the automatic index variable name based on nesting level
         ///     Level 0 = 'A', Level 1 = 'B', Level 2 = 'C', etc.
         /// </summary>
-        private string GetAutomaticIndexName(int nestingLevel)
+        private static string GetAutomaticIndexName(int nestingLevel)
         {
             if (nestingLevel < 26)
             {

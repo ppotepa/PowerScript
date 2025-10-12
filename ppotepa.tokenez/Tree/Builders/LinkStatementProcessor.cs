@@ -35,27 +35,29 @@ namespace ppotepa.tokenez.Tree.Builders
         {
             _logger.DebugLocalized(MessageKeys.Debug.LinkProcessor, token.RawToken?.Text ?? string.Empty, context.Depth);
 
-            var linkToken = token as LinkKeywordToken;
+            LinkKeywordToken? linkToken = token as LinkKeywordToken;
 
             // LINK statements must appear at the top level (root scope)
             if (context.CurrentScope.ScopeName != "ROOT")
+            {
                 throw new UnexpectedTokenException(
                     token,
                     "LINK statements must appear at the top of the script, before any functions or other statements"
                 );
+            }
 
             // LINK must be followed by either an identifier (library name) or string literal (file path)
-            var targetToken = linkToken!.Next;
+            Token targetToken = linkToken!.Next;
 
             string linkTarget;
-            var isWellKnownLibrary = false;
+            bool isWellKnownLibrary;
 
             if (targetToken is IdentifierToken identifierToken)
             {
                 // Could be a simple library name or a namespace path (e.g., System.Collections.Generic)
                 // Collect all parts separated by :: or .
                 List<string> namespaceParts = [identifierToken.RawToken!.OriginalText];
-                var currentToken = identifierToken.Next;
+                Token currentToken = identifierToken.Next;
                 Token lastProcessedToken = identifierToken;
 
                 // Check for namespace paths with :: (System::Collections::Generic)
@@ -114,13 +116,13 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             // Register the link
-            RegisterLink(context.CurrentScope, linkTarget, isWellKnownLibrary);
+            RegisterLink(linkTarget, isWellKnownLibrary);
 
             // Continue processing from the token after the link target
             return TokenProcessingResult.Continue(targetToken!.Next);
         }
 
-        private void RegisterLink(Scope scope, string linkTarget, bool isWellKnownLibrary)
+        private void RegisterLink(string linkTarget, bool isWellKnownLibrary)
         {
             // Create a simple record of the linked library/file
             if (isWellKnownLibrary)
@@ -146,9 +148,12 @@ namespace ppotepa.tokenez.Tree.Builders
                 try
                 {
                     // Resolve the file path (support relative paths)
-                    var fullPath = ResolveFilePath(linkTarget);
+                    string fullPath = ResolveFilePath(linkTarget);
 
-                    if (!File.Exists(fullPath)) throw new FileNotFoundException($"Linked file not found: {fullPath}");
+                    if (!File.Exists(fullPath))
+                    {
+                        throw new FileNotFoundException($"Linked file not found: {fullPath}");
+                    }
 
                     _logger.InfoLocalized(MessageKeys.Link.Loading, fullPath);
 
@@ -168,18 +173,27 @@ namespace ppotepa.tokenez.Tree.Builders
             }
         }
 
-        private string ResolveFilePath(string filePath)
+        private static string ResolveFilePath(string filePath)
         {
             // If the path is already absolute and exists, return it
-            if (Path.IsPathRooted(filePath) && File.Exists(filePath)) return filePath;
+            if (Path.IsPathRooted(filePath) && File.Exists(filePath))
+            {
+                return filePath;
+            }
 
             // Try relative to current directory
-            var currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-            if (File.Exists(currentDirPath)) return currentDirPath;
+            string currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
+            if (File.Exists(currentDirPath))
+            {
+                return currentDirPath;
+            }
 
             // Try relative to app base directory
-            var appDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filePath);
-            if (File.Exists(appDirPath)) return appDirPath;
+            string appDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filePath);
+            if (File.Exists(appDirPath))
+            {
+                return appDirPath;
+            }
 
             // Return the original path (will fail if not found)
             return filePath;

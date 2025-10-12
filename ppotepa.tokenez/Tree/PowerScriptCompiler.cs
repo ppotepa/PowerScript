@@ -40,10 +40,9 @@ namespace ppotepa.tokenez.Tree
             // Iterate through all function declarations in root scope
             foreach (FunctionDeclaration decl in _tree.RootScope!.Decarations.Values.OfType<FunctionDeclaration>())
             {
-                string funcName = decl.Identifier.RawToken.Text;
-                Scope funcScope = decl.Scope;
+                _ = decl.Scope;
 
-                LoggerService.Logger.Warning($"📦 Compiling function: {funcName}");
+                LoggerService.Logger.Warning($"📦 Compiling function: {decl.Identifier.RawToken.Text}");
 
                 try
                 {
@@ -56,7 +55,7 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Now execute any statements in the root scope (like PRINT statements)
-            if (_tree.RootScope.Statements.Any())
+            if (_tree.RootScope.Statements.Count > 0)
             {
                 LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
                 LoggerService.Logger.Info("║       EXECUTING ROOT STATEMENTS        ║");
@@ -178,7 +177,7 @@ namespace ppotepa.tokenez.Tree
 
             if (!_variables.TryGetValue(arrayName, out object? arrayObj))
             {
-                throw new Exception($"Array '{arrayName}' not found");
+                throw new InvalidOperationException($"Array '{arrayName}' not found");
             }
 
             // Evaluate the index
@@ -193,7 +192,7 @@ namespace ppotepa.tokenez.Tree
             {
                 if (index < 0 || index >= list.Count)
                 {
-                    throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})");
+                    throw new InvalidOperationException($"Index {index} out of range for array {arrayName} (size: {list.Count})");
                 }
 
                 list[index] = value;
@@ -202,14 +201,14 @@ namespace ppotepa.tokenez.Tree
             {
                 if (index < 0 || index >= doubleArray.Length)
                 {
-                    throw new Exception($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
+                    throw new InvalidOperationException($"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
                 }
 
                 doubleArray[index] = ConvertToNumber(value);
             }
             else
             {
-                throw new Exception($"Cannot assign to index of non-array variable '{arrayName}'");
+                throw new InvalidOperationException($"Cannot assign to index of non-array variable '{arrayName}'");
             }
 
             LoggerService.Logger.Debug($"[EXEC] {arrayName}[{index}] = {value}");
@@ -221,14 +220,14 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private string EvaluateTemplateString(TemplateStringExpression templateExpr)
         {
-            string result = "";
+            System.Text.StringBuilder result = new();
 
             foreach (Tokens.Values.TemplatePart? part in templateExpr.Template.Parts)
             {
                 if (part.IsLiteral)
                 {
                     // Just append the literal text
-                    result += part.Text;
+                    result.Append(part.Text);
                 }
                 else
                 {
@@ -236,19 +235,19 @@ namespace ppotepa.tokenez.Tree
                     string varName = part.Text.ToUpperInvariant();
                     if (_variables.TryGetValue(varName, out object? value))
                     {
-                        result += value.ToString();
+                        result.Append(value.ToString());
                     }
                     else
                     {
                         // Variable not found - leave the @var syntax or show error
-                        result += $"@{part.Text}";
+                        result.Append($"@{part.Text}");
                         LoggerService.Logger.Warning($"[WARN] Variable '{varName}' not found in template string");
                         Console.ResetColor();
                     }
                 }
             }
 
-            return result;
+            return result.ToString();
         }
 
         /// <summary>
@@ -309,7 +308,7 @@ namespace ppotepa.tokenez.Tree
                     ">=" => CompareValues(left, right) >= 0,
                     "==" => CompareValues(left, right) == 0,
                     "!=" => CompareValues(left, right) != 0,
-                    _ => throw new Exception($"Unknown comparison operator: {op}")
+                    _ => throw new InvalidOperationException($"Unknown comparison operator: {op}")
                 };
             }
 
@@ -323,19 +322,19 @@ namespace ppotepa.tokenez.Tree
                 if (op == "AND")
                 {
                     // Short-circuit evaluation for AND
-                    return !leftResult ? false : EvaluateCondition(logicalExpr.Right);
+                    return leftResult && EvaluateCondition(logicalExpr.Right);
                 }
 
                 if (op == "OR")
                 {
                     // Short-circuit evaluation for OR
-                    return leftResult ? true : EvaluateCondition(logicalExpr.Right);
+                    return leftResult || EvaluateCondition(logicalExpr.Right);
                 }
 
-                throw new Exception($"Unknown logical operator: {op}");
+                throw new InvalidOperationException($"Unknown logical operator: {op}");
             }
 
-            throw new Exception($"Cannot evaluate condition of type: {condition.GetType().Name}");
+            throw new InvalidOperationException($"Cannot evaluate condition of type: {condition.GetType().Name}");
         }
 
         /// <summary>
@@ -343,114 +342,148 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private object EvaluateExpressionValue(Expression expr)
         {
-            if (expr is ArrayLiteralExpression arrayLiteralExpr)
+            return expr switch
             {
-                // Create array from literal values
-                List<object> array = [];
-                foreach (TreeExpression? elementExpr in arrayLiteralExpr.Elements)
-                {
-                    object elementValue = EvaluateExpressionValue(elementExpr);
-                    array.Add(elementValue);
-                }
+                ArrayLiteralExpression arrayLiteralExpr => EvaluateArrayLiteral(arrayLiteralExpr),
+                ArrayCreationExpression arrayCreationExpr => EvaluateArrayCreation(arrayCreationExpr),
+                TreeStringLiteralExpression stringLiteralExpr => EvaluateStringLiteral(stringLiteralExpr),
+                LiteralExpression literalExpr => EvaluateLiteral(literalExpr),
+                IndexExpression indexExpr => EvaluateIndexExpression(indexExpr),
+                IdentifierExpression identifierExpr => EvaluateIdentifier(identifierExpr),
+                BinaryExpression binaryExpr => EvaluateBinaryExpression(binaryExpr),
+                _ => throw new InvalidOperationException($"Cannot evaluate expression of type: {expr.GetType().Name}")
+            };
+        }
 
-                LoggerService.Logger.Debug($"[EXEC] Created array literal with {array.Count} elements");
+        /// <summary>
+        ///     Evaluates an array literal expression.
+        /// </summary>
+        private List<object> EvaluateArrayLiteral(ArrayLiteralExpression arrayLiteralExpr)
+        {
+            List<object> array = [];
 
-                return array;
+            foreach (TreeExpression elementExpr in arrayLiteralExpr.Elements)
+            {
+                object elementValue = EvaluateExpressionValue(elementExpr);
+                array.Add(elementValue);
             }
 
-            if (expr is ArrayCreationExpression arrayCreationExpr)
+            LoggerService.Logger.Debug($"[EXEC] Created array literal with {array.Count} elements");
+            return array;
+        }
+
+        /// <summary>
+        ///     Evaluates an array creation expression with specified size.
+        /// </summary>
+        private static List<object> EvaluateArrayCreation(ArrayCreationExpression arrayCreationExpr)
+        {
+            string sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
+            int size = int.Parse(sizeText);
+
+            List<object> array = new(size);
+            for (int i = 0; i < size; i++)
             {
-                // Create array with specified size
-                string sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
-                int size = int.Parse(sizeText);
-
-                // Create a List<object> initialized with zeros
-                List<object> array = new(size);
-                for (int i = 0; i < size; i++)
-                {
-                    array.Add(0.0);
-                }
-
-                return array;
+                array.Add(0.0);
             }
 
-            if (expr is TreeStringLiteralExpression stringLiteralExpr)
+            return array;
+        }
+
+        /// <summary>
+        ///     Evaluates a string literal expression by removing quotes.
+        /// </summary>
+        private static string EvaluateStringLiteral(TreeStringLiteralExpression stringLiteralExpr)
+        {
+            string text = stringLiteralExpr.Value.RawToken?.Text ?? "";
+            return text.Trim('"');
+        }
+
+        /// <summary>
+        ///     Evaluates a literal expression (number or text).
+        /// </summary>
+        private static object EvaluateLiteral(LiteralExpression literalExpr)
+        {
+            string text = literalExpr.Value.RawToken?.Text ?? "";
+
+            // Try parsing as integer first
+            if (int.TryParse(text, out int intValue))
             {
-                // String literal - remove quotes
-                string text = stringLiteralExpr.Value.RawToken?.Text ?? "";
-                return text.Trim('"');
+                return intValue;
             }
 
-            if (expr is LiteralExpression literalExpr)
+            // Try parsing as double
+            if (double.TryParse(text, out double doubleValue))
             {
-                // Parse the literal value
-                string text = literalExpr.Value.RawToken?.Text ?? "";
-                return int.TryParse(text, out int intValue) ? intValue :
-                    double.TryParse(text, out double doubleValue) ? doubleValue : text;
+                return doubleValue;
             }
 
-            if (expr is IndexExpression indexExpr)
+            // Fall back to string
+            return text;
+        }
+
+        /// <summary>
+        ///     Evaluates an array index access expression.
+        /// </summary>
+        private object EvaluateIndexExpression(IndexExpression indexExpr)
+        {
+            string? arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
+
+            if (string.IsNullOrEmpty(arrayName) || !_variables.TryGetValue(arrayName, out object? arrayObj))
             {
-                // Array index access
-                string? arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
-                if (string.IsNullOrEmpty(arrayName) || !_variables.TryGetValue(arrayName, out object? arrayObj))
-                {
-                    throw new Exception($"Array not found: {arrayName}");
-                }
-
-                // Evaluate the index expression
-                object indexValue = EvaluateExpressionValue(indexExpr.Index);
-                int index = Convert.ToInt32(ConvertToNumber(indexValue));
-
-                // Support different array types
-                return arrayObj is List<object> list
-                    ? index < 0 || index >= list.Count
-                        ? throw new Exception($"Index {index} out of range for array {arrayName} (size: {list.Count})")
-                        : list[index]
-                    : arrayObj is double[] doubleArray
-                    ? index < 0 || index >= doubleArray.Length
-                        ? throw new Exception(
-                            $"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})")
-                        : (object)doubleArray[index]
-                    : arrayObj is object[] objArray
-                        ? index < 0 || index >= objArray.Length
-                            ? throw new Exception(
-                                $"Index {index} out of range for array {arrayName} (size: {objArray.Length})")
-                            : objArray[index]
-                        : throw new Exception($"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})");
+                throw new InvalidOperationException($"Array not found: {arrayName}");
             }
 
-            if (expr is IdentifierExpression identifierExpr)
-            {
-                // Look up variable value
-                string? varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
-                if (string.IsNullOrEmpty(varName) || !_variables.TryGetValue(varName, out object? value))
-                {
-                    throw new Exception($"Variable not found: {varName}");
-                }
-                return value;
-            }
+            object indexValue = EvaluateExpressionValue(indexExpr.Index);
+            int index = Convert.ToInt32(ConvertToNumber(indexValue));
 
-            if (expr is BinaryExpression binaryExpr)
+            return arrayObj switch
             {
-                // Evaluate binary operation
-                return EvaluateBinaryExpression(binaryExpr);
-            }
+                List<object> list => GetListElement(list, index, arrayName),
+                double[] doubleArray => GetArrayElement(doubleArray, index, arrayName),
+                object[] objArray => GetArrayElement(objArray, index, arrayName),
+                _ => throw new InvalidOperationException($"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})")
+            };
+        }
 
-            throw new Exception($"Cannot evaluate expression of type: {expr.GetType().Name}");
+        /// <summary>
+        ///     Gets an element from a List with bounds checking.
+        /// </summary>
+        private static object GetListElement(List<object> list, int index, string arrayName)
+        {
+            return index < 0 || index >= list.Count
+                ? throw new InvalidOperationException($"Index {index} out of range for array {arrayName} (size: {list.Count})")
+                : list[index];
+        }
+
+        /// <summary>
+        ///     Gets an element from an array with bounds checking.
+        /// </summary>
+        private static object GetArrayElement(Array array, int index, string arrayName)
+        {
+            return index < 0 || index >= array.Length
+                ? throw new InvalidOperationException($"Index {index} out of range for array {arrayName} (size: {array.Length})")
+                : array.GetValue(index)!;
+        }
+
+        /// <summary>
+        ///     Evaluates an identifier by looking up its value.
+        /// </summary>
+        private object EvaluateIdentifier(IdentifierExpression identifierExpr)
+        {
+            string? varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
+
+            return string.IsNullOrEmpty(varName) || !_variables.TryGetValue(varName, out object? value)
+                ? throw new InvalidOperationException($"Variable not found: {varName}")
+                : value;
         }
 
         /// <summary>
         ///     Evaluates a binary expression (e.g., a + b, x * y).
         /// </summary>
-        private object EvaluateBinaryExpression(BinaryExpression expr)
+        private double EvaluateBinaryExpression(BinaryExpression expr)
         {
-            object left = EvaluateExpressionValue(expr.Left);
-            object right = EvaluateExpressionValue(expr.Right);
-
-            // Convert to numeric values
-            double leftNum = ConvertToNumber(left);
-            double rightNum = ConvertToNumber(right);
+            double leftNum = ConvertToNumber(EvaluateExpressionValue(expr.Left));
+            double rightNum = ConvertToNumber(EvaluateExpressionValue(expr.Right));
 
             // Perform the operation based on operator type
             if (expr.Operator is PlusToken)
@@ -476,9 +509,9 @@ namespace ppotepa.tokenez.Tree
 
             if (expr.Operator is DivideToken)
             {
-                if (rightNum == 0)
+                if (Math.Abs(rightNum) < double.Epsilon)
                 {
-                    throw new Exception("Division by zero");
+                    throw new InvalidOperationException("Division by zero");
                 }
 
                 double result = leftNum / rightNum;
@@ -486,27 +519,28 @@ namespace ppotepa.tokenez.Tree
                 return result;
             }
 
-            throw new Exception($"Unknown binary operator: {expr.Operator.GetType().Name}");
+            throw new InvalidOperationException($"Unknown binary operator: {expr.Operator.GetType().Name}");
         }
 
         /// <summary>
         ///     Converts a value to a number (double).
         /// </summary>
-        private double ConvertToNumber(object value)
+        private static double ConvertToNumber(object value)
         {
-            return value is int intValue
-                ? intValue
-                : value is double doubleValue
-                    ? doubleValue
-                    : double.TryParse(value.ToString(), out double result)
-                        ? result
-                        : throw new Exception($"Cannot convert '{value}' to number");
+            return value switch
+            {
+                int intValue => intValue,
+                double doubleValue => doubleValue,
+                string stringValue when double.TryParse(stringValue, out double parsed) => parsed,
+                _ when double.TryParse(value.ToString(), out double parsed) => parsed,
+                _ => throw new InvalidOperationException($"Cannot convert '{value}' to number")
+            };
         }
 
         /// <summary>
         ///     Compares two values and returns -1, 0, or 1.
         /// </summary>
-        private int CompareValues(object left, object right)
+        private static int CompareValues(object left, object right)
         {
             // Try numeric comparison
             if (left is int leftInt && right is int rightInt)
@@ -540,12 +574,12 @@ namespace ppotepa.tokenez.Tree
             // Find the function declaration in the root scope
             if (!_tree.RootScope!.Decarations.TryGetValue(funcCallStmt.FunctionName, out Declaration? declaration))
             {
-                throw new Exception($"Function not found: {funcCallStmt.FunctionName}");
+                throw new InvalidOperationException($"Function not found: {funcCallStmt.FunctionName}");
             }
 
             if (declaration is not FunctionDeclaration functionDecl)
             {
-                throw new Exception($"{funcCallStmt.FunctionName} is not a function");
+                throw new InvalidOperationException($"{funcCallStmt.FunctionName} is not a function");
             }
 
             // Execute all statements in the function's scope
@@ -567,7 +601,7 @@ namespace ppotepa.tokenez.Tree
 
                 if (!int.TryParse(countValue.ToString(), out int count))
                 {
-                    throw new Exception($"CYCLE count must be a number, got: {countValue}");
+                    throw new InvalidOperationException($"CYCLE count must be a number, got: {countValue}");
                 }
 
                 LoggerService.Logger.Info(
@@ -597,7 +631,7 @@ namespace ppotepa.tokenez.Tree
             else
             {
                 // Collection-based loop: CYCLE IN items AS item { ... }
-                // TODO: Implement collection-based loops
+                // Collection-based loops are not yet implemented
                 throw new NotImplementedException(
                     "Collection-based CYCLE loops not yet implemented. Use count-based: CYCLE 5 { ... }");
             }
@@ -614,7 +648,7 @@ namespace ppotepa.tokenez.Tree
                 string[] parts = netStmt.FullMethodPath.Split('.');
                 if (parts.Length < 2)
                 {
-                    throw new Exception($"Invalid NET method path: {netStmt.FullMethodPath}");
+                    throw new InvalidOperationException($"Invalid NET method path: {netStmt.FullMethodPath}");
                 }
 
                 // The last part is the method name
@@ -653,7 +687,7 @@ namespace ppotepa.tokenez.Tree
 
                 if (type == null)
                 {
-                    throw new Exception($"Type not found: {typeName}");
+                    throw new InvalidOperationException($"Type not found: {typeName}");
                 }
 
                 // Evaluate arguments and determine their types
@@ -673,16 +707,15 @@ namespace ppotepa.tokenez.Tree
                 if (method == null)
                 {
                     // Try without exact parameter matching - get all methods and find best match
-                    MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                        .Where(m => m.Name == methodName)
-                        .ToArray();
+                    MethodInfo[] methods = [.. type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                        .Where(m => m.Name == methodName)];
 
                     // Find method with matching parameter count
                     method = methods.FirstOrDefault(m => m.GetParameters().Length == args.Length);
 
                     if (method == null)
                     {
-                        throw new Exception(
+                        throw new InvalidOperationException(
                             $"Method not found: {methodName} on type {typeName} with {args.Length} parameter(s)");
                     }
                 }
@@ -696,7 +729,7 @@ namespace ppotepa.tokenez.Tree
                 {
                     // For instance methods, we need an instance
                     // For now, we'll only support static methods
-                    throw new Exception($"Instance methods are not yet supported. Method {methodName} must be static.");
+                    throw new InvalidOperationException($"Instance methods are not yet supported. Method {methodName} must be static.");
                 }
             }
             catch (Exception ex)
@@ -706,38 +739,61 @@ namespace ppotepa.tokenez.Tree
         }
 
         /// <summary>
-        ///     Evaluates an expression to get its runtime value.
+        ///     Evaluates an expression to get its runtime value for NET method calls.
+        ///     Supports string literals, numeric literals, and identifiers.
         /// </summary>
-        private object? EvaluateExpression(TreeExpression expr)
+        private static object? EvaluateExpression(TreeExpression expr)
         {
-            if (expr is TreeStringLiteralExpression stringExpr)
+            return expr switch
             {
-                // Remove quotes from string literal
-                return stringExpr.Value.RawToken.Text.Trim('"');
+                TreeStringLiteralExpression stringExpr => EvaluateStringLiteralForNetCall(stringExpr),
+                TreeLiteralExpression literalExpr => EvaluateLiteralForNetCall(literalExpr),
+                TreeIdentifierExpression identifierExpr => EvaluateIdentifierForNetCall(identifierExpr),
+                TreeBinaryExpression => throw new InvalidOperationException("Binary expressions in NET calls not yet supported"),
+                _ => throw new InvalidOperationException($"Unsupported expression type: {expr.GetType().Name}"),
+            };
+        }
+
+        /// <summary>
+        ///     Evaluates a string literal for use in NET method calls.
+        /// </summary>
+        private static string EvaluateStringLiteralForNetCall(TreeStringLiteralExpression stringExpr)
+        {
+            return stringExpr.Value.RawToken.Text.Trim('"');
+        }
+
+        /// <summary>
+        ///     Evaluates a literal expression for use in NET method calls.
+        ///     Attempts to parse as int, then double, otherwise returns as string.
+        /// </summary>
+        private static object EvaluateLiteralForNetCall(TreeLiteralExpression literalExpr)
+        {
+            string text = literalExpr.Value.RawToken.Text;
+
+            // Try parsing as integer
+            if (int.TryParse(text, out int intValue))
+            {
+                return intValue;
             }
 
-            if (expr is TreeLiteralExpression literalExpr)
+            // Try parsing as double
+            if (double.TryParse(text, out double doubleValue))
             {
-                string text = literalExpr.Value.RawToken.Text;
-
-                // Try to parse as number
-                return int.TryParse(text, out int intValue) ? intValue :
-                    double.TryParse(text, out double doubleValue) ? doubleValue : text;
+                return doubleValue;
             }
 
-            if (expr is TreeIdentifierExpression identifierExpr)
-            {
-                // TODO: Look up identifier value in scope
-                return identifierExpr.Identifier.RawToken.Text;
-            }
+            // Fall back to string
+            return text;
+        }
 
-            if (expr is TreeBinaryExpression binaryExpr)
-            {
-                // TODO: Evaluate binary expressions
-                throw new Exception("Binary expressions in NET calls not yet supported");
-            }
-
-            throw new Exception($"Unsupported expression type: {expr.GetType().Name}");
+        /// <summary>
+        ///     Evaluates an identifier for use in NET method calls.
+        ///     Note: Returns the identifier name as a string.
+        ///     Full variable lookup would require access to runtime scope.
+        /// </summary>
+        private static string EvaluateIdentifierForNetCall(TreeIdentifierExpression identifierExpr)
+        {
+            return identifierExpr.Identifier.RawToken.Text;
         }
 
         /// <summary>
@@ -757,9 +813,8 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Build parameter expressions
-            List<ParameterExpression> parameters = decl.Parameters.Select(p =>
-                SysExpression.Parameter(typeof(int), p.Identifier.RawToken.Text)
-            ).ToList();
+            List<ParameterExpression> parameters = [.. decl.Parameters.Select(p =>
+                SysExpression.Parameter(typeof(int), p.Identifier.RawToken.Text))];
 
             // Build the lambda expression
             if (returnStmt.ReturnValue == null)
@@ -770,7 +825,7 @@ namespace ppotepa.tokenez.Tree
                     SysExpression.Empty(),
                     parameters
                 );
-                Delegate compiledVoid = voidLambda.Compile();
+                _ = voidLambda.Compile();
                 LoggerService.Logger.Success("  ✓ Compiled as void function");
             }
             else
@@ -825,7 +880,7 @@ namespace ppotepa.tokenez.Tree
 
                 TreeIdentifierExpression ident =>
                     parameters.FirstOrDefault(p => p.Name == ident.Identifier.RawToken.Text)
-                    ?? throw new Exception($"Parameter '{ident.Identifier.RawToken.Text}' not found"),
+                    ?? throw new InvalidOperationException($"Parameter '{ident.Identifier.RawToken.Text}' not found"),
 
                 TreeBinaryExpression binary =>
                     BuildBinaryExpression(binary, parameters),
@@ -837,7 +892,7 @@ namespace ppotepa.tokenez.Tree
         /// <summary>
         ///     Builds a binary operation expression.
         /// </summary>
-        private SysExpression BuildBinaryExpression(TreeBinaryExpression binary, List<ParameterExpression> parameters)
+        private System.Linq.Expressions.BinaryExpression BuildBinaryExpression(TreeBinaryExpression binary, List<ParameterExpression> parameters)
         {
             SysExpression left = BuildExpression(binary.Left, parameters);
             SysExpression right = BuildExpression(binary.Right, parameters);
@@ -855,7 +910,7 @@ namespace ppotepa.tokenez.Tree
         /// <summary>
         ///     Gets a human-readable description of an expression.
         /// </summary>
-        private string GetExpressionDescription(TreeExpression expr)
+        private static string GetExpressionDescription(TreeExpression expr)
         {
             return expr switch
             {
@@ -870,7 +925,7 @@ namespace ppotepa.tokenez.Tree
         /// <summary>
         ///     Executes an external PowerScript file using the interpreter.
         /// </summary>
-        private void ExecuteScriptFile(string filePath)
+        public static void ExecuteScriptFile(string filePath)
         {
             try
             {
@@ -878,7 +933,7 @@ namespace ppotepa.tokenez.Tree
                 Type? interpreterType = Type.GetType("ppotepa.tokenez.Interpreter.PowerScriptInterpreter, ppotepa.tokenez");
                 if (interpreterType == null)
                 {
-                    throw new Exception("PowerScriptInterpreter type not found. Cannot execute external scripts.");
+                    throw new InvalidOperationException("PowerScriptInterpreter type not found. Cannot execute external scripts.");
                 }
 
                 // Create an instance using the CreateNew static method
@@ -887,13 +942,13 @@ namespace ppotepa.tokenez.Tree
 
                 if (interpreter == null)
                 {
-                    throw new Exception("Failed to create PowerScriptInterpreter instance.");
+                    throw new InvalidOperationException("Failed to create PowerScriptInterpreter instance.");
                 }
 
                 // Call ExecuteFile method
                 MethodInfo? executeFileMethod =
                     interpreterType.GetMethod("ExecuteFile", BindingFlags.Public | BindingFlags.Instance);
-                executeFileMethod?.Invoke(interpreter, new object[] { filePath });
+                _ = executeFileMethod?.Invoke(interpreter, [filePath]);
             }
             catch (Exception ex)
             {
@@ -920,13 +975,13 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Group diagnostics by severity
-            List<Diagnostic> errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
-            List<Diagnostic> warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning).ToList();
-            List<Diagnostic> suggestions = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion).ToList();
-            List<Diagnostic> info = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info).ToList();
+            List<Diagnostic> errors = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+            List<Diagnostic> warnings = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)];
+            List<Diagnostic> suggestions = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion)];
+            List<Diagnostic> info = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info)];
 
             // Display errors first
-            if (errors.Any())
+            if (errors.Count > 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("ERRORS:");
@@ -940,7 +995,7 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Then warnings
-            if (warnings.Any())
+            if (warnings.Count > 0)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("WARNINGS:");
@@ -954,7 +1009,7 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Then suggestions
-            if (suggestions.Any())
+            if (suggestions.Count > 0)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("SUGGESTIONS:");
@@ -968,7 +1023,7 @@ namespace ppotepa.tokenez.Tree
             }
 
             // Finally info (only show if verbose or if there are no other diagnostics)
-            if (info.Any() && errors.Count + warnings.Count + suggestions.Count == 0)
+            if (info.Count > 0 && errors.Count + warnings.Count + suggestions.Count == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine("INFO:");

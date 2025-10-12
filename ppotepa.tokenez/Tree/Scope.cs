@@ -17,11 +17,6 @@ namespace ppotepa.tokenez.Tree
         /// <summary>Track variable types for static type checking</summary>
         private readonly Dictionary<string, Type> _variableTypes = [];
 
-        public Scope? _outerScope;
-
-        /// <summary>Declarations (functions, variables) made in this scope</summary>
-        public Dictionary<string, Declaration> Decarations = [];
-
         public Scope(string scopeName)
         {
             ScopeName = scopeName;
@@ -30,6 +25,9 @@ namespace ppotepa.tokenez.Tree
         public Scope()
         {
         }
+
+        /// <summary>Declarations (functions, variables) made in this scope</summary>
+        public Dictionary<string, Declaration> Decarations { get; set; } = [];
 
         /// <summary>Statements executed in this scope</summary>
         public List<Statement> Statements { get; set; } = [];
@@ -49,11 +47,7 @@ namespace ppotepa.tokenez.Tree
 
         public string? Name { get; }
 
-        public Scope? OuterScope
-        {
-            get => _outerScope;
-            set => _outerScope = value;
-        }
+        public Scope? OuterScope { get; set; }
 
         public string? ScopeName { get; set; }
         public Token? Token { get; set; }
@@ -117,14 +111,6 @@ namespace ppotepa.tokenez.Tree
                         else
                             Console.WriteLine($"{indent}│      Returns: void");
                     }
-                    // TODO: Re-implement PRINT statement
-                    // else if (stmt is PrintStatement printStmt)
-                    // {
-                    //     if (printStmt.PrintValue != null)
-                    //     {
-                    //         Console.WriteLine($"{indent}│      Prints: {printStmt.PrintValue.ExpressionType}");
-                    //     }
-                    // }
                 }
 
                 Console.ResetColor();
@@ -161,7 +147,7 @@ namespace ppotepa.tokenez.Tree
             if (_dynamicVariables.Contains(name)) return true;
 
             // Check parent scope
-            return _outerScope != null ? _outerScope.IsDynamicVariable(name) : false;
+            return OuterScope?.IsDynamicVariable(name) ?? false;
         }
 
         /// <summary>
@@ -183,7 +169,7 @@ namespace ppotepa.tokenez.Tree
             if (_variableTypes.TryGetValue(name, out var type)) return type;
 
             // Check parent scope
-            return _outerScope?.GetVariableType(name);
+            return OuterScope?.GetVariableType(name);
         }
 
         /// <summary>

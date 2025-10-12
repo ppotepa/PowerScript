@@ -13,7 +13,6 @@ namespace ppotepa.tokenez.Tree
         private readonly DotNetLinker _dotNetLinker;
         private readonly TokenProcessorRegistry _registry;
         private readonly ScopeBuilder _scopeBuilder;
-        private readonly ExpectationValidator _validator;
 
         /// <summary>
         ///     Initializes the token tree builder with all necessary processors.
@@ -22,12 +21,11 @@ namespace ppotepa.tokenez.Tree
         public TokenTree()
         {
             // Create core infrastructure
-            _validator = new ExpectationValidator();
             _registry = new TokenProcessorRegistry();
             _dotNetLinker = new DotNetLinker();
 
             // Create the scope builder first (needed by ScopeProcessor)
-            _scopeBuilder = new ScopeBuilder(_registry, _validator);
+            _scopeBuilder = new ScopeBuilder(_registry);
 
             // Create specialized processors for different token types
             ParameterProcessor parameterProcessor = new();

@@ -18,7 +18,7 @@ namespace ppotepa.tokenez.Logging
         public static void DebugLocalized(this ILogger logger, string messageKey, params object[] args)
         {
 #if DEBUG
-            var message = LocalizationService.GetString(messageKey, args);
+            string message = LocalizationService.GetString(messageKey, args);
             logger.Debug(message);
 #endif
         }
@@ -28,7 +28,7 @@ namespace ppotepa.tokenez.Logging
         /// </summary>
         public static void InfoLocalized(this ILogger logger, string messageKey, params object[] args)
         {
-            var message = LocalizationService.GetString(messageKey, args);
+            string message = LocalizationService.GetString(messageKey, args);
             logger.Info(message);
         }
 
@@ -37,7 +37,7 @@ namespace ppotepa.tokenez.Logging
         /// </summary>
         public static void WarningLocalized(this ILogger logger, string messageKey, params object[] args)
         {
-            var message = LocalizationService.GetString(messageKey, args);
+            string message = LocalizationService.GetString(messageKey, args);
             logger.Warning(message);
         }
 
@@ -46,7 +46,7 @@ namespace ppotepa.tokenez.Logging
         /// </summary>
         public static void ErrorLocalized(this ILogger logger, string messageKey, params object[] args)
         {
-            var message = LocalizationService.GetString(messageKey, args);
+            string message = LocalizationService.GetString(messageKey, args);
             logger.Error(message);
         }
 
@@ -55,27 +55,34 @@ namespace ppotepa.tokenez.Logging
         /// </summary>
         public static void SuccessLocalized(this ILogger logger, string messageKey, params object[] args)
         {
-            var message = LocalizationService.GetString(messageKey, args);
+            string message = LocalizationService.GetString(messageKey, args);
             logger.Success(message);
         }
 
         /// <summary>
         ///     Writes a formatted header with a border.
         /// </summary>
-        public static void WriteHeader(this ILogger logger, string text, ConsoleColor color = ConsoleColor.Cyan)
+        public static void WriteHeader(this ILogger? logger, string text, ConsoleColor color = ConsoleColor.Cyan)
         {
-            var originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            Console.WriteLine(text);
-            Console.ForegroundColor = originalColor;
+            if (logger != null)
+            {
+                ConsoleColor originalColor = Console.ForegroundColor;
+                Console.ForegroundColor = color;
+                Console.WriteLine(text);
+                Console.ForegroundColor = originalColor;
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
         }
 
         /// <summary>
         ///     Writes a separator line.
         /// </summary>
-        public static void WriteSeparator(this ILogger logger, ConsoleColor color = ConsoleColor.DarkGray)
+        public static void WriteSeparator(this ILogger _, ConsoleColor color = ConsoleColor.DarkGray)
         {
-            var originalColor = Console.ForegroundColor;
+            ConsoleColor originalColor = Console.ForegroundColor;
             Console.ForegroundColor = color;
             Console.WriteLine(new string('─', 60));
             Console.ForegroundColor = originalColor;

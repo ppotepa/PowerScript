@@ -66,8 +66,6 @@ namespace ppotepa.tokenez.Tree
             { ".", typeof(DotToken) } // Dot operator for member access
         };
 
-        private Dictionary<string, Type>? _tokenTypes;
-
         /// <summary>The root scope containing all top-level declarations</summary>
         public Scope? RootScope { get; private set; }
 
@@ -76,34 +74,6 @@ namespace ppotepa.tokenez.Tree
 
         /// <summary>The .NET linker for resolving types from linked namespaces</summary>
         public DotNetLinker DotNetLinker => _dotNetLinker;
-
-        /// <summary>
-        ///     Dynamically discovered token types through reflection.
-        ///     Finds all Token subclasses and maps them by their name (without 'Token' suffix).
-        ///     Excludes operator tokens to prevent conflicts with function names.
-        ///     This allows adding new token types without modifying the core mapping logic.
-        /// </summary>
-        private Dictionary<string, Type> TokenTypes
-        {
-            get
-            {
-                // Use reflection to find all classes that inherit from Token
-                _tokenTypes
-                    ??= AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes())
-                        .Where(type => type.IsSubclassOf(typeof(Token)))
-                        // Exclude operator and value tokens to prevent conflicts (they should be in _map instead)
-                        .Where(type => type.Namespace?.Contains("Operators") != true)
-                        .Where(type => type.Namespace?.Contains("Values") != true)
-                        .ToDictionary(
-                            // Map by class name without 'Token' suffix (e.g., 'FunctionToken' -> 'FUNCTION')
-                            type => type.Name.ToUpperInvariant().Replace("TOKEN", ""),
-                            type => type,
-                            StringComparer.OrdinalIgnoreCase
-                        );
-
-                return _tokenTypes;
-            }
-        }
 
         /// <summary>
         ///     Creates the token tree from a user prompt.
@@ -123,7 +93,7 @@ namespace ppotepa.tokenez.Tree
             Console.WriteLine("Tokens linked");
 
             // Step 3: Build the scope hierarchy starting from root scope
-            var scope = CreateScope(tokens[0], new Scope("ROOT"));
+            Scope scope = CreateScope(tokens[0], new Scope("ROOT"));
             Console.WriteLine("Scope creation complete\n");
 
             // Store the results
@@ -163,7 +133,7 @@ namespace ppotepa.tokenez.Tree
         ///     Links tokens bidirectionally to form a doubly-linked list.
         ///     This allows processors to easily navigate forward (Next) and backward (Prev).
         /// </summary>
-        private Token Link(Token token, int index, Token[] tokens)
+        private static Token Link(Token token, int index, Token[] tokens)
         {
             // First token: only set Next
             if (index is 0)
@@ -192,18 +162,18 @@ namespace ppotepa.tokenez.Tree
         ///     2) Check dynamic TokenTypes for reflection-discovered types
         ///     3) Fall back to switch statement for special cases and identifiers
         /// </summary>
-        private Token ToToken(RawToken rawToken, int index)
+        private static Token ToToken(RawToken rawToken, int index)
         {
-            Type? targetType = null;
+            Type? targetType;
 
             // First priority: Check static map for exact string matches
-            if (_map.ContainsKey(rawToken.Text))
-                targetType = _map[rawToken.Text];
-            // Second priority: Check dynamically discovered token types
-            else if (TokenTypes.ContainsKey(rawToken.Text))
-                targetType = TokenTypes[rawToken.Text];
-            // Third priority: Handle special cases and default to identifier
+            if (_map.TryGetValue(rawToken.Text, out Type? mappedType))
+            {
+                _ = index;
+                targetType = mappedType;
+            }
             else
+            {
                 switch (rawToken.Text.Trim())
                 {
                     case "(":
@@ -224,22 +194,31 @@ namespace ppotepa.tokenez.Tree
                     default:
                         // Check if it's a template string (starts and ends with backticks)
                         if (IsTemplateString(rawToken.Text))
+                        {
                             targetType = typeof(TemplateStringToken);
+                        }
                         // Check if it's a string literal (starts and ends with quotes)
                         else if (IsStringLiteral(rawToken.Text))
+                        {
                             targetType = typeof(StringLiteralToken);
+                        }
                         // Check if it's a numeric literal
                         else if (IsNumericLiteral(rawToken.Text))
+                        {
                             targetType = typeof(ValueToken);
+                        }
                         else
+                        {
                             // If no match found, treat as identifier (variable/function name)
                             targetType = typeof(IdentifierToken);
+                        }
+
                         break;
                 }
+            }
 
             // Create instance of the appropriate token type
-            var token = Activator.CreateInstance(targetType, rawToken) as Token;
-            if (token == null)
+            if (Activator.CreateInstance(targetType, rawToken) is not Token token)
             {
                 throw new InvalidOperationException($"Failed to create token of type {targetType.Name}");
             }
@@ -252,7 +231,7 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private static bool IsStringLiteral(string text)
         {
-            return text.StartsWith("\"") && text.EndsWith("\"") && text.Length >= 2;
+            return text.StartsWith('\\') && text.EndsWith('\\') && text.Length >= 2;
         }
 
         /// <summary>
@@ -260,7 +239,7 @@ namespace ppotepa.tokenez.Tree
         /// </summary>
         private static bool IsTemplateString(string text)
         {
-            return text.StartsWith("`") && text.EndsWith("`") && text.Length >= 2;
+            return text.StartsWith('`') && text.EndsWith('`') && text.Length >= 2;
         }
 
         /// <summary>

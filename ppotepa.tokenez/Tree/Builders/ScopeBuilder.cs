@@ -6,7 +6,7 @@ namespace ppotepa.tokenez.Tree.Builders
     ///     Builds scope hierarchies by processing tokens sequentially.
     ///     Uses a processor registry pattern to delegate token-specific logic to specialized processors.
     /// </summary>
-    internal class ScopeBuilder(TokenProcessorRegistry registry, ExpectationValidator validator)
+    internal class ScopeBuilder(TokenProcessorRegistry registry)
     {
         /// <summary>
         ///     Builds a complete scope by processing tokens from start to end.
@@ -67,16 +67,6 @@ namespace ppotepa.tokenez.Tree.Builders
                     // Process the token and get the next token to continue from
                     TokenProcessingResult result = processor.Process(currentToken, context);
 
-                    // Optionally validate that the next token meets expectations (only for tokens that have them)
-                    if (result.ShouldValidateExpectations && HasExpectations(currentToken))
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine(
-                            $"[DEBUG] Validating expectations after processing {currentToken.GetType().Name} '{currentToken.RawToken?.Text}'");
-                        Console.ResetColor();
-                        validator.ValidateNext(currentToken);
-                    }
-
                     // Update scope if processor modified it
                     if (result.ModifiedScope != null)
                     {
@@ -105,15 +95,6 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ResetColor();
 
             return scope;
-        }
-
-        /// <summary>
-        ///     Checks if a token has any expectations defined.
-        ///     Tokens without expectations are typically identifiers or values that don't require special processing.
-        /// </summary>
-        private static bool HasExpectations(Token token)
-        {
-            return token.Expectations.Length != 0;
         }
     }
 }

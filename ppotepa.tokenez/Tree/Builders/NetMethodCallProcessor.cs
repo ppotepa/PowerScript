@@ -39,7 +39,7 @@ namespace ppotepa.tokenez.Tree.Builders
             {
                 // Expect namespace operator :: for NET syntax
                 if (currentToken is not NamespaceOperatorToken)
-                    throw new Exception($"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
+                    throw new InvalidOperationException($"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
                 currentToken = currentToken.Next;
             }
 
@@ -52,7 +52,7 @@ namespace ppotepa.tokenez.Tree.Builders
 
             // Check for open parenthesis for parameters
             if (currentToken is not ParenthesisOpen)
-                throw new Exception(
+                throw new InvalidOperationException(
                     $"Expected opening parenthesis after .NET method name '{fullPath}', got {currentToken?.GetType().Name}");
 
             // Parse method arguments
@@ -105,7 +105,7 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             return pathParts.Count == 0
-                ? throw new Exception("Expected at least one identifier in .NET path")
+                ? throw new InvalidOperationException("Expected at least one identifier in .NET path")
                 : string.Join(".", pathParts);
         }
 
@@ -133,7 +133,7 @@ namespace ppotepa.tokenez.Tree.Builders
                 if (token is CommaSeparatorToken)
                     token = token.Next;
                 else if (token is not ParenthesisClosed)
-                    throw new Exception($"Expected comma or closing parenthesis, got {token?.GetType().Name}");
+                    throw new InvalidOperationException($"Expected comma or closing parenthesis, got {token?.GetType().Name}");
             }
 
             // Skip closing parenthesis

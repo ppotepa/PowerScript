@@ -195,10 +195,13 @@ public class DotNetLinker
             { "System.Net", "System.Net.Primitives" }
         };
 
-        // Check known mappings
-        foreach (KeyValuePair<string, string> kvp in knownAssemblies.Where(kvp => namespacePath.StartsWith(kvp.Key)))
+        // Check known mappings - find the first matching namespace prefix
+        KeyValuePair<string, string>? matchingAssembly = knownAssemblies
+            .FirstOrDefault(kvp => namespacePath.StartsWith(kvp.Key));
+
+        if (matchingAssembly.HasValue)
         {
-            return kvp.Value;
+            return matchingAssembly.Value.Value;
         }
 
         // Default: use the first two parts of the namespace

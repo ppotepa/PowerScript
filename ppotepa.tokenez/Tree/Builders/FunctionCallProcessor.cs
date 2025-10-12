@@ -15,10 +15,13 @@ namespace ppotepa.tokenez.Tree.Builders
         public bool CanProcess(Token token)
         {
             // Check if this is an identifier followed by an opening parenthesis
-            if (token is not IdentifierToken) return false;
+            if (token is not IdentifierToken)
+            {
+                return false;
+            }
 
             // Look ahead to see if next token is opening parenthesis
-            var nextToken = token.Next;
+            Token nextToken = token.Next;
             return nextToken is ParenthesisOpen;
         }
 
@@ -29,18 +32,23 @@ namespace ppotepa.tokenez.Tree.Builders
                 $"[DEBUG] FunctionCallProcessor: Processing function call '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
-            var identifierToken = (IdentifierToken)token;
-            var functionName = identifierToken.RawToken?.Text?.ToUpperInvariant() ?? "";
+            IdentifierToken identifierToken = (IdentifierToken)token;
+            string functionName = identifierToken.RawToken?.Text?.ToUpperInvariant() ?? "";
 
             // Consume the opening parenthesis
-            var openParen = token.Next;
-            if (openParen is not ParenthesisOpen) throw new Exception($"Expected '(' after function name '{functionName}'");
+            Token openParen = token.Next;
+            if (openParen is not ParenthesisOpen)
+            {
+                throw new InvalidOperationException($"Expected '(' after function name '{functionName}'");
+            }
 
             // For now, we only support parameterless function calls
-            // TODO: Parse arguments here
-            var closeParen = openParen.Next;
+            // Argument parsing will be implemented in future versions
+            Token closeParen = openParen.Next;
             if (closeParen is not ParenthesisClosed)
-                throw new Exception($"Expected ')' after function name '{functionName}()' - parameters not yet supported");
+            {
+                throw new InvalidOperationException($"Expected ')' after function name '{functionName}()' - parameters not yet supported");
+            }
 
             // Create the function call statement
             FunctionCallStatement statement = new()

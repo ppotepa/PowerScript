@@ -32,11 +32,11 @@ namespace ppotepa.tokenez.Tree.Builders
                 $"[IfStatementProcessor] Processing IF statement in scope '{context.CurrentScope.ScopeName}'");
             Console.ResetColor();
 
-            var ifToken = token as IfKeywordToken;
-            var currentToken = ifToken!.Next;
+            IfKeywordToken? ifToken = token as IfKeywordToken;
+            Token currentToken = ifToken!.Next;
 
             // Parse the condition expression
-            var condition = ParseConditionExpression(ref currentToken);
+            Expression condition = ParseConditionExpression(ref currentToken);
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine($"[IfStatementProcessor] Condition: {condition}");
@@ -44,10 +44,12 @@ namespace ppotepa.tokenez.Tree.Builders
 
             // Expect opening brace for THEN block
             if (currentToken is not ScopeStartToken)
-                throw new Exception($"Expected {{ after IF condition, got {currentToken?.GetType().Name}");
+            {
+                throw new InvalidOperationException($"Expected {{ after IF condition, got {currentToken?.GetType().Name}");
+            }
 
             // Create THEN scope
-            var thenScopeName = $"IF_THEN_{context.CurrentScope.Statements.Count}";
+            string thenScopeName = $"IF_THEN_{context.CurrentScope.Statements.Count}";
             Scope thenScope = new(thenScopeName)
             {
                 Type = ScopeType.Block,
@@ -70,10 +72,12 @@ namespace ppotepa.tokenez.Tree.Builders
 
                 // Expect opening brace for ELSE block
                 if (currentToken is not ScopeStartToken)
-                    throw new Exception($"Expected {{ after ELSE keyword, got {currentToken?.GetType().Name}");
+                {
+                    throw new InvalidOperationException($"Expected {{ after ELSE keyword, got {currentToken?.GetType().Name}");
+                }
 
                 // Create ELSE scope
-                var elseScopeName = $"IF_ELSE_{context.CurrentScope.Statements.Count}";
+                string elseScopeName = $"IF_ELSE_{context.CurrentScope.Statements.Count}";
                 elseScope = new Scope(elseScopeName)
                 {
                     Type = ScopeType.Block,
@@ -100,13 +104,16 @@ namespace ppotepa.tokenez.Tree.Builders
             Console.ResetColor();
 
             // Find the closing brace and continue from there
-            var nextToken = currentToken;
-            var braceDepth = 0;
+            Token? nextToken = currentToken;
+            int braceDepth = 0;
 
             // Skip past the THEN scope
             while (nextToken != null)
             {
-                if (nextToken is ScopeStartToken) braceDepth++;
+                if (nextToken is ScopeStartToken)
+                {
+                    braceDepth++;
+                }
 
                 if (nextToken is ScopeEndToken)
                 {
@@ -128,7 +135,10 @@ namespace ppotepa.tokenez.Tree.Builders
                 braceDepth = 0;
                 while (nextToken != null)
                 {
-                    if (nextToken is ScopeStartToken) braceDepth++;
+                    if (nextToken is ScopeStartToken)
+                    {
+                        braceDepth++;
+                    }
 
                     if (nextToken is ScopeEndToken)
                     {
@@ -151,18 +161,18 @@ namespace ppotepa.tokenez.Tree.Builders
         ///     Parse a condition expression with support for comparisons and logical operators.
         ///     Examples: a > b, x == y AND z < w, m != n OR p>= q
         /// </summary>
-        private Expression ParseConditionExpression(ref Token currentToken)
+        private static Expression ParseConditionExpression(ref Token currentToken)
         {
             // Parse the left side of the condition
-            var left = ParseComparisonExpression(ref currentToken);
+            Expression left = ParseComparisonExpression(ref currentToken);
 
             // Check for logical operators (AND, OR)
             while (currentToken is AndKeywordToken or OrKeywordToken)
             {
-                var logicalOp = currentToken;
+                Token logicalOp = currentToken;
                 currentToken = currentToken.Next;
 
-                var right = ParseComparisonExpression(ref currentToken);
+                Expression right = ParseComparisonExpression(ref currentToken);
                 left = new LogicalExpression(left, logicalOp, right);
             }
 
@@ -174,17 +184,19 @@ namespace ppotepa.tokenez.Tree.Builders
         ///     Operators: >, <, >=, <=, ==, !=
         ///     Handles == as two consecutive = tokens if needed
         /// </summary>
-        private Expression ParseComparisonExpression(ref Token currentToken)
+        private static BinaryExpression ParseComparisonExpression(ref Token currentToken)
         {
             // Parse left operand
-            var left = ParseValue(ref currentToken);
+            Expression left = ParseValue(ref currentToken);
 
             // Expect a comparison operator
             if (!IsComparisonOperator(currentToken))
-                throw new Exception(
+            {
+                throw new InvalidOperationException(
                     $"Expected comparison operator (>, <, >=, <=, ==, !=), got {currentToken?.GetType().Name}");
+            }
 
-            var comparisonOp = currentToken;
+            Token comparisonOp = currentToken;
 
             // Handle == as two EqualsToken (tokenizer fallback)
             if (currentToken is EqualsToken && currentToken.Next is EqualsToken)
@@ -198,7 +210,7 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             // Parse right operand
-            var right = ParseValue(ref currentToken);
+            Expression right = ParseValue(ref currentToken);
 
             return new BinaryExpression(left, comparisonOp, right);
         }
@@ -206,7 +218,7 @@ namespace ppotepa.tokenez.Tree.Builders
         /// <summary>
         ///     Parse a value (identifier, array element, number, or string literal)
         /// </summary>
-        private Expression ParseValue(ref Token currentToken)
+        private static Expression ParseValue(ref Token currentToken)
         {
             if (currentToken is IdentifierToken identifierToken)
             {
@@ -216,11 +228,13 @@ namespace ppotepa.tokenez.Tree.Builders
                     currentToken = identifierToken.Next.Next; // Move past identifier and '['
 
                     // Parse the index expression
-                    var indexExpr = ParseSimpleValue(ref currentToken);
+                    Expression indexExpr = ParseSimpleValue(ref currentToken);
 
                     // Expect closing bracket
                     if (currentToken is not BracketClosed)
-                        throw new Exception($"Expected ']' after array index, got {currentToken?.GetType().Name}");
+                    {
+                        throw new InvalidOperationException($"Expected ']' after array index, got {currentToken?.GetType().Name}");
+                    }
 
                     currentToken = currentToken.Next; // Move past ']'
 
@@ -250,13 +264,13 @@ namespace ppotepa.tokenez.Tree.Builders
                 return expr;
             }
 
-            throw new Exception($"Expected identifier, number, or string, got {currentToken?.GetType().Name}");
+            throw new InvalidOperationException($"Expected identifier, number, or string, got {currentToken?.GetType().Name}");
         }
 
         /// <summary>
         ///     Parse a simple value for array index (identifier or number)
         /// </summary>
-        private Expression ParseSimpleValue(ref Token currentToken)
+        private static Expression ParseSimpleValue(ref Token currentToken)
         {
             if (currentToken is ValueToken valueToken)
             {
@@ -272,18 +286,20 @@ namespace ppotepa.tokenez.Tree.Builders
                 return expr;
             }
 
-            throw new Exception($"Expected value or identifier for array index, got {currentToken?.GetType().Name}");
+            throw new InvalidOperationException($"Expected value or identifier for array index, got {currentToken?.GetType().Name}");
         }
 
         /// <summary>
         ///     Check if the token is a comparison operator.
         ///     Handles == as two consecutive EqualsToken if needed.
         /// </summary>
-        private bool IsComparisonOperator(Token token)
+        private static bool IsComparisonOperator(Token token)
         {
             if (token is EqualsToken && token.Next is EqualsToken)
+            {
                 // Handle == as two EqualsToken (tokenizer fallback)
                 return true;
+            }
 
             return token is GreaterThanToken
                 or LessThanToken
