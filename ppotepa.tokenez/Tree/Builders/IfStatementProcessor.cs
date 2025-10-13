@@ -183,8 +183,8 @@ namespace ppotepa.tokenez.Tree.Builders
         /// </summary>
         private static BinaryExpression ParseComparisonExpression(ref Token currentToken)
         {
-            // Parse left operand
-            Expression left = ParseValue(ref currentToken);
+            // Parse left operand as a full arithmetic expression
+            Expression left = ParseArithmeticExpression(ref currentToken);
 
             // Expect a comparison operator
             if (!IsComparisonOperator(currentToken))
@@ -219,6 +219,33 @@ namespace ppotepa.tokenez.Tree.Builders
         {
             if (currentToken is IdentifierToken identifierToken)
             {
+                // Check for function call: identifier(...)
+                if (identifierToken.Next is ParenthesisOpen)
+                {
+                    FunctionCallExpression funcCall = new()
+                    {
+                        FunctionName = identifierToken
+                    };
+
+                    currentToken = identifierToken.Next; // Move to '('
+                    currentToken = currentToken.Next; // Move past '('
+
+                    // Parse function arguments (simple for now - skip to closing paren)
+                    // TODO: Implement proper argument parsing
+                    while (currentToken is not null and not ParenthesisClosed)
+                    {
+                        currentToken = currentToken.Next;
+                    }
+
+                    if (currentToken is not ParenthesisClosed)
+                    {
+                        throw new InvalidOperationException($"Expected ')' after function call, got {currentToken?.GetType().Name}");
+                    }
+
+                    currentToken = currentToken.Next; // Move past ')'
+                    return funcCall;
+                }
+
                 // Check for array indexing: identifier[index]
                 if (identifierToken.Next is BracketOpen)
                 {
@@ -284,6 +311,79 @@ namespace ppotepa.tokenez.Tree.Builders
             }
 
             throw new InvalidOperationException($"Expected value or identifier for array index, got {currentToken?.GetType().Name}");
+        }
+
+        /// <summary>
+        ///     Parse an arithmetic expression with support for +, -, *, /, % operators
+        /// </summary>
+        private static Expression ParseArithmeticExpression(ref Token currentToken)
+        {
+            return ParseAdditiveExpression(ref currentToken);
+        }
+
+        /// <summary>
+        ///     Parses addition and subtraction (left-to-right)
+        /// </summary>
+        private static Expression ParseAdditiveExpression(ref Token currentToken)
+        {
+            Expression left = ParseMultiplicativeExpression(ref currentToken);
+
+            while (currentToken is PlusToken or MinusToken)
+            {
+                Token operatorToken = currentToken;
+                currentToken = currentToken.Next;
+
+                Expression right = ParseMultiplicativeExpression(ref currentToken);
+
+                left = new BinaryExpression(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        ///     Parses multiplication, division, and modulo (left-to-right)
+        /// </summary>
+        private static Expression ParseMultiplicativeExpression(ref Token currentToken)
+        {
+            Expression left = ParsePrimaryExpression(ref currentToken);
+
+            while (currentToken is MultiplyToken or DivideToken or ModuloToken)
+            {
+                Token operatorToken = currentToken;
+                currentToken = currentToken.Next;
+
+                Expression right = ParsePrimaryExpression(ref currentToken);
+
+                left = new BinaryExpression(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        ///     Parses primary expressions: literals, identifiers, array access, parentheses
+        /// </summary>
+        private static Expression ParsePrimaryExpression(ref Token currentToken)
+        {
+            // Handle parentheses for precedence override
+            if (currentToken is ParenthesisOpen)
+            {
+                currentToken = currentToken.Next; // Skip '('
+
+                Expression innerExpr = ParseArithmeticExpression(ref currentToken);
+
+                if (currentToken is not ParenthesisClosed)
+                {
+                    throw new InvalidOperationException($"Expected ')' after expression, got {currentToken?.GetType().Name}");
+                }
+
+                currentToken = currentToken.Next; // Skip ')'
+                return innerExpr;
+            }
+
+            // Delegate to ParseValue for identifiers, values, strings
+            return ParseValue(ref currentToken);
         }
 
         /// <summary>

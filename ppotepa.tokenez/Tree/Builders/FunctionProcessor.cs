@@ -79,8 +79,8 @@ namespace ppotepa.tokenez.Tree.Builders
                 // NUMBER is special - it's treated as INT but written as identifier to avoid conflicts
                 ITypeToken returnTypeInterface;
                 Token returnTypeToken;
-                
-                if (currentToken.Next is IdentifierToken identToken && 
+
+                if (currentToken.Next is IdentifierToken identToken &&
                     identToken.RawToken!.Text == "NUMBER")
                 {
                     // Create synthetic INT token for NUMBER

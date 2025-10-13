@@ -38,9 +38,9 @@ namespace ppotepa.tokenez.Tree.Builders
 
             Token? currentToken = startToken;
 
-            // Process all tokens sequentially
+            // Process all tokens sequentially until we hit a scope end token
             int safetyCounter = 0;
-            while (currentToken is not null)
+            while (currentToken is not null and not Tokens.Scoping.ScopeEndToken)
             {
                 safetyCounter++;
                 if (safetyCounter > 1000)

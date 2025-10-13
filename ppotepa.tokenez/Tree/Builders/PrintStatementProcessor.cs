@@ -50,8 +50,27 @@ namespace ppotepa.tokenez.Tree.Builders
             }
             else if (nextToken is IdentifierToken identifierToken)
             {
+                // Check if it's a function call
+                if (identifierToken.Next is ParenthesisOpen)
+                {
+                    // Function call expression: PRINT function(args)
+                    expression = new FunctionCallExpression
+                    {
+                        FunctionName = identifierToken
+                    };
+                    // Skip to closing parenthesis
+                    var currentToken = identifierToken.Next.Next; // Move past '('
+                    int depth = 1;
+                    while (currentToken != null && depth > 0)
+                    {
+                        if (currentToken is ParenthesisOpen) depth++;
+                        if (currentToken is ParenthesisClosed) depth--;
+                        if (depth > 0) currentToken = currentToken.Next;
+                    }
+                    nextToken = currentToken?.Next; // Move past ')'
+                }
                 // Check if it's an array index access
-                if (identifierToken.Next is BracketOpen)
+                else if (identifierToken.Next is BracketOpen)
                 {
                     // Parse array indexing expression
                     var currentToken = identifierToken.Next.Next; // Move past '[' 
@@ -101,7 +120,7 @@ namespace ppotepa.tokenez.Tree.Builders
             // Don't validate expectations since we already handled the token sequence
             return new TokenProcessingResult
             {
-                NextToken = nextToken,
+                NextToken = nextToken ?? printToken,
                 ShouldValidateExpectations = false
             };
         }

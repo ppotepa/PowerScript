@@ -9,6 +9,7 @@ using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Keywords;
 using ppotepa.tokenez.Tree.Tokens.Keywords.Types;
 using ppotepa.tokenez.Tree.Tokens.Operators;
+using ppotepa.tokenez.Tree.Tokens.Raw;
 using ppotepa.tokenez.Tree.Tokens.Values;
 
 namespace ppotepa.tokenez.Tree.Builders
@@ -327,6 +328,25 @@ namespace ppotepa.tokenez.Tree.Builders
                 IdentifierExpression expr = new(identifierToken);
                 token = token.Next;
                 return expr;
+            }
+
+            // Handle unary minus for negative numbers
+            if (token is MinusToken minusToken)
+            {
+                token = token.Next; // Move past minus
+
+                if (token is ValueToken negValueToken)
+                {
+                    // Create negative value token
+                    token = token.Next;
+                    RawToken negativeRaw = RawToken.Create($"-{negValueToken.RawToken.OriginalText}");
+                    ValueToken negativeToken = new ValueToken(negativeRaw);
+                    return new LiteralExpression(negativeToken);
+                }
+
+                // If it's not followed by a number, it might be a minus expression
+                // Put the token back and let the caller handle it
+                token = minusToken;
             }
 
             throw new NotImplementedException(

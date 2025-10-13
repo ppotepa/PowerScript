@@ -3,7 +3,11 @@ using ppotepa.tokenez.Logging;
 using ppotepa.tokenez.Tree.Diagnostics;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
+using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Delimiters;
+using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Operators;
+using ppotepa.tokenez.Tree.Tokens.Values;
 using System.Reflection;
 using ParameterExpression = System.Linq.Expressions.ParameterExpression;
 using SysExpression = System.Linq.Expressions.Expression;
@@ -23,6 +27,9 @@ namespace ppotepa.tokenez.Tree
     {
         private readonly TokenTree _tree;
         private readonly Dictionary<string, object> _variables = [];
+        private int _recursionDepth = 0;
+        private const int MaxRecursionDepth = 1000;
+        private readonly List<string> _callStack = [];
 
         public PowerScriptCompiler(TokenTree tree)
         {
@@ -180,6 +187,12 @@ namespace ppotepa.tokenez.Tree
                     // Evaluate array index access and print
                     object value = EvaluateExpressionValue(indexExpr);
                     Console.WriteLine(value);
+                }
+                else if (printStmt.Expression is FunctionCallExpression funcCallExpr)
+                {
+                    // Evaluate function call and print result
+                    object result = EvaluateFunctionCall(funcCallExpr);
+                    Console.WriteLine(result);
                 }
                 else
                 {
@@ -412,6 +425,7 @@ namespace ppotepa.tokenez.Tree
                 IndexExpression indexExpr => EvaluateIndexExpression(indexExpr),
                 IdentifierExpression identifierExpr => EvaluateIdentifier(identifierExpr),
                 BinaryExpression binaryExpr => EvaluateBinaryExpression(binaryExpr),
+                FunctionCallExpression funcCallExpr => EvaluateFunctionCall(funcCallExpr),
                 _ => throw new InvalidOperationException($"Cannot evaluate expression of type: {expr.GetType().Name}")
             };
         }
@@ -648,6 +662,161 @@ namespace ppotepa.tokenez.Tree
             {
                 ExecuteStatement(stmt);
             }
+        }
+
+        /// <summary>
+        ///     Evaluates a function call expression with arguments and returns the result.
+        ///     This is used when functions are called as part of expressions (e.g., PRINT power(2, 8)).
+        /// </summary>
+        private object EvaluateFunctionCall(FunctionCallExpression funcCallExpr)
+        {
+            // Check recursion depth to prevent stack overflow
+            if (_recursionDepth >= MaxRecursionDepth)
+            {
+                LoggerService.Logger.Error($"Maximum recursion depth ({MaxRecursionDepth}) exceeded!");
+                LoggerService.Logger.Error($"Current variables: {string.Join(", ", _variables.Select(kv => $"{kv.Key}={kv.Value}"))}");
+                LoggerService.Logger.Error($"Call stack (last 20): {string.Join(" -> ", _callStack.TakeLast(20))}");
+                throw new InvalidOperationException($"Maximum recursion depth ({MaxRecursionDepth}) exceeded");
+            }
+
+            string functionName = funcCallExpr.FunctionName.RawToken?.Text?.ToUpperInvariant() ?? "";
+            _callStack.Add(functionName);
+            _recursionDepth++;
+            try
+            {
+                LoggerService.Logger.Warning($"[EXEC] >>> Calling {functionName} [depth={_recursionDepth}]");
+
+                // Find the function declaration in the root scope
+                if (!_tree.RootScope!.Decarations.TryGetValue(functionName, out Declaration? declaration))
+                {
+                    throw new InvalidOperationException($"Function not found: {functionName}");
+                }
+
+                if (declaration is not FunctionDeclaration functionDecl)
+                {
+                    throw new InvalidOperationException($"{functionName} is not a function");
+                }
+
+                // For now, parse arguments from the function call expression
+                // Note: The current FunctionCallExpression doesn't have parsed arguments yet
+                // We need to extract them from the tokens between ( and )
+                List<object> argumentValues = ParseFunctionArguments(funcCallExpr.FunctionName.Next);
+
+                // Validate argument count
+                if (argumentValues.Count != functionDecl.Parameters.Count)
+                {
+                    throw new InvalidOperationException(
+                        $"Function {functionName} expects {functionDecl.Parameters.Count} arguments, but got {argumentValues.Count}");
+                }
+
+                // Bind arguments to parameters (do NOT save/restore - just set them)
+                for (int i = 0; i < functionDecl.Parameters.Count; i++)
+                {
+                    string paramName = functionDecl.Parameters[i].Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
+                    _variables[paramName] = argumentValues[i];
+                    if (_recursionDepth <= 10)
+                    {
+                        LoggerService.Logger.Debug($"  → Binding parameter: {paramName} = {argumentValues[i]}");
+                    }
+                }
+
+                // Execute function body and capture return value
+                object? result = null;
+                foreach (Statement stmt in functionDecl.Scope.Statements)
+                {
+                    if (_recursionDepth <= 3)
+                    {
+                        LoggerService.Logger.Debug($"  [depth={_recursionDepth}] Executing: {stmt.GetType().Name}");
+                    }
+
+                    if (stmt is ReturnStatement returnStmt && returnStmt.ReturnValue != null)
+                    {
+                        result = EvaluateExpressionValue(returnStmt.ReturnValue);
+                        break;
+                    }
+                    else
+                    {
+                        ExecuteStatement(stmt);
+                    }
+                }
+
+                if (result == null)
+                {
+                    throw new InvalidOperationException($"Function {functionName} did not return a value");
+                }
+
+                if (_recursionDepth <= 10)
+                {
+                    LoggerService.Logger.Debug($"[EXEC] Function {functionName} returned: {result}");
+                }
+                return result;
+            }
+            finally
+            {
+                _recursionDepth--;
+                if (_callStack.Count > 0)
+                    _callStack.RemoveAt(_callStack.Count - 1);
+            }
+        }
+
+        /// <summary>
+        ///     Parses function call arguments from the token stream.
+        ///     Starts at the token after the function name (should be '(')
+        /// </summary>
+        private List<object> ParseFunctionArguments(Token? startToken)
+        {
+            List<object> arguments = [];
+
+            // Skip to opening parenthesis
+            Token? current = startToken;
+            while (current != null && current is not ParenthesisOpen)
+            {
+                current = current.Next;
+            }
+
+            if (current == null || current is not ParenthesisOpen)
+            {
+                // No arguments
+                return arguments;
+            }
+
+            current = current.Next; // Move past '('
+
+            // Parse arguments until ')'
+            while (current != null && current is not ParenthesisClosed)
+            {
+                // Parse single argument (for now, just handle simple values and identifiers)
+                if (current is ValueToken valueToken)
+                {
+                    arguments.Add(int.Parse(valueToken.RawToken?.Text ?? "0"));
+                    current = current.Next;
+                }
+                else if (current is IdentifierToken identToken)
+                {
+                    // Look up variable value
+                    string varName = identToken.RawToken?.Text?.ToUpperInvariant() ?? "";
+                    if (_variables.TryGetValue(varName, out object? value))
+                    {
+                        arguments.Add(value);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Variable not found: {varName}");
+                    }
+                    current = current.Next;
+                }
+                else if (current is CommaToken)
+                {
+                    current = current.Next; // Skip comma
+                }
+                else
+                {
+                    // Skip other tokens (for now)
+                    current = current.Next;
+                }
+            }
+
+            return arguments;
         }
 
         /// <summary>

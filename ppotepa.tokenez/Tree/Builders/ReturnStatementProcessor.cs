@@ -4,6 +4,7 @@ using ppotepa.tokenez.Tree.Exceptions;
 using ppotepa.tokenez.Tree.Expressions;
 using ppotepa.tokenez.Tree.Statements;
 using ppotepa.tokenez.Tree.Tokens.Base;
+using ppotepa.tokenez.Tree.Tokens.Delimiters;
 using ppotepa.tokenez.Tree.Tokens.Identifiers;
 using ppotepa.tokenez.Tree.Tokens.Keywords;
 using ppotepa.tokenez.Tree.Tokens.Operators;
@@ -32,11 +33,17 @@ namespace ppotepa.tokenez.Tree.Builders
         {
             LoggerService.Logger.Debug(
                 $"ReturnStatementProcessor: Processing RETURN token '{token.RawToken?.Text}' in scope '{context.CurrentScope.ScopeName}'");
-            // Enforce language rule: RETURN can only appear inside functions
-            if (!context.IsInsideFunction) throw new InvalidReturnStatementException(token);
 
             // Parse the expression after RETURN keyword
-            var expression = ParseExpression(token.Next);
+            Token? currentToken = token.Next;
+            var expression = currentToken is null or ScopeEndToken ? null : ParseFullExpression(ref currentToken);
+
+            // Enforce language rule: RETURN with a value can only appear inside functions
+            // Void RETURN is allowed anywhere (acts as early exit/break)
+            if (!context.IsInsideFunction && expression != null)
+            {
+                throw new InvalidReturnStatementException(token);
+            }
 
             // Create and register the RETURN statement
             ReturnStatement returnStatement = new(token, expression)
@@ -48,93 +55,177 @@ namespace ppotepa.tokenez.Tree.Builders
 
             LoggerService.Logger.Debug($"Registered RETURN statement in scope '{context.CurrentScope.ScopeName}'");
 
-            // Find where the expression ends (at scope end)
-            var nextToken = FindNextToken(token.Next);
-
+            // currentToken now points to the token after the expression
             LoggerService.Logger.Debug(
-                $"ReturnStatementProcessor: Next token after RETURN is {nextToken?.GetType().Name} '{nextToken?.RawToken?.Text}'");
-            return TokenProcessingResult.Continue(nextToken!);
+                $"ReturnStatementProcessor: Next token after RETURN is {currentToken?.GetType().Name} '{currentToken?.RawToken?.Text}'");
+            return TokenProcessingResult.Continue(currentToken!);
         }
 
         /// <summary>
         ///     Parses an expression following the RETURN keyword.
-        ///     Currently supports:
+        ///     Supports:
         ///     - Void return (e.g., RETURN) - returns null expression
-        ///     - Simple identifiers (e.g., RETURN x)
-        ///     - Literal values (e.g., RETURN 42)
-        ///     - Binary operations (e.g., RETURN a + b)
+        ///     - Arithmetic expressions with operators: +, -, *, /, %
+        ///     - Parenthesized expressions
+        ///     - Comparisons: ==, !=, <, >, <=, >=
         /// </summary>
         private Expression? ParseExpression(Token? startToken)
         {
             // Allow void return: RETURN with no expression (followed by scope end)
             if (startToken is null or ScopeEndToken) return null;
 
-            if (startToken is IdentifierToken identToken)
+            Token? current = startToken;
+            return ParseFullExpression(ref current);
+        }
+
+        /// <summary>
+        ///     Parse a full expression including comparisons and logical operators
+        /// </summary>
+        private Expression ParseFullExpression(ref Token? token)
+        {
+            Expression left = ParseArithmeticExpression(ref token);
+
+            // Handle comparison operators
+            if (token is GreaterThanToken or LessThanToken or GreaterThanOrEqualToken or
+                LessThanOrEqualToken or EqualsEqualsToken or NotEqualsToken)
             {
-                // Check if followed by an operator (binary expression)
-                if (startToken.Next is PlusToken or MinusToken or MultiplyToken or DivideToken)
+                Token comparisonOp = token;
+                token = token.Next;
+                Expression right = ParseArithmeticExpression(ref token);
+                return new BinaryExpression(left, comparisonOp, right);
+            }
+
+            // Handle == as two EqualsToken (tokenizer fallback)
+            if (token is EqualsToken && token.Next is EqualsToken)
+            {
+                Token equalsOp = token;
+                token = token.Next.Next; // Skip both = tokens
+                Expression right = ParseArithmeticExpression(ref token);
+                return new BinaryExpression(left, equalsOp, right);
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        ///     Parse arithmetic expression with support for +, -, *, /, % operators
+        /// </summary>
+        private Expression ParseArithmeticExpression(ref Token? token)
+        {
+            return ParseAdditiveExpression(ref token);
+        }
+
+        /// <summary>
+        ///     Parses addition and subtraction (left-to-right)
+        /// </summary>
+        private Expression ParseAdditiveExpression(ref Token? token)
+        {
+            Expression left = ParseMultiplicativeExpression(ref token);
+
+            while (token is PlusToken or MinusToken)
+            {
+                Token operatorToken = token;
+                token = token.Next;
+
+                Expression right = ParseMultiplicativeExpression(ref token);
+
+                left = new BinaryExpression(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        ///     Parses multiplication, division, and modulo (left-to-right)
+        /// </summary>
+        private Expression ParseMultiplicativeExpression(ref Token? token)
+        {
+            Expression left = ParsePrimaryExpression(ref token);
+
+            while (token is MultiplyToken or DivideToken or ModuloToken)
+            {
+                Token operatorToken = token;
+                token = token.Next;
+
+                Expression right = ParsePrimaryExpression(ref token);
+
+                left = new BinaryExpression(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        ///     Parses primary expressions: literals, identifiers, parentheses
+        /// </summary>
+        private Expression ParsePrimaryExpression(ref Token? token)
+        {
+            // Handle parentheses for precedence override
+            if (token is ParenthesisOpen)
+            {
+                token = token.Next; // Skip '('
+
+                Expression innerExpr = ParseFullExpression(ref token);
+
+                if (token is not ParenthesisClosed)
                 {
-                    IdentifierExpression left = new(identToken);
-                    var op = startToken.Next;
-                    var right = ParseSimpleExpression(op.Next);
-                    return new BinaryExpression(left, op, right);
+                    throw new UnexpectedTokenException(token!, typeof(ParenthesisClosed));
                 }
 
-                // Simple identifier
+                token = token.Next; // Skip ')'
+                return innerExpr;
+            }
+
+            // Handle identifiers (including function calls)
+            if (token is IdentifierToken identToken)
+            {
+                // Check for function call: identifier(...)
+                if (identToken.Next is ParenthesisOpen)
+                {
+                    FunctionCallExpression funcCall = new()
+                    {
+                        FunctionName = identToken
+                    };
+
+                    token = identToken.Next; // Move to '('
+                    token = token.Next; // Move past '('
+
+                    // Parse function arguments - for now, skip to closing paren
+                    // TODO: Properly parse argument expressions
+                    int parenDepth = 1; // Track nested parentheses
+                    while (token is not null && parenDepth > 0)
+                    {
+                        if (token is ParenthesisOpen)
+                            parenDepth++;
+                        else if (token is ParenthesisClosed)
+                            parenDepth--;
+
+                        if (parenDepth > 0)
+                            token = token.Next;
+                    }
+
+                    if (token is not ParenthesisClosed)
+                    {
+                        throw new UnexpectedTokenException(token!, typeof(ParenthesisClosed));
+                    }
+
+                    token = token.Next; // Move past ')'
+                    return funcCall;
+                }
+
+                token = token.Next;
                 return new IdentifierExpression(identToken);
             }
 
-            // Check for literal value
-            return startToken is ValueToken valueToken
-                ? (Expression)new LiteralExpression(valueToken)
-                : throw new UnexpectedTokenException(startToken, typeof(IdentifierToken), typeof(ValueToken),
-                    typeof(ScopeEndToken));
-        }
-
-        /// <summary>
-        ///     Parses a simple expression (identifier or value without operators).
-        ///     Used as the right-hand side of binary expressions.
-        /// </summary>
-        private Expression ParseSimpleExpression(Token token)
-        {
-            return token is IdentifierToken identToken
-                ? new IdentifierExpression(identToken)
-                : token is ValueToken valueToken
-                    ? (Expression)new LiteralExpression(valueToken)
-                    : throw new UnexpectedTokenException(token, typeof(IdentifierToken), typeof(ValueToken));
-        }
-
-        /// <summary>
-        ///     Finds the token after the return expression ends.
-        ///     Navigates through the expression tokens until reaching scope end.
-        /// </summary>
-        private Token FindNextToken(Token expressionStart)
-        {
-            var current = expressionStart;
-
-            // Skip through expression tokens
-            while (current is not null and not ScopeEndToken)
+            // Handle literal values
+            if (token is ValueToken valueToken)
             {
-                if (current is IdentifierToken or ValueToken)
-                {
-                    // Check if this is part of a binary expression
-                    if (current.Next is PlusToken or MinusToken or MultiplyToken or DivideToken)
-                        // Skip the operator and right operand
-                        current = current.Next?.Next;
-                    else
-                        // Simple expression, move past it
-                        current = current.Next;
-                }
-                else
-                {
-                    current = current.Next;
-                }
-
-                // Stop at scope end
-                if (current is ScopeEndToken) return current;
+                token = token.Next;
+                return new LiteralExpression(valueToken);
             }
 
-            return current!;
+            throw new UnexpectedTokenException(token!, typeof(IdentifierToken), typeof(ValueToken),
+                typeof(ParenthesisOpen));
         }
     }
 }

@@ -29,8 +29,8 @@ namespace ppotepa.tokenez.Prompt
         {
             get
             {
-                // First, extract and protect string literals
-                var text = WrappedPrompt.Trim();
+                // First, strip single-line comments (//)
+                var text = StripComments(WrappedPrompt).Trim();
                 List<string> tokens = [];
                 var i = 0;
 
@@ -101,7 +101,8 @@ namespace ppotepa.tokenez.Prompt
                             .Replace("+", " + ")
                             .Replace("-", " - ")
                             .Replace("*", " * ")
-                            .Replace("/", " / ");
+                            .Replace("/", " / ")
+                            .Replace("%", " % "); // Modulo operator
 
                         // NOTE: Single "=" and "<", ">" are NOT replaced here
                         // because they would break multi-character operators like "==", "<=", ">="
@@ -114,6 +115,89 @@ namespace ppotepa.tokenez.Prompt
 
                 return _rawTokens;
             }
+        }
+
+        /// <summary>
+        ///     Strips single-line comments (//) from the code while preserving string literals.
+        /// </summary>
+        private string StripComments(string code)
+        {
+            var result = new System.Text.StringBuilder();
+            var i = 0;
+
+            while (i < code.Length)
+            {
+                // Preserve string literals
+                if (code[i] == '"')
+                {
+                    result.Append(code[i]);
+                    i++;
+                    while (i < code.Length && code[i] != '"')
+                    {
+                        if (code[i] == '\\' && i + 1 < code.Length)
+                        {
+                            result.Append(code[i]); // Append escape character
+                            i++;
+                            result.Append(code[i]); // Append escaped character
+                            i++;
+                        }
+                        else
+                        {
+                            result.Append(code[i]);
+                            i++;
+                        }
+                    }
+                    if (i < code.Length)
+                    {
+                        result.Append(code[i]); // Append closing quote
+                        i++;
+                    }
+                }
+                // Preserve template strings (backticks)
+                else if (code[i] == '`')
+                {
+                    result.Append(code[i]);
+                    i++;
+                    while (i < code.Length && code[i] != '`')
+                    {
+                        result.Append(code[i]);
+                        i++;
+                    }
+                    if (i < code.Length)
+                    {
+                        result.Append(code[i]); // Append closing backtick
+                        i++;
+                    }
+                }
+                // Strip single-line comments
+                else if (i + 1 < code.Length && code[i] == '/' && code[i + 1] == '/')
+                {
+                    // Skip until end of line
+                    while (i < code.Length && code[i] != '\n' && code[i] != '\r')
+                    {
+                        i++;
+                    }
+                    // Keep the newline character
+                    if (i < code.Length && (code[i] == '\n' || code[i] == '\r'))
+                    {
+                        result.Append(code[i]);
+                        i++;
+                        // Handle \r\n
+                        if (i < code.Length && code[i - 1] == '\r' && code[i] == '\n')
+                        {
+                            result.Append(code[i]);
+                            i++;
+                        }
+                    }
+                }
+                else
+                {
+                    result.Append(code[i]);
+                    i++;
+                }
+            }
+
+            return result.ToString();
         }
     }
 }

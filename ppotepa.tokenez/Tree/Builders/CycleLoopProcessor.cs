@@ -42,7 +42,7 @@ namespace ppotepa.tokenez.Tree.Builders
             int nestingLevel = context.CycleNestingDepth;
             bool isCountBased = false;
 
-            // Check if this is a count-based loop (CYCLE <number>) or collection-based (CYCLE IN)
+            // Check if this is a count-based loop (CYCLE <number>), expression-based (CYCLE n-2), or collection-based (CYCLE IN)
             if (currentToken is ValueToken countToken)
             {
                 // Count-based loop: CYCLE 5 { ... } or CYCLE 10 AS i { ... }
@@ -53,6 +53,51 @@ namespace ppotepa.tokenez.Tree.Builders
                 LoggerService.Logger.Debug($"Count-based loop: {countToken.RawToken?.Text} iterations");
 
                 currentToken = currentToken.Next;
+
+                // Check for AS keyword to customize loop variable name
+                if (currentToken is AsKeywordToken)
+                {
+                    currentToken = currentToken.Next;
+
+                    if (currentToken is not IdentifierToken customNameToken)
+                    {
+                        throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
+                    }
+
+                    loopVariableName = customNameToken.RawToken!.Text;
+                    currentToken = currentToken.Next;
+
+                    LoggerService.Logger.Debug($"Custom loop variable name: {loopVariableName}");
+                }
+            }
+            else if (currentToken is IdentifierToken)
+            {
+                // Expression-based loop: CYCLE n - 2 { ... } or simple identifier: CYCLE iterations { ... }
+                isCountBased = true;
+                var startToken = currentToken;
+                var expressionTokens = new List<Token>();
+
+                // Collect tokens that could be part of an expression
+                while (currentToken is not ScopeStartToken && currentToken is not AsKeywordToken && currentToken != null)
+                {
+                    expressionTokens.Add(currentToken);
+                    currentToken = currentToken.Next;
+                }
+
+                // If we only got one identifier, treat as simple variable reference
+                if (expressionTokens.Count == 1 && expressionTokens[0] is IdentifierToken singleIdent)
+                {
+                    collectionExpression = new IdentifierExpression(singleIdent);
+                    LoggerService.Logger.Debug($"Variable-based loop count: {singleIdent.RawToken?.Text}");
+                }
+                else
+                {
+                    // Build expression from tokens (e.g., "n - 2", "len / 2")
+                    collectionExpression = BuildExpressionFromTokens(expressionTokens);
+                    LoggerService.Logger.Debug($"Expression-based loop count: {string.Join(" ", expressionTokens.Select(t => t.RawToken?.Text))}");
+                }
+
+                loopVariableName = GetAutomaticIndexName(nestingLevel);
 
                 // Check for AS keyword to customize loop variable name
                 if (currentToken is AsKeywordToken)
@@ -238,6 +283,51 @@ namespace ppotepa.tokenez.Tree.Builders
             int firstChar = (nestingLevel / 26) - 1;
             int secondChar = nestingLevel % 26;
             return $"{(char)('A' + firstChar)}{(char)('A' + secondChar)}";
+        }
+
+        /// <summary>
+        ///     Builds a binary expression from a list of tokens (e.g., "n - 2", "len / 2")
+        ///     Supports simple binary expressions with +, -, *, /, %
+        /// </summary>
+        private static Expression BuildExpressionFromTokens(List<Token> tokens)
+        {
+            if (tokens.Count == 0)
+                throw new InvalidOperationException("Cannot build expression from empty token list");
+
+            if (tokens.Count == 1)
+            {
+                // Single token - should be identifier or value
+                if (tokens[0] is IdentifierToken ident)
+                    return new IdentifierExpression(ident);
+                if (tokens[0] is ValueToken val)
+                    return new LiteralExpression(val);
+                throw new UnexpectedTokenException(tokens[0], "Expected identifier or value");
+            }
+
+            // Simple binary expression: <left> <operator> <right>
+            // For now, support only 3-token expressions
+            if (tokens.Count == 3)
+            {
+                Expression left;
+                if (tokens[0] is IdentifierToken leftIdent)
+                    left = new IdentifierExpression(leftIdent);
+                else if (tokens[0] is ValueToken leftVal)
+                    left = new LiteralExpression(leftVal);
+                else
+                    throw new UnexpectedTokenException(tokens[0], "Expected identifier or value as left operand");
+
+                Expression right;
+                if (tokens[2] is IdentifierToken rightIdent)
+                    right = new IdentifierExpression(rightIdent);
+                else if (tokens[2] is ValueToken rightVal)
+                    right = new LiteralExpression(rightVal);
+                else
+                    throw new UnexpectedTokenException(tokens[2], "Expected identifier or value as right operand");
+
+                return new BinaryExpression(left, tokens[1], right);
+            }
+
+            throw new NotImplementedException($"Complex expressions with {tokens.Count} tokens not yet supported in CYCLE");
         }
     }
 }

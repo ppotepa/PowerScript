@@ -59,6 +59,7 @@ namespace ppotepa.tokenez.Tree
             { "-", typeof(MinusToken) }, // Subtraction operator
             { "*", typeof(MultiplyToken) }, // Multiplication operator
             { "/", typeof(DivideToken) }, // Division operator
+            { "%", typeof(ModuloToken) }, // Modulo operator
             { "=", typeof(EqualsToken) }, // Assignment operator
             { ">", typeof(GreaterThanToken) }, // Greater than comparison
             { "<", typeof(LessThanToken) }, // Less than comparison
