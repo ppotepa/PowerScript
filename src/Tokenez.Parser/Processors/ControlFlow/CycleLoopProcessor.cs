@@ -77,7 +77,7 @@ public class CycleLoopProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             List<Token> expressionTokens = [];
 
             // Collect tokens that could be part of an expression
-            while (currentToken != null && currentToken is not ScopeStartToken && currentToken is not AsKeywordToken)
+            while (currentToken is not null and not ScopeStartToken and not AsKeywordToken)
             {
                 expressionTokens.Add(currentToken);
                 currentToken = currentToken.Next;
@@ -247,7 +247,7 @@ public class CycleLoopProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
                 // Function call arguments are not yet supported in CYCLE loops
 
                 // Skip to )
-                while (token != null && token is not ParenthesisClosed)
+                while (token is not null and not ParenthesisClosed)
                 {
                     token = token.Next;
                 }
@@ -319,16 +319,10 @@ public class CycleLoopProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
 
     private static Expression TokenToExpression(Token token, string? errorMessage = null)
     {
-        if (token is IdentifierToken ident)
-        {
-            return new IdentifierExpression(ident);
-        }
-
-        if (token is ValueToken val)
-        {
-            return new LiteralExpression(val);
-        }
-
-        throw new UnexpectedTokenException(token, errorMessage ?? "Expected identifier or value");
+        return token is IdentifierToken ident
+            ? new IdentifierExpression(ident)
+            : token is ValueToken val
+            ? (Expression)new LiteralExpression(val)
+            : throw new UnexpectedTokenException(token, errorMessage ?? "Expected identifier or value");
     }
 }
