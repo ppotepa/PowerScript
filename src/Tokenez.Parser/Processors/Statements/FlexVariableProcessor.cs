@@ -13,81 +13,52 @@ using Tokenez.Core.Syntax.Tokens.Raw;
 using Tokenez.Core.Syntax.Tokens.Values;
 using Tokenez.Parser.Processors.Base;
 
-namespace Tokenez.Parser.Processors.Statements
+namespace Tokenez.Parser.Processors.Statements;
+
+/// <summary>
+///     Processes FLEX keyword for dynamic variable declarations.
+///     Syntax: FLEX variableName = expression
+/// </summary>
+public class FlexVariableProcessor : ITokenProcessor
 {
-    /// <summary>
-    ///     Processes FLEX keyword for dynamic variable declarations.
-    ///     Syntax: FLEX variableName = expression
-    /// </summary>
-    public class FlexVariableProcessor : ITokenProcessor
+    public bool CanProcess(Token token)
     {
-        public bool CanProcess(Token token)
+        return token is FlexKeywordToken;
+    }
+
+    public TokenProcessingResult Process(Token token, ProcessingContext context)
+    {
+        LoggerService.Logger.Info(
+            $"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
+
+        FlexKeywordToken? flexToken = token as FlexKeywordToken;
+        Token? currentToken = flexToken!.Next;
+
+        // Expect identifier (variable name)
+        if (currentToken is not IdentifierToken identifierToken)
         {
-            return token is FlexKeywordToken;
+            throw new UnexpectedTokenException(currentToken!, typeof(IdentifierToken));
         }
 
-        public TokenProcessingResult Process(Token token, ProcessingContext context)
+        string variableName = identifierToken.RawToken!.Text;
+        LoggerService.Logger.Debug($"[FlexVariableProcessor] Variable name: {variableName}");
+
+        currentToken = currentToken.Next;
+
+        // Check if this is an array element assignment (FLEX arr[0] = value)
+        if (currentToken is BracketOpen)
         {
-            LoggerService.Logger.Info(
-                $"[FlexVariableProcessor] Processing FLEX variable declaration in scope '{context.CurrentScope.ScopeName}'");
+            // Parse array index assignment
+            currentToken = currentToken.Next; // Move past '['
+            Expression indexExpr = ParseExpression(ref currentToken);
 
-            FlexKeywordToken? flexToken = token as FlexKeywordToken;
-            Token? currentToken = flexToken!.Next;
-
-            // Expect identifier (variable name)
-            if (currentToken is not IdentifierToken identifierToken)
+            // Expect closing bracket
+            if (currentToken is not BracketClosed)
             {
-                throw new UnexpectedTokenException(currentToken!, typeof(IdentifierToken));
+                throw new UnexpectedTokenException(currentToken!, typeof(BracketClosed));
             }
 
-            string variableName = identifierToken.RawToken!.Text;
-            LoggerService.Logger.Debug($"[FlexVariableProcessor] Variable name: {variableName}");
-
-            currentToken = currentToken.Next;
-
-            // Check if this is an array element assignment (FLEX arr[0] = value)
-            if (currentToken is BracketOpen)
-            {
-                // Parse array index assignment
-                currentToken = currentToken.Next; // Move past '['
-                Expression indexExpr = ParseExpression(ref currentToken);
-
-                // Expect closing bracket
-                if (currentToken is not BracketClosed)
-                {
-                    throw new UnexpectedTokenException(currentToken!, typeof(BracketClosed));
-                }
-
-                currentToken = currentToken.Next; // Skip ']'
-
-                // Expect assignment operator
-                if (currentToken is not EqualsToken)
-                {
-                    throw new UnexpectedTokenException(currentToken!, typeof(EqualsToken));
-                }
-
-                currentToken = currentToken.Next;
-
-                // Parse the value expression
-                Expression valueExpr = ParseExpression(ref currentToken);
-
-                // Create an ArrayAssignmentStatement
-                ArrayAssignmentStatement arrayAssignStmt = new(identifierToken, indexExpr, valueExpr)
-                {
-                    StartToken = flexToken
-                };
-
-                context.CurrentScope.Statements.Add(arrayAssignStmt);
-
-                LoggerService.Logger.Success(
-                    $"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
-
-                return new TokenProcessingResult
-                {
-                    NextToken = currentToken!,
-                    ShouldValidateExpectations = false
-                };
-            }
+            currentToken = currentToken.Next; // Skip ']'
 
             // Expect assignment operator
             if (currentToken is not EqualsToken)
@@ -97,24 +68,19 @@ namespace Tokenez.Parser.Processors.Statements
 
             currentToken = currentToken.Next;
 
-            // Parse the initialization expression
-            Expression initExpression = ParseExpression(ref currentToken);
+            // Parse the value expression
+            Expression valueExpr = ParseExpression(ref currentToken);
 
-            // Create variable declaration
-            VariableDeclaration variableDecl = new(identifierToken); // No type token for FLEX variables
-
-            // Create variable declaration statement
-            VariableDeclarationStatement statement = new(variableDecl, initExpression, true)
+            // Create an ArrayAssignmentStatement
+            ArrayAssignmentStatement arrayAssignStmt = new(identifierToken, indexExpr, valueExpr)
             {
                 StartToken = flexToken
             };
 
-            // Add to current scope
-            context.CurrentScope.Statements.Add(statement);
-            context.CurrentScope.AddDynamicVariable(variableName);
+            context.CurrentScope.Statements.Add(arrayAssignStmt);
 
             LoggerService.Logger.Success(
-                $"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
+                $"[FlexVariableProcessor] Registered array assignment '{variableName}[...] = ...' in scope '{context.CurrentScope.ScopeName}'");
 
             return new TokenProcessingResult
             {
@@ -123,235 +89,268 @@ namespace Tokenez.Parser.Processors.Statements
             };
         }
 
-
-        /// <summary>
-        ///     Parses an expression with support for binary operations.
-        ///     Handles operator precedence: * / before + -
-        /// </summary>
-        private Expression ParseExpression(ref Token? token)
+        // Expect assignment operator
+        if (currentToken is not EqualsToken)
         {
-            // Parse additive expression (lowest precedence)
-            return ParseAdditiveExpression(ref token);
+            throw new UnexpectedTokenException(currentToken!, typeof(EqualsToken));
         }
 
-        /// <summary>
-        ///     Parses addition and subtraction (left-to-right)
-        /// </summary>
-        private Expression ParseAdditiveExpression(ref Token? token)
+        currentToken = currentToken.Next;
+
+        // Parse the initialization expression
+        Expression initExpression = ParseExpression(ref currentToken);
+
+        // Create variable declaration
+        VariableDeclaration variableDecl = new(identifierToken); // No type token for FLEX variables
+
+        // Create variable declaration statement
+        VariableDeclarationStatement statement = new(variableDecl, initExpression, true)
         {
-            Expression left = ParseMultiplicativeExpression(ref token);
+            StartToken = flexToken
+        };
 
-            while (token is PlusToken or MinusToken)
-            {
-                Token operatorToken = token;
-                token = token.Next;
+        // Add to current scope
+        context.CurrentScope.Statements.Add(statement);
+        context.CurrentScope.AddDynamicVariable(variableName);
 
-                Expression right = ParseMultiplicativeExpression(ref token);
+        LoggerService.Logger.Success(
+            $"[FlexVariableProcessor] Registered FLEX variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
-                left = new BinaryExpression(left, operatorToken, right);
-            }
+        return new TokenProcessingResult
+        {
+            NextToken = currentToken!,
+            ShouldValidateExpectations = false
+        };
+    }
 
-            return left;
+
+    /// <summary>
+    ///     Parses an expression with support for binary operations.
+    ///     Handles operator precedence: * / before + -
+    /// </summary>
+    private Expression ParseExpression(ref Token? token)
+    {
+        // Parse additive expression (lowest precedence)
+        return ParseAdditiveExpression(ref token);
+    }
+
+    /// <summary>
+    ///     Parses addition and subtraction (left-to-right)
+    /// </summary>
+    private Expression ParseAdditiveExpression(ref Token? token)
+    {
+        Expression left = ParseMultiplicativeExpression(ref token);
+
+        while (token is PlusToken or MinusToken)
+        {
+            Token operatorToken = token;
+            token = token.Next;
+
+            Expression right = ParseMultiplicativeExpression(ref token);
+
+            left = new BinaryExpression(left, operatorToken, right);
         }
 
-        /// <summary>
-        ///     Parses multiplication and division (left-to-right)
-        /// </summary>
-        private Expression ParseMultiplicativeExpression(ref Token? token)
+        return left;
+    }
+
+    /// <summary>
+    ///     Parses multiplication and division (left-to-right)
+    /// </summary>
+    private Expression ParseMultiplicativeExpression(ref Token? token)
+    {
+        Expression left = ParsePrimaryExpression(ref token);
+
+        while (token is MultiplyToken or DivideToken)
         {
-            Expression left = ParsePrimaryExpression(ref token);
+            Token operatorToken = token;
+            token = token.Next;
 
-            while (token is MultiplyToken or DivideToken)
-            {
-                Token operatorToken = token;
-                token = token.Next;
+            Expression right = ParsePrimaryExpression(ref token);
 
-                Expression right = ParsePrimaryExpression(ref token);
-
-                left = new BinaryExpression(left, operatorToken, right);
-            }
-
-            return left;
+            left = new BinaryExpression(left, operatorToken, right);
         }
 
-        /// <summary>
-        ///     Parses primary expressions: literals, identifiers, function calls, parentheses
-        /// </summary>
-        private Expression ParsePrimaryExpression(ref Token? token)
+        return left;
+    }
+
+    /// <summary>
+    ///     Parses primary expressions: literals, identifiers, function calls, parentheses
+    /// </summary>
+    private Expression ParsePrimaryExpression(ref Token? token)
+    {
+        // Handle parentheses for precedence override
+        if (token is ParenthesisOpen)
         {
-            // Handle parentheses for precedence override
-            if (token is ParenthesisOpen)
+            token = token.Next; // Skip '('
+
+            // Recursively parse the expression inside parentheses
+            Expression innerExpr = ParseExpression(ref token);
+
+            // Expect closing parenthesis
+            if (token is not ParenthesisClosed)
             {
-                token = token.Next; // Skip '('
-
-                // Recursively parse the expression inside parentheses
-                Expression innerExpr = ParseExpression(ref token);
-
-                // Expect closing parenthesis
-                if (token is not ParenthesisClosed)
-                {
-                    throw new UnexpectedTokenException(token!, typeof(ParenthesisClosed));
-                }
-
-                token = token.Next; // Skip ')'
-                return innerExpr;
+                throw new UnexpectedTokenException(token!, typeof(ParenthesisClosed));
             }
 
-            if (token is BracketOpen)
+            token = token.Next; // Skip ')'
+            return innerExpr;
+        }
+
+        if (token is BracketOpen)
+        {
+            // Array literal: [1, 2, 3, 4]
+            token = token.Next; // Move past '['
+
+            List<Expression> elements = [];
+
+            // Handle empty array []
+            if (token is BracketClosed)
             {
-                // Array literal: [1, 2, 3, 4]
-                token = token.Next; // Move past '['
+                token = token.Next; // Move past ']'
+                return new ArrayLiteralExpression(elements);
+            }
 
-                List<Expression> elements = [];
+            // Parse array elements
+            while (token != null)
+            {
+                // Parse element expression
+                Expression elementExpr = ParsePrimaryExpression(ref token);
+                elements.Add(elementExpr);
 
-                // Handle empty array []
-                if (token is BracketClosed)
+                // Check for comma or closing bracket
+                if (token is CommaToken)
                 {
-                    token = token.Next; // Move past ']'
-                    return new ArrayLiteralExpression(elements);
-                }
+                    token = token.Next; // Move past comma
 
-                // Parse array elements
-                while (token != null)
-                {
-                    // Parse element expression
-                    Expression elementExpr = ParsePrimaryExpression(ref token);
-                    elements.Add(elementExpr);
-
-                    // Check for comma or closing bracket
-                    if (token is CommaToken)
-                    {
-                        token = token.Next; // Move past comma
-
-                        // Allow trailing comma: [1, 2, 3,]
-                        if (token is BracketClosed)
-                        {
-                            break;
-                        }
-                    }
-                    else if (token is BracketClosed)
+                    // Allow trailing comma: [1, 2, 3,]
+                    if (token is BracketClosed)
                     {
                         break;
                     }
-                    else
-                    {
-                        throw new UnexpectedTokenException(token!, typeof(CommaToken), typeof(BracketClosed));
-                    }
                 }
+                else if (token is BracketClosed)
+                {
+                    break;
+                }
+                else
+                {
+                    throw new UnexpectedTokenException(token!, typeof(CommaToken), typeof(BracketClosed));
+                }
+            }
 
+            if (token is not BracketClosed)
+            {
+                throw new UnexpectedTokenException(token!, typeof(BracketClosed));
+            }
+
+            token = token.Next; // Move past ']'
+            return new ArrayLiteralExpression(elements);
+        }
+
+        if (token is ChainToken)
+        {
+            // CHAIN keyword for array creation: CHAIN <size>
+            token = token.Next; // Move past CHAIN
+
+            if (token is not ValueToken sizeToken)
+            {
+                throw new UnexpectedTokenException(token!, typeof(ValueToken));
+            }
+
+            ArrayCreationExpression expr = new(sizeToken);
+            token = token.Next;
+            return expr;
+        }
+
+        if (token is ValueToken valueToken)
+        {
+            LiteralExpression expr = new(valueToken);
+            token = token.Next;
+            return expr;
+        }
+
+        if (token is StringLiteralToken stringToken)
+        {
+            StringLiteralExpression expr = new(stringToken);
+            token = token.Next;
+            return expr;
+        }
+
+        if (token is IdentifierToken identifierToken)
+        {
+            // Check if it's an array index access
+            if (identifierToken.Next is BracketOpen)
+            {
+                token = identifierToken.Next.Next; // Move past '[' to index expression
+                Expression indexExpr = ParseExpression(ref token);
+
+                // Expect closing bracket
                 if (token is not BracketClosed)
                 {
                     throw new UnexpectedTokenException(token!, typeof(BracketClosed));
                 }
 
-                token = token.Next; // Move past ']'
-                return new ArrayLiteralExpression(elements);
-            }
+                token = token.Next; // Skip ']'
 
-            if (token is ChainToken)
-            {
-                // CHAIN keyword for array creation: CHAIN <size>
-                token = token.Next; // Move past CHAIN
-
-                if (token is not ValueToken sizeToken)
+                return new IndexExpression
                 {
-                    throw new UnexpectedTokenException(token!, typeof(ValueToken));
-                }
-
-                ArrayCreationExpression expr = new(sizeToken);
-                token = token.Next;
-                return expr;
+                    ArrayIdentifier = identifierToken,
+                    Index = indexExpr
+                };
             }
+            // Check if it's a function call
 
-            if (token is ValueToken valueToken)
+            if (identifierToken.Next is ParenthesisOpen)
             {
-                LiteralExpression expr = new(valueToken);
-                token = token.Next;
-                return expr;
-            }
-
-            if (token is StringLiteralToken stringToken)
-            {
-                StringLiteralExpression expr = new(stringToken);
-                token = token.Next;
-                return expr;
-            }
-
-            if (token is IdentifierToken identifierToken)
-            {
-                // Check if it's an array index access
-                if (identifierToken.Next is BracketOpen)
+                FunctionCallExpression funcCallExpr = new()
                 {
-                    token = identifierToken.Next.Next; // Move past '[' to index expression
-                    Expression indexExpr = ParseExpression(ref token);
+                    FunctionName = identifierToken
+                };
+                token = identifierToken.Next; // Move to (
+                token = token!.Next; // Move past (
 
-                    // Expect closing bracket
-                    if (token is not BracketClosed)
-                    {
-                        throw new UnexpectedTokenException(token!, typeof(BracketClosed));
-                    }
+                // Parse function call arguments - not implemented yet
 
-                    token = token.Next; // Skip ']'
-
-                    return new IndexExpression
-                    {
-                        ArrayIdentifier = identifierToken,
-                        Index = indexExpr
-                    };
-                }
-                // Check if it's a function call
-
-                if (identifierToken.Next is ParenthesisOpen)
+                // Skip to )
+                while (token is not null and not ParenthesisClosed)
                 {
-                    FunctionCallExpression funcCallExpr = new()
-                    {
-                        FunctionName = identifierToken
-                    };
-                    token = identifierToken.Next; // Move to (
-                    token = token!.Next; // Move past (
-
-                    // Parse function call arguments - not implemented yet
-
-                    // Skip to )
-                    while (token is not null and not ParenthesisClosed)
-                    {
-                        token = token.Next;
-                    }
-
-                    if (token is ParenthesisClosed)
-                    {
-                        token = token.Next;
-                    }
-
-                    return funcCallExpr;
-                }
-
-                IdentifierExpression expr = new(identifierToken);
-                token = token.Next;
-                return expr;
-            }
-
-            // Handle unary minus for negative numbers
-            if (token is MinusToken minusToken)
-            {
-                token = token.Next; // Move past minus
-
-                if (token is ValueToken negValueToken)
-                {
-                    // Create negative value token
                     token = token.Next;
-                    RawToken negativeRaw = RawToken.Create($"-{negValueToken.RawToken.OriginalText}");
-                    ValueToken negativeToken = new ValueToken(negativeRaw);
-                    return new LiteralExpression(negativeToken);
                 }
 
-                // If it's not followed by a number, it might be a minus expression
-                // Put the token back and let the caller handle it
-                token = minusToken;
+                if (token is ParenthesisClosed)
+                {
+                    token = token.Next;
+                }
+
+                return funcCallExpr;
             }
 
-            throw new NotImplementedException(
-                $"Expression type {token?.GetType().Name} not yet supported in FLEX variable initialization");
+            IdentifierExpression expr = new(identifierToken);
+            token = token.Next;
+            return expr;
         }
+
+        // Handle unary minus for negative numbers
+        if (token is MinusToken minusToken)
+        {
+            token = token.Next; // Move past minus
+
+            if (token is ValueToken negValueToken)
+            {
+                // Create negative value token
+                token = token.Next;
+                RawToken negativeRaw = RawToken.Create($"-{negValueToken.RawToken.OriginalText}");
+                ValueToken negativeToken = new(negativeRaw);
+                return new LiteralExpression(negativeToken);
+            }
+
+            // If it's not followed by a number, it might be a minus expression
+            // Put the token back and let the caller handle it
+            token = minusToken;
+        }
+
+        throw new NotImplementedException(
+            $"Expression type {token?.GetType().Name} not yet supported in FLEX variable initialization");
     }
 }

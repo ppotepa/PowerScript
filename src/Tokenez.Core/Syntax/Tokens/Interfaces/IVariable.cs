@@ -1,6 +1,5 @@
-namespace Tokenez.Core.Syntax.Tokens.Interfaces
+namespace Tokenez.Core.Syntax.Tokens.Interfaces;
+
+internal interface IVariable
 {
-    internal interface IVariable
-    {
-    }
 }

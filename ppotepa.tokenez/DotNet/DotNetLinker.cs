@@ -1,8 +1,8 @@
+#nullable enable
+using ppotepa.tokenez.Logging;
 using System.Reflection;
-using Tokenez.Common.Logging;
-using Tokenez.Core.DotNet;
 
-namespace Tokenez.Interpreter.DotNet;
+namespace ppotepa.tokenez.DotNet;
 
 /// <summary>
 ///     Manages .NET assembly loading and type resolution for PowerScript.
@@ -116,14 +116,6 @@ public class DotNetLinker : IDotNetLinker
     }
 
     /// <summary>
-    ///     Gets all linked assemblies.
-    /// </summary>
-    public IReadOnlyCollection<Assembly> GetLinkedAssemblies()
-    {
-        return _loadedAssemblies.Values.ToList().AsReadOnly();
-    }
-
-    /// <summary>
     ///     Resolves a fully qualified type name (with dots)
     /// </summary>
     private Type? ResolveFullyQualifiedType(string fullTypeName)
@@ -165,6 +157,14 @@ public class DotNetLinker : IDotNetLinker
         }
 
         return null;
+    }
+
+    /// <summary>
+    ///     Gets all linked assemblies.
+    /// </summary>
+    public IReadOnlyCollection<Assembly> GetLinkedAssemblies()
+    {
+        return _loadedAssemblies.Values.ToList().AsReadOnly();
     }
 
     /// <summary>

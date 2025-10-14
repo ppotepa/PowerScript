@@ -1,15 +1,15 @@
-using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.AST;
+using Tokenez.Core.Syntax.Tokens.Base;
 
 namespace Tokenez.Parser.Processors.Base;
 
 /// <summary>
-/// Interface for building scope hierarchies by processing tokens.
+///     Interface for building scope hierarchies by processing tokens.
 /// </summary>
 public interface IScopeBuilder
 {
     /// <summary>
-    /// Builds a complete scope by processing tokens from start to end.
+    ///     Builds a complete scope by processing tokens from start to end.
     /// </summary>
     /// <param name="startToken">The starting token</param>
     /// <param name="scope">The scope to build</param>
@@ -18,7 +18,7 @@ public interface IScopeBuilder
     Scope BuildScope(Token startToken, Scope scope, int depth = 0);
 
     /// <summary>
-    /// Builds a complete scope by processing tokens from start to end with an existing context.
+    ///     Builds a complete scope by processing tokens from start to end with an existing context.
     /// </summary>
     /// <param name="startToken">The starting token</param>
     /// <param name="scope">The scope to build</param>

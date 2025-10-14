@@ -1,130 +1,138 @@
 using Tokenez.Common.Localization;
 
-namespace Tokenez.Common.Logging
+namespace Tokenez.Common.Logging;
+
+/// <summary>
+///     Console-based logger implementation with localization support.
+///     Outputs colored messages to the console with support for DEBUG/RELEASE modes.
+/// </summary>
+public class ConsoleLogger : ILogger
 {
-    /// <summary>
-    ///     Console-based logger implementation with localization support.
-    ///     Outputs colored messages to the console with support for DEBUG/RELEASE modes.
-    /// </summary>
-    public class ConsoleLogger : ILogger
+    public bool IsEnabled { get; set; } = true;
+
+    public void Debug(string message)
     {
-        public bool IsEnabled { get; set; } = true;
-
-        public void Debug(string message)
-        {
 #if DEBUG
-            Log(LogLevel.Debug, message);
+        Log(LogLevel.Debug, message);
 #endif
+    }
+
+    public void Info(string message)
+    {
+        Log(LogLevel.Info, message);
+    }
+
+    public void Warning(string message)
+    {
+        Log(LogLevel.Warning, message);
+    }
+
+    public void Error(string message)
+    {
+        Log(LogLevel.Error, message);
+    }
+
+    public void Success(string message)
+    {
+        Log(LogLevel.Success, message);
+    }
+
+    public void Log(LogLevel level, string message)
+    {
+        if (!IsEnabled)
+        {
+            return;
         }
 
-        public void Info(string message)
+        ConsoleColor originalColor = Console.ForegroundColor;
+
+        // Set color based on log level
+        Console.ForegroundColor = level switch
         {
-            Log(LogLevel.Info, message);
-        }
+            LogLevel.Debug => ConsoleColor.DarkGray,
+            LogLevel.Info => ConsoleColor.Cyan,
+            LogLevel.Warning => ConsoleColor.Yellow,
+            LogLevel.Error => ConsoleColor.Red,
+            LogLevel.Success => ConsoleColor.Green,
+            _ => ConsoleColor.White
+        };
 
-        public void Warning(string message)
-        {
-            Log(LogLevel.Warning, message);
-        }
-
-        public void Error(string message)
-        {
-            Log(LogLevel.Error, message);
-        }
-
-        public void Success(string message)
-        {
-            Log(LogLevel.Success, message);
-        }
-
-        public void Log(LogLevel level, string message)
-        {
-            if (!IsEnabled) return;
-
-            var originalColor = Console.ForegroundColor;
-
-            // Set color based on log level
-            Console.ForegroundColor = level switch
-            {
-                LogLevel.Debug => ConsoleColor.DarkGray,
-                LogLevel.Info => ConsoleColor.Cyan,
-                LogLevel.Warning => ConsoleColor.Yellow,
-                LogLevel.Error => ConsoleColor.Red,
-                LogLevel.Success => ConsoleColor.Green,
-                _ => ConsoleColor.White
-            };
-
-            // Add prefix for debug builds
+        // Add prefix for debug builds
 #if DEBUG
-            var prefix = level switch
-            {
-                LogLevel.Debug => "[DEBUG] ",
-                LogLevel.Info => "[INFO] ",
-                LogLevel.Warning => "[WARN] ",
-                LogLevel.Error => "[ERROR] ",
-                LogLevel.Success => "[OK] ",
-                _ => ""
-            };
-            Console.WriteLine(prefix + message);
+        string prefix = level switch
+        {
+            LogLevel.Debug => "[DEBUG] ",
+            LogLevel.Info => "[INFO] ",
+            LogLevel.Warning => "[WARN] ",
+            LogLevel.Error => "[ERROR] ",
+            LogLevel.Success => "[OK] ",
+            _ => ""
+        };
+        Console.WriteLine(prefix + message);
 #else
                 Console.WriteLine(message);
 #endif
 
-            Console.ForegroundColor = originalColor;
-        }
+        Console.ForegroundColor = originalColor;
+    }
 
-        /// <summary>
-        ///     Logs a localized message by key.
-        /// </summary>
-        public void LogLocalized(LogLevel level, string messageKey)
+    /// <summary>
+    ///     Logs a localized message by key.
+    /// </summary>
+    public void LogLocalized(LogLevel level, string messageKey)
+    {
+        string message = LocalizationService.GetString(messageKey);
+        Log(level, message);
+    }
+
+    /// <summary>
+    ///     Logs a localized message by key with parameters.
+    /// </summary>
+    public void LogLocalized(LogLevel level, string messageKey, params object[] args)
+    {
+        string message = LocalizationService.GetString(messageKey, args);
+        Log(level, message);
+    }
+
+    /// <summary>
+    ///     Writes a colorful header box.
+    /// </summary>
+    public void WriteHeader(string title, ConsoleColor color = ConsoleColor.Cyan)
+    {
+        if (!IsEnabled)
         {
-            var message = LocalizationService.GetString(messageKey);
-            Log(level, message);
+            return;
         }
 
-        /// <summary>
-        ///     Logs a localized message by key with parameters.
-        /// </summary>
-        public void LogLocalized(LogLevel level, string messageKey, params object[] args)
+        ConsoleColor originalColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+
+        int width = Math.Max(title.Length + 4, 60);
+        string line = new('═', width);
+        int padding = (width - title.Length - 2) / 2;
+        string titleLine = "║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) +
+                        "║";
+
+        Console.WriteLine("╔" + line + "╗");
+        Console.WriteLine(titleLine);
+        Console.WriteLine("╚" + line + "╝");
+
+        Console.ForegroundColor = originalColor;
+    }
+
+    /// <summary>
+    ///     Writes a section separator.
+    /// </summary>
+    public void WriteSeparator(ConsoleColor color = ConsoleColor.DarkGray)
+    {
+        if (!IsEnabled)
         {
-            var message = LocalizationService.GetString(messageKey, args);
-            Log(level, message);
+            return;
         }
 
-        /// <summary>
-        ///     Writes a colorful header box.
-        /// </summary>
-        public void WriteHeader(string title, ConsoleColor color = ConsoleColor.Cyan)
-        {
-            if (!IsEnabled) return;
-
-            var originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-
-            var width = Math.Max(title.Length + 4, 60);
-            string line = new('═', width);
-            var padding = (width - title.Length - 2) / 2;
-            var titleLine = "║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) +
-                            "║";
-
-            Console.WriteLine("╔" + line + "╗");
-            Console.WriteLine(titleLine);
-            Console.WriteLine("╚" + line + "╝");
-
-            Console.ForegroundColor = originalColor;
-        }
-
-        /// <summary>
-        ///     Writes a section separator.
-        /// </summary>
-        public void WriteSeparator(ConsoleColor color = ConsoleColor.DarkGray)
-        {
-            if (!IsEnabled) return;
-
-            var originalColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            Console.WriteLine(new string('─', 60));
-            Console.ForegroundColor = originalColor;
-        }
+        ConsoleColor originalColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+        Console.WriteLine(new string('─', 60));
+        Console.ForegroundColor = originalColor;
     }
 }

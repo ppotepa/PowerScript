@@ -1,29 +1,28 @@
 using Tokenez.Core.AST.Expressions;
 
-namespace Tokenez.Core.AST.Statements
+namespace Tokenez.Core.AST.Statements;
+
+/// <summary>
+///     Represents a direct call to a .NET framework method.
+///     Example: NET::System.Console.WriteLine("Hello")
+/// </summary>
+public class NetMethodCallStatement(string fullMethodPath, List<Expression>? arguments = null) : Statement
 {
     /// <summary>
-    ///     Represents a direct call to a .NET framework method.
-    ///     Example: NET::System.Console.WriteLine("Hello")
+    ///     The fully qualified .NET method path (e.g., "System.Console.WriteLine")
     /// </summary>
-    public class NetMethodCallStatement(string fullMethodPath, List<Expression>? arguments = null) : Statement
+    public string FullMethodPath { get; } = fullMethodPath;
+
+    /// <summary>
+    ///     The arguments to pass to the method
+    /// </summary>
+    public List<Expression> Arguments { get; } = arguments ?? [];
+
+    public override string StatementType => "NET_METHOD_CALL";
+
+    public override string ToString()
     {
-        /// <summary>
-        ///     The fully qualified .NET method path (e.g., "System.Console.WriteLine")
-        /// </summary>
-        public string FullMethodPath { get; } = fullMethodPath;
-
-        /// <summary>
-        ///     The arguments to pass to the method
-        /// </summary>
-        public List<Expression> Arguments { get; } = arguments ?? [];
-
-        public override string StatementType => "NET_METHOD_CALL";
-
-        public override string ToString()
-        {
-            var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-            return $"NET::{FullMethodPath}({args})";
-        }
+        string args = string.Join(", ", Arguments.Select(a => a.ToString()));
+        return $"NET::{FullMethodPath}({args})";
     }
 }

@@ -1,118 +1,112 @@
 using NUnit.Framework;
 using Tokenez.Interpreter;
 
-namespace Tokenez.Integration.Tests
-{
-    [TestFixture]
-    [Category("Complex")]
-    [Description("Complex feature tests covering advanced language constructs and combinations")]
-    public class ComplexFeatureTests
-    {
-        private PowerScriptInterpreter _interpreter;
-        private StringWriter _output;
+namespace Tokenez.Integration.Tests;
 
-        [SetUp]
-        public void Setup()
-        {
+[TestFixture]
+[Category("Complex")]
+[Description("Complex feature tests covering advanced language constructs and combinations")]
+public class ComplexFeatureTests
+{
+    [SetUp]
+    public void Setup()
+    {
 #pragma warning disable CS0618 // Type or member is obsolete
-            _interpreter = PowerScriptInterpreter.CreateNew();
+        _interpreter = PowerScriptInterpreter.CreateNew();
 #pragma warning restore CS0618
 
-            // Link the standard library
-            string stdLibPath = Path.Combine("..", "..", "scripts", "stdlib", "StdLib.ps");
-            if (File.Exists(stdLibPath))
-            {
-                _interpreter.LinkLibrary(stdLibPath);
-            }
-
-            _output = new StringWriter();
-            Console.SetOut(_output);
+        // Link the standard library
+        string stdLibPath = Path.Combine("..", "..", "scripts", "stdlib", "StdLib.ps");
+        if (File.Exists(stdLibPath))
+        {
+            _interpreter.LinkLibrary(stdLibPath);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            _output?.Dispose();
-            Console.SetOut(Console.Out);
-        }
+        _output = new StringWriter();
+        Console.SetOut(_output);
+    }
 
-        private string GetOutput()
-        {
-            return _output.ToString();
-        }
+    [TearDown]
+    public void TearDown()
+    {
+        _output?.Dispose();
+        Console.SetOut(Console.Out);
+    }
 
-        #region Array and Loop Tests
+    private PowerScriptInterpreter _interpreter;
+    private StringWriter _output;
 
-        [Test]
-        [Category("Arrays")]
-        [Description("Test 3.1: Bubble sort algorithm with array literals")]
-        public void Test_3_1_BubbleSort()
-        {
-            string script = File.ReadAllText("scripts/complex/3_1_bubble_sort.ps");
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+    private string GetOutput()
+    {
+        return _output.ToString();
+    }
 
-            string output = GetOutput();
-            // Verify sorted output contains numbers in ascending order
-            Assert.That(output, Does.Contain("11"), "Should contain smallest number");
-            Assert.That(output, Does.Contain("90"), "Should contain largest number");
-        }
+    [Test]
+    [Category("Arrays")]
+    [Description("Test 3.1: Bubble sort algorithm with array literals")]
+    public void Test_3_1_BubbleSort()
+    {
+        string script = File.ReadAllText("scripts/complex/3_1_bubble_sort.ps");
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-        [Test]
-        [Category("Arrays")]
-        [Description("Test 3.2: Multi-dimensional array simulation (matrix operations)")]
-        public void Test_3_2_MatrixOperations()
-        {
-            string script = File.ReadAllText("scripts/complex/3_2_matrix_operations.ps");
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string output = GetOutput();
+        // Verify sorted output contains numbers in ascending order
+        Assert.That(output, Does.Contain("11"), "Should contain smallest number");
+        Assert.That(output, Does.Contain("90"), "Should contain largest number");
+    }
 
-            string output = GetOutput();
-            Assert.That(output, Is.Not.Empty, "Should produce output");
-        }
+    [Test]
+    [Category("Arrays")]
+    [Description("Test 3.2: Multi-dimensional array simulation (matrix operations)")]
+    public void Test_3_2_MatrixOperations()
+    {
+        string script = File.ReadAllText("scripts/complex/3_2_matrix_operations.ps");
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-        [Test]
-        [Category("Pathfinding")]
-        [Description("Test 3.3: Maze solver using 1D array as 2D grid")]
-        public void Test_3_3_MazeSolver()
-        {
-            string script = File.ReadAllText("scripts/complex/3_3_maze_solver.ps");
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string output = GetOutput();
+        Assert.That(output, Is.Not.Empty, "Should produce output");
+    }
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("Path found"), "Should find a path through the maze");
-            Assert.That(output, Does.Contain("8"), "Path length should be 8");
-        }
+    [Test]
+    [Category("Pathfinding")]
+    [Description("Test 3.3: Maze solver using 1D array as 2D grid")]
+    public void Test_3_3_MazeSolver()
+    {
+        string script = File.ReadAllText("scripts/complex/3_3_maze_solver.ps");
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-        #endregion
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("Path found"), "Should find a path through the maze");
+        Assert.That(output, Does.Contain("8"), "Path length should be 8");
+    }
 
-        #region Auto-Generated Loop Variables
-
-        [Test]
-        [Category("Loops")]
-        [Description("Test 3.4: Auto-generated loop variables (A, B, C)")]
-        public void Test_3_4_AutoGeneratedVariables()
-        {
-            string script = @"
+    [Test]
+    [Category("Loops")]
+    [Description("Test 3.4: Auto-generated loop variables (A, B, C)")]
+    public void Test_3_4_AutoGeneratedVariables()
+    {
+        string script = @"
 CYCLE 2 {
     CYCLE 3 {
         PRINT A
         PRINT B
     }
 }";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            // Should print A values (0, 1) and B values (0, 1, 2) for each A
-            Assert.That(output, Does.Contain("0"), "Should contain A=0");
-            Assert.That(output, Does.Contain("1"), "Should contain A=1 or B=1");
-            Assert.That(output, Does.Contain("2"), "Should contain B=2");
-        }
+        string output = GetOutput();
+        // Should print A values (0, 1) and B values (0, 1, 2) for each A
+        Assert.That(output, Does.Contain("0"), "Should contain A=0");
+        Assert.That(output, Does.Contain("1"), "Should contain A=1 or B=1");
+        Assert.That(output, Does.Contain("2"), "Should contain B=2");
+    }
 
-        [Test]
-        [Category("Loops")]
-        [Description("Test 3.5: Triple-nested auto-generated loop variables (A, B, C)")]
-        public void Test_3_5_TripleNestedLoops()
-        {
-            string script = @"
+    [Test]
+    [Category("Loops")]
+    [Description("Test 3.5: Triple-nested auto-generated loop variables (A, B, C)")]
+    public void Test_3_5_TripleNestedLoops()
+    {
+        string script = @"
 FLEX count = 0
 CYCLE 2 {
     CYCLE 2 {
@@ -122,43 +116,40 @@ CYCLE 2 {
     }
 }
 PRINT count";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("8"), "2*2*2 iterations should give count=8");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("8"), "2*2*2 iterations should give count=8");
+    }
 
-        [Test]
-        [Category("Loops")]
-        [Description("Test 3.6: Mixed explicit and auto-generated loop variables")]
-        public void Test_3_6_MixedLoopVariables()
-        {
-            string script = @"
+    [Test]
+    [Category("Loops")]
+    [Description("Test 3.6: Mixed explicit and auto-generated loop variables")]
+    public void Test_3_6_MixedLoopVariables()
+    {
+        string script = @"
 CYCLE 2 AS outer {
     CYCLE 2 {
         PRINT outer
         PRINT A
     }
 }";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            // outer is explicitly named, inner loop gets 'A'
-            Assert.That(output, Does.Contain("0"), "Should contain outer=0");
-            Assert.That(output, Does.Contain("1"), "Should contain outer=1");
-        }
+        string output = GetOutput();
+        // outer is explicitly named, inner loop gets 'A'
+        Assert.That(output, Does.Contain("0"), "Should contain outer=0");
+        Assert.That(output, Does.Contain("1"), "Should contain outer=1");
+    }
 
-        #endregion
-
-        #region Recursive Functions
-
-        [Test]
-        [Category("Recursion")]
-        [Description("Test 3.7: Factorial using recursion")]
-        [Ignore("Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
-        public void Test_3_7_Factorial()
-        {
-            string script = @"
+    [Test]
+    [Category("Recursion")]
+    [Description("Test 3.7: Factorial using recursion")]
+    [Ignore(
+        "Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
+    public void Test_3_7_Factorial()
+    {
+        string script = @"
 FUNCTION factorial RETURNS NUMBER WITH n {
     IF n <= 1 {
         RETURN 1
@@ -167,19 +158,20 @@ FUNCTION factorial RETURNS NUMBER WITH n {
 }
 
 PRINT factorial(5)";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("120"), "5! should be 120");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("120"), "5! should be 120");
+    }
 
-        [Test]
-        [Category("Recursion")]
-        [Description("Test 3.8: Fibonacci sequence using recursion")]
-        [Ignore("Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
-        public void Test_3_8_Fibonacci()
-        {
-            string script = @"
+    [Test]
+    [Category("Recursion")]
+    [Description("Test 3.8: Fibonacci sequence using recursion")]
+    [Ignore(
+        "Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
+    public void Test_3_8_Fibonacci()
+    {
+        string script = @"
 FUNCTION fib RETURNS NUMBER WITH n {
     IF n <= 1 {
         RETURN n
@@ -188,22 +180,18 @@ FUNCTION fib RETURNS NUMBER WITH n {
 }
 
 PRINT fib(7)";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("13"), "7th Fibonacci number should be 13");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("13"), "7th Fibonacci number should be 13");
+    }
 
-        #endregion
-
-        #region Complex Algorithms
-
-        [Test]
-        [Category("Algorithms")]
-        [Description("Test 3.9: Prime number detection")]
-        public void Test_3_9_PrimeDetection()
-        {
-            string script = @"
+    [Test]
+    [Category("Algorithms")]
+    [Description("Test 3.9: Prime number detection")]
+    public void Test_3_9_PrimeDetection()
+    {
+        string script = @"
 FUNCTION isPrime RETURNS NUMBER WITH n {
     IF n <= 1 {
         RETURN 0
@@ -223,19 +211,19 @@ FUNCTION isPrime RETURNS NUMBER WITH n {
 
 PRINT isPrime(17)
 PRINT isPrime(18)";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("1"), "17 is prime");
-            Assert.That(output, Does.Contain("0"), "18 is not prime");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("1"), "17 is prime");
+        Assert.That(output, Does.Contain("0"), "18 is not prime");
+    }
 
-        [Test]
-        [Category("Algorithms")]
-        [Description("Test 3.10: Greatest Common Divisor (GCD) using Euclidean algorithm")]
-        public void Test_3_10_GCD()
-        {
-            string script = @"
+    [Test]
+    [Category("Algorithms")]
+    [Description("Test 3.10: Greatest Common Divisor (GCD) using Euclidean algorithm")]
+    public void Test_3_10_GCD()
+    {
+        string script = @"
 FUNCTION gcd RETURNS NUMBER WITH a, b {
     IF b == 0 {
         RETURN a
@@ -244,22 +232,18 @@ FUNCTION gcd RETURNS NUMBER WITH a, b {
 }
 
 PRINT gcd(48, 18)";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("6"), "GCD of 48 and 18 should be 6");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("6"), "GCD of 48 and 18 should be 6");
+    }
 
-        #endregion
-
-        #region Advanced Control Flow
-
-        [Test]
-        [Category("ControlFlow")]
-        [Description("Test 3.11: Nested IF statements with complex conditions")]
-        public void Test_3_11_NestedConditions()
-        {
-            string script = @"
+    [Test]
+    [Category("ControlFlow")]
+    [Description("Test 3.11: Nested IF statements with complex conditions")]
+    public void Test_3_11_NestedConditions()
+    {
+        string script = @"
 FLEX x = 10
 FLEX y = 20
 FLEX z = 15
@@ -271,18 +255,18 @@ IF x < y {
         }
     }
 }";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("z is between x and y"), "Should execute nested IF");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("z is between x and y"), "Should execute nested IF");
+    }
 
-        [Test]
-        [Category("ControlFlow")]
-        [Description("Test 3.12: Complex loop breaking logic")]
-        public void Test_3_12_LoopBreaking()
-        {
-            string script = @"
+    [Test]
+    [Category("ControlFlow")]
+    [Description("Test 3.12: Complex loop breaking logic")]
+    public void Test_3_12_LoopBreaking()
+    {
+        string script = @"
 FLEX found = 0
 FLEX target = 7
 FLEX i = 0
@@ -298,23 +282,19 @@ CYCLE 20 {
 IF found == 1 {
     PRINT ""Search successful""
 }";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("Found target"), "Should find target");
-            Assert.That(output, Does.Contain("Search successful"), "Should confirm success");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("Found target"), "Should find target");
+        Assert.That(output, Does.Contain("Search successful"), "Should confirm success");
+    }
 
-        #endregion
-
-        #region Data Structure Simulation
-
-        [Test]
-        [Category("DataStructures")]
-        [Description("Test 3.13: Stack simulation using array")]
-        public void Test_3_13_StackSimulation()
-        {
-            string script = @"
+    [Test]
+    [Category("DataStructures")]
+    [Description("Test 3.13: Stack simulation using array")]
+    public void Test_3_13_StackSimulation()
+    {
+        string script = @"
 FLEX stack = [0, 0, 0, 0, 0]
 FLEX top = 0
 
@@ -329,18 +309,18 @@ FLEX top = top + 1
 // Pop one value
 FLEX top = top - 1
 PRINT stack[top]";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("30"), "Should pop value 30");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("30"), "Should pop value 30");
+    }
 
-        [Test]
-        [Category("DataStructures")]
-        [Description("Test 3.14: Queue simulation using array")]
-        public void Test_3_14_QueueSimulation()
-        {
-            string script = @"
+    [Test]
+    [Category("DataStructures")]
+    [Description("Test 3.14: Queue simulation using array")]
+    public void Test_3_14_QueueSimulation()
+    {
+        string script = @"
 FLEX queue = [0, 0, 0, 0, 0]
 FLEX front = 0
 FLEX rear = 0
@@ -356,22 +336,18 @@ FLEX rear = rear + 1
 // Dequeue one value
 PRINT queue[front]
 FLEX front = front + 1";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("5"), "Should dequeue value 5 (FIFO)");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("5"), "Should dequeue value 5 (FIFO)");
+    }
 
-        #endregion
-
-        #region Mathematical Computations
-
-        [Test]
-        [Category("Math")]
-        [Description("Test 3.15: Power function (exponentiation)")]
-        public void Test_3_15_PowerFunction()
-        {
-            string script = @"
+    [Test]
+    [Category("Math")]
+    [Description("Test 3.15: Power function (exponentiation)")]
+    public void Test_3_15_PowerFunction()
+    {
+        string script = @"
 FUNCTION power RETURNS NUMBER WITH base, exp {
     IF exp == 0 {
         RETURN 1
@@ -386,18 +362,18 @@ FUNCTION power RETURNS NUMBER WITH base, exp {
 }
 
 PRINT power(2, 8)";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("256"), "2^8 should be 256");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("256"), "2^8 should be 256");
+    }
 
-        [Test]
-        [Category("Math")]
-        [Description("Test 3.16: Square root approximation using Newton's method")]
-        public void Test_3_16_SquareRoot()
-        {
-            string script = @"
+    [Test]
+    [Category("Math")]
+    [Description("Test 3.16: Square root approximation using Newton's method")]
+    public void Test_3_16_SquareRoot()
+    {
+        string script = @"
 FUNCTION sqrt RETURNS NUMBER WITH n {
     IF n == 0 {
         RETURN 0
@@ -414,22 +390,18 @@ FUNCTION sqrt RETURNS NUMBER WITH n {
 
 FLEX result = sqrt(16)
 PRINT result";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("4"), "Square root of 16 should be approximately 4");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("4"), "Square root of 16 should be approximately 4");
+    }
 
-        #endregion
-
-        #region String and Array Manipulation
-
-        [Test]
-        [Category("Arrays")]
-        [Description("Test 3.17: Array reversal")]
-        public void Test_3_17_ArrayReversal()
-        {
-            string script = @"
+    [Test]
+    [Category("Arrays")]
+    [Description("Test 3.17: Array reversal")]
+    public void Test_3_17_ArrayReversal()
+    {
+        string script = @"
 FLEX arr = [1, 2, 3, 4, 5]
 FLEX len = 5
 FLEX i = 0
@@ -443,19 +415,19 @@ CYCLE len / 2 {
 
 PRINT arr[0]
 PRINT arr[4]";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("5"), "First element should be 5");
-            Assert.That(output, Does.Contain("1"), "Last element should be 1");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("5"), "First element should be 5");
+        Assert.That(output, Does.Contain("1"), "Last element should be 1");
+    }
 
-        [Test]
-        [Category("Algorithms")]
-        [Description("Test 3.18: Linear search in array")]
-        public void Test_3_18_LinearSearch()
-        {
-            string script = @"
+    [Test]
+    [Category("Algorithms")]
+    [Description("Test 3.18: Linear search in array")]
+    public void Test_3_18_LinearSearch()
+    {
+        string script = @"
 FLEX arr = [5, 3, 8, 1, 9, 2, 7]
 FLEX target = 9
 FLEX found = -1
@@ -467,22 +439,18 @@ CYCLE 7 AS i {
 }
 
 PRINT found";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("4"), "Target 9 should be found at index 4");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("4"), "Target 9 should be found at index 4");
+    }
 
-        #endregion
-
-        #region Performance and Stress Tests
-
-        [Test]
-        [Category("Performance")]
-        [Description("Test 3.19: Deep nesting stress test")]
-        public void Test_3_19_DeepNesting()
-        {
-            string script = @"
+    [Test]
+    [Category("Performance")]
+    [Description("Test 3.19: Deep nesting stress test")]
+    public void Test_3_19_DeepNesting()
+    {
+        string script = @"
 FLEX sum = 0
 CYCLE 5 {
     CYCLE 5 {
@@ -492,18 +460,18 @@ CYCLE 5 {
     }
 }
 PRINT sum";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("100"), "5*5*4 iterations should give sum=100");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("100"), "5*5*4 iterations should give sum=100");
+    }
 
-        [Test]
-        [Category("Performance")]
-        [Description("Test 3.20: Large array operations")]
-        public void Test_3_20_LargeArray()
-        {
-            string script = @"
+    [Test]
+    [Category("Performance")]
+    [Description("Test 3.20: Large array operations")]
+    public void Test_3_20_LargeArray()
+    {
+        string script = @"
 FLEX arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 FLEX sum = 0
 
@@ -512,39 +480,35 @@ CYCLE 20 AS i {
 }
 
 PRINT sum";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("210"), "Sum of 1 to 20 should be 210");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("210"), "Sum of 1 to 20 should be 210");
+    }
 
-        #endregion
-
-        #region Edge Cases and Error Handling
-
-        [Test]
-        [Category("EdgeCases")]
-        [Description("Test 3.21: Zero iterations loop")]
-        public void Test_3_21_ZeroIterations()
-        {
-            string script = @"
+    [Test]
+    [Category("EdgeCases")]
+    [Description("Test 3.21: Zero iterations loop")]
+    public void Test_3_21_ZeroIterations()
+    {
+        string script = @"
 FLEX count = 0
 CYCLE 0 {
     FLEX count = count + 1
 }
 PRINT count";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("0"), "Count should remain 0");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("0"), "Count should remain 0");
+    }
 
-        [Test]
-        [Category("EdgeCases")]
-        [Description("Test 3.22: Division and modulo operations")]
-        public void Test_3_22_DivisionModulo()
-        {
-            string script = @"
+    [Test]
+    [Category("EdgeCases")]
+    [Description("Test 3.22: Division and modulo operations")]
+    public void Test_3_22_DivisionModulo()
+    {
+        string script = @"
 FLEX a = 17
 FLEX b = 5
 
@@ -553,38 +517,34 @@ FLEX remainder = a % b
 
 PRINT quotient
 PRINT remainder";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("3"), "17 / 5 should be 3");
-            Assert.That(output, Does.Contain("2"), "17 % 5 should be 2");
-        }
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("3"), "17 / 5 should be 3");
+        Assert.That(output, Does.Contain("2"), "17 % 5 should be 2");
+    }
 
-        [Test]
-        [Category("EdgeCases")]
-        [Description("Test 3.23: Operator precedence")]
-        public void Test_3_23_OperatorPrecedence()
-        {
-            string script = @"
+    [Test]
+    [Category("EdgeCases")]
+    [Description("Test 3.23: Operator precedence")]
+    public void Test_3_23_OperatorPrecedence()
+    {
+        string script = @"
 FLEX result = 2 + 3 * 4
 PRINT result";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            // Depending on implementation, should respect precedence
-            Assert.That(output, Is.Not.Empty, "Should produce a result");
-        }
+        string output = GetOutput();
+        // Depending on implementation, should respect precedence
+        Assert.That(output, Is.Not.Empty, "Should produce a result");
+    }
 
-        #endregion
-
-        #region Integration Tests
-
-        [Test]
-        [Category("Integration")]
-        [Description("Test 3.24: Complete program combining multiple features")]
-        public void Test_3_24_IntegrationTest()
-        {
-            string script = @"
+    [Test]
+    [Category("Integration")]
+    [Description("Test 3.24: Complete program combining multiple features")]
+    public void Test_3_24_IntegrationTest()
+    {
+        string script = @"
 // Compute sum of squares of even numbers from 1 to 10
 FUNCTION isEven RETURNS NUMBER WITH n {
     RETURN (n % 2 == 0)
@@ -599,19 +559,19 @@ CYCLE 10 AS i {
 }
 
 PRINT sum";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            // 2^2 + 4^2 + 6^2 + 8^2 + 10^2 = 4 + 16 + 36 + 64 + 100 = 220
-            Assert.That(output, Does.Contain("220"), "Sum of squares of even numbers should be 220");
-        }
+        string output = GetOutput();
+        // 2^2 + 4^2 + 6^2 + 8^2 + 10^2 = 4 + 16 + 36 + 64 + 100 = 220
+        Assert.That(output, Does.Contain("220"), "Sum of squares of even numbers should be 220");
+    }
 
-        [Test]
-        [Category("Integration")]
-        [Description("Test 3.25: Collatz conjecture sequence")]
-        public void Test_3_25_CollatzSequence()
-        {
-            string script = @"
+    [Test]
+    [Category("Integration")]
+    [Description("Test 3.25: Collatz conjecture sequence")]
+    public void Test_3_25_CollatzSequence()
+    {
+        string script = @"
 FLEX n = 10
 FLEX steps = 0
 
@@ -629,12 +589,9 @@ CYCLE 100 {
     
     FLEX steps = steps + 1
 }";
-            Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
-            string output = GetOutput();
-            Assert.That(output, Does.Contain("6"), "Collatz sequence from 10 takes 6 steps");
-        }
-
-        #endregion
+        string output = GetOutput();
+        Assert.That(output, Does.Contain("6"), "Collatz sequence from 10 takes 6 steps");
     }
 }

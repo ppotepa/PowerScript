@@ -3,18 +3,17 @@ using Tokenez.Core.Syntax.Tokens.Identifiers;
 using Tokenez.Core.Syntax.Tokens.Interfaces;
 using Tokenez.Core.Syntax.Tokens.Raw;
 
-namespace Tokenez.Core.Syntax.Tokens.Keywords.Types
+namespace Tokenez.Core.Syntax.Tokens.Keywords.Types;
+
+public class IntToken : Token, IKeyWordToken, IBaseTypeToken
 {
-    public class IntToken : Token, IKeyWordToken, IBaseTypeToken
+    public IntToken()
     {
-        public IntToken()
-        {
-        }
-
-        public IntToken(RawToken rawToken) : base(rawToken)
-        {
-        }
-
-        public override Type[] Expectations => [typeof(IdentifierToken), typeof(ChainToken)];
     }
+
+    public IntToken(RawToken rawToken) : base(rawToken)
+    {
+    }
+
+    public override Type[] Expectations => [typeof(IdentifierToken), typeof(ChainToken)];
 }

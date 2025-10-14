@@ -1,23 +1,22 @@
 using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.Syntax.Tokens.Raw;
 
-namespace Tokenez.Core.Syntax.Tokens.Operators
+namespace Tokenez.Core.Syntax.Tokens.Operators;
+
+public class NotEqualsToken : Token
 {
-    public class NotEqualsToken : Token
+    public NotEqualsToken()
     {
-        public NotEqualsToken()
-        {
-        }
+    }
 
-        public NotEqualsToken(RawToken rawToken) : base(rawToken)
-        {
-        }
+    public NotEqualsToken(RawToken rawToken) : base(rawToken)
+    {
+    }
 
-        public override Type[] Expectations => [];
+    public override Type[] Expectations => [];
 
-        public override string ToString()
-        {
-            return "NotEqualsToken(!=)";
-        }
+    public override string ToString()
+    {
+        return "NotEqualsToken(!=)";
     }
 }
