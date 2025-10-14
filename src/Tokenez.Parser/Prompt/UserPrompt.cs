@@ -137,7 +137,7 @@ public class UserPrompt(string prompt)
     /// <summary>
     ///     Strips single-line comments (//) from the code while preserving string literals.
     /// </summary>
-    private string StripComments(string code)
+    private static string StripComments(string code)
     {
         StringBuilder result = new();
         int i = 0;

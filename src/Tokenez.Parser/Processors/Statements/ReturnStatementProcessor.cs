@@ -61,26 +61,6 @@ public class ReturnStatementProcessor : ITokenProcessor
     }
 
     /// <summary>
-    ///     Parses an expression following the RETURN keyword.
-    ///     Supports:
-    ///     - Void return (e.g., RETURN) - returns null expression
-    ///     - Arithmetic expressions with operators: +, -, *, /, %
-    ///     - Parenthesized expressions
-    ///     - Comparisons: ==, !=, <, >, <=, >=
-    /// </summary>
-    private Expression? ParseExpression(Token? startToken)
-    {
-        // Allow void return: RETURN with no expression (followed by scope end)
-        if (startToken is null or ScopeEndToken)
-        {
-            return null;
-        }
-
-        Token current = startToken;
-        return ParseFullExpression(ref current);
-    }
-
-    /// <summary>
     ///     Parse a full expression including comparisons and logical operators
     /// </summary>
     private Expression ParseFullExpression(ref Token? token)

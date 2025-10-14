@@ -27,18 +27,13 @@ namespace Tokenez.Compiler;
 ///     Compiles PowerScript token trees into executable .NET Lambda expressions.
 ///     Handles function compilation, parameter binding, and expression tree building.
 /// </summary>
-public class PowerScriptCompiler : IPowerScriptCompiler
+public class PowerScriptCompiler(TokenTree tree) : IPowerScriptCompiler
 {
     private const int MaxRecursionDepth = 1000;
     private readonly List<string> _callStack = [];
-    private readonly TokenTree _tree;
+    private readonly TokenTree _tree = tree ?? throw new ArgumentNullException(nameof(tree));
     private readonly Dictionary<string, object> _variables = [];
     private int _recursionDepth;
-
-    public PowerScriptCompiler(TokenTree tree)
-    {
-        _tree = tree ?? throw new ArgumentNullException(nameof(tree));
-    }
 
     /// <summary>
     ///     Executes the provided scope and returns the result.
@@ -89,10 +84,9 @@ public class PowerScriptCompiler : IPowerScriptCompiler
     /// </summary>
     public bool IsFunctionRegistered(string functionName)
     {
-        return string.IsNullOrWhiteSpace(functionName)
-            ? false
-            : _tree.RootScope!.Decarations.ContainsKey(functionName) &&
-               _tree.RootScope.Decarations[functionName] is FunctionDeclaration;
+        return !string.IsNullOrWhiteSpace(functionName)
+               && _tree.RootScope!.Decarations.ContainsKey(functionName) &&
+                    _tree.RootScope.Decarations[functionName] is FunctionDeclaration;
     }
 
     /// <summary>
@@ -834,66 +828,69 @@ public class PowerScriptCompiler : IPowerScriptCompiler
 
         // Skip to opening parenthesis
         Token? current = startToken;
-        while (current is not ParenthesisOpen && current is not null)
+        while (current is not ParenthesisOpen and not null)
         {
             current = current.Next;
         }
 
-        if (current is null or not ParenthesisOpen)
+        if (current is ParenthesisOpen)
         {
             // No arguments
             return arguments;
         }
 
-        current = current.Next; // Move past '('
-
-        // Parse arguments until ')'
-        List<Token> argumentTokens = [];
-        int parenDepth = 0;
-
-        while (current != null && !(current is ParenthesisClosed && parenDepth == 0))
+        if (current != null)
         {
-            if (current is ParenthesisOpen)
+            current = current.Next; // Move past '('
+
+            // Parse arguments until ')'
+            List<Token> argumentTokens = [];
+            int parenDepth = 0;
+
+            while (current != null && !(current is ParenthesisClosed && parenDepth == 0))
             {
-                parenDepth++;
-                argumentTokens.Add(current);
-            }
-            else if (current is ParenthesisClosed)
-            {
-                parenDepth--;
-                argumentTokens.Add(current);
-            }
-            else if (current is CommaToken && parenDepth == 0)
-            {
-                // End of argument, evaluate what we have
-                if (argumentTokens.Count > 0)
+                if (current is ParenthesisOpen)
                 {
-                    TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
-                    object argValue = EvaluateExpressionValue(argExpression);
-                    arguments.Add(argValue);
-                    argumentTokens.Clear();
+                    parenDepth++;
+                    argumentTokens.Add(current);
                 }
+                else if (current is ParenthesisClosed)
+                {
+                    parenDepth--;
+                    argumentTokens.Add(current);
+                }
+                else if (current is CommaToken && parenDepth == 0)
+                {
+                    // End of argument, evaluate what we have
+                    if (argumentTokens.Count > 0)
+                    {
+                        TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
+                        object argValue = EvaluateExpressionValue(argExpression);
+                        arguments.Add(argValue);
+                        argumentTokens.Clear();
+                    }
+                }
+                else
+                {
+                    argumentTokens.Add(current);
+                }
+
+                current = current.Next;
             }
-            else
+
+            // Evaluate the last argument
+            if (argumentTokens.Count > 0)
             {
-                argumentTokens.Add(current);
+                TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
+                object argValue = EvaluateExpressionValue(argExpression);
+                arguments.Add(argValue);
             }
-
-            current = current.Next;
-        }
-
-        // Evaluate the last argument
-        if (argumentTokens.Count > 0)
-        {
-            TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
-            object argValue = EvaluateExpressionValue(argExpression);
-            arguments.Add(argValue);
         }
 
         return arguments;
     }
 
-    private Expression BuildExpressionFromTokens(List<Token> tokens)
+    private static Expression BuildExpressionFromTokens(List<Token> tokens)
     {
         if (tokens.Count == 0)
         {
@@ -904,13 +901,13 @@ public class PowerScriptCompiler : IPowerScriptCompiler
         if (tokens.Count == 1)
         {
             Token token = tokens[0];
-            return token is ValueToken valueToken
-                ? new LiteralExpression(valueToken)
-                : token is StringLiteralToken strToken
-                ? new StringLiteralExpression(strToken)
-                : token is IdentifierToken identToken
-                ? (TreeExpression)new IdentifierExpression(identToken)
-                : throw new InvalidOperationException($"Unexpected single token: {token.GetType().Name}");
+            return token switch
+            {
+                ValueToken valueToken => new LiteralExpression(valueToken),
+                StringLiteralToken strToken => new StringLiteralExpression(strToken),
+                IdentifierToken identToken => new IdentifierExpression(identToken),
+                _ => throw new InvalidOperationException($"Unexpected single token: {token.GetType().Name}")
+            };
         }
 
         // Multiple tokens - check for binary operators
@@ -945,8 +942,8 @@ public class PowerScriptCompiler : IPowerScriptCompiler
         // If we found an operator, split and recurse
         if (operatorIndex >= 0)
         {
-            List<Token> leftTokens = tokens.Take(operatorIndex).ToList();
-            List<Token> rightTokens = tokens.Skip(operatorIndex + 1).ToList();
+            List<Token> leftTokens = [.. tokens.Take(operatorIndex)];
+            List<Token> rightTokens = [.. tokens.Skip(operatorIndex + 1)];
 
             TreeExpression left = BuildExpressionFromTokens(leftTokens);
             TreeExpression right = BuildExpressionFromTokens(rightTokens);
@@ -961,7 +958,7 @@ public class PowerScriptCompiler : IPowerScriptCompiler
             $"Cannot build expression from tokens: {string.Join(", ", tokens.Select(t => t.GetType().Name))}");
     }
 
-    private bool IsOperatorToken(Token token)
+    private static bool IsOperatorToken(Token token)
     {
         return token is PlusToken or MinusToken or MultiplyToken or DivideToken or ModuloToken
             or EqualsEqualsToken or NotEqualsToken
@@ -969,7 +966,7 @@ public class PowerScriptCompiler : IPowerScriptCompiler
             or AndKeywordToken or OrKeywordToken;
     }
 
-    private int GetOperatorPrecedence(Token token)
+    private static int GetOperatorPrecedence(Token token)
     {
         // Lower number = lower precedence (evaluated later)
         return token switch
