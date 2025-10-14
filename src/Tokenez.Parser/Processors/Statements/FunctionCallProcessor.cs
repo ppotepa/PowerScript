@@ -1,11 +1,11 @@
 using Tokenez.Common.Logging;
-using Tokenez.Parser.Processors.Base;
 using Tokenez.Core.AST.Statements;
 using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.Syntax.Tokens.Delimiters;
 using Tokenez.Core.Syntax.Tokens.Identifiers;
+using Tokenez.Parser.Processors.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Statements
 {
     /// <summary>
     ///     Processes function call statements: identifier followed by parentheses.

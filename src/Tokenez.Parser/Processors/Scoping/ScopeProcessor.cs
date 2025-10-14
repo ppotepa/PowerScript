@@ -1,13 +1,13 @@
 using Tokenez.Common.Logging;
-using Tokenez.Parser.Processors.Base;
+using Tokenez.Core.AST;
 using Tokenez.Core.Exceptions;
 using Tokenez.Core.Syntax.Tokens.Base;
-using Tokenez.Core.AST;
 using Tokenez.Core.Syntax.Tokens.Identifiers;
 using Tokenez.Core.Syntax.Tokens.Keywords;
 using Tokenez.Core.Syntax.Tokens.Scoping;
+using Tokenez.Parser.Processors.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Scoping
 {
     /// <summary>
     ///     Processes scope blocks (code between { and }).

@@ -8,6 +8,11 @@ using Tokenez.Parser.Processors.Base;
 using Tokenez.Compiler;
 using Tokenez.Compiler.Interfaces;
 using Tokenez.Core.DotNet;
+using Tokenez.Interpreter.Interfaces;
+using Tokenez.Parser.Processors.ControlFlow;
+using Tokenez.Parser.Processors.Expressions;
+using Tokenez.Parser.Processors.Scoping;
+using Tokenez.Parser.Processors.Statements;
 
 namespace Tokenez.Interpreter
 {

@@ -1,6 +1,6 @@
 using Tokenez.Common.Logging;
 
-namespace Tokenez.Parser.Processors;
+namespace Tokenez.Parser.Processors.Base;
 
 /// <summary>
 ///     Handles logging for the tree building process with depth-based indentation

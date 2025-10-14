@@ -1,9 +1,9 @@
 using Tokenez.Common.Logging;
-using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.AST;
+using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Parser.Processors.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Scoping
 {
     /// <summary>
     ///     Builds scope hierarchies by processing tokens sequentially.

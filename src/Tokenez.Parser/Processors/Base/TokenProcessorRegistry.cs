@@ -1,7 +1,6 @@
-using Tokenez.Parser.Processors.Base;
 using Tokenez.Core.Syntax.Tokens.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Base
 {
     /// <summary>
     ///     Registry that maps tokens to their processors.

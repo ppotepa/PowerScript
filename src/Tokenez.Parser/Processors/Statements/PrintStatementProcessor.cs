@@ -1,5 +1,4 @@
 using Tokenez.Common.Logging;
-using Tokenez.Parser.Processors.Base;
 using Tokenez.Core.AST.Expressions;
 using Tokenez.Core.AST.Statements;
 using Tokenez.Core.Syntax.Tokens.Base;
@@ -7,8 +6,9 @@ using Tokenez.Core.Syntax.Tokens.Delimiters;
 using Tokenez.Core.Syntax.Tokens.Identifiers;
 using Tokenez.Core.Syntax.Tokens.Keywords;
 using Tokenez.Core.Syntax.Tokens.Values;
+using Tokenez.Parser.Processors.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Statements
 {
     /// <summary>
     ///     Processes PRINT keyword tokens.

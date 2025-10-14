@@ -15,6 +15,11 @@ using Tokenez.Core.DotNet;
 using Tokenez.Interpreter.DotNet;
 using Serilog;
 using Serilog.Events;
+using Tokenez.Interpreter.Interfaces;
+using Tokenez.Parser.Processors.ControlFlow;
+using Tokenez.Parser.Processors.Expressions;
+using Tokenez.Parser.Processors.Scoping;
+using Tokenez.Parser.Processors.Statements;
 
 namespace Tokenez.CLI
 {

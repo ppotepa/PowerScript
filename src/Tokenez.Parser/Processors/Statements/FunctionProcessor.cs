@@ -1,15 +1,16 @@
 using Tokenez.Common.Logging;
-using Tokenez.Parser.Processors.Base;
+using Tokenez.Core.AST;
 using Tokenez.Core.Exceptions;
 using Tokenez.Core.Syntax.Tokens.Base;
-using Tokenez.Core.AST;
 using Tokenez.Core.Syntax.Tokens.Delimiters;
 using Tokenez.Core.Syntax.Tokens.Identifiers;
 using Tokenez.Core.Syntax.Tokens.Keywords;
 using Tokenez.Core.Syntax.Tokens.Keywords.Types;
 using Tokenez.Core.Syntax.Tokens.Scoping;
+using Tokenez.Parser.Processors.Base;
+using Tokenez.Parser.Processors.Expressions;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Statements
 {
     /// <summary>
     ///     Processes FUNCTION keyword tokens.

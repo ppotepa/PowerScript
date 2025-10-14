@@ -1,13 +1,12 @@
 using Tokenez.Common.Logging;
-using Tokenez.Core.Exceptions;
 using Tokenez.Core.AST;
+using Tokenez.Core.Exceptions;
 using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.Syntax.Tokens.Delimiters;
 using Tokenez.Core.Syntax.Tokens.Identifiers;
 using Tokenez.Core.Syntax.Tokens.Keywords.Types;
-using Tokenez.Core.Syntax.Tokens.Operators;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Expressions
 {
     /// <summary>
     ///     Processes function parameter lists.

@@ -1,4 +1,4 @@
-namespace Tokenez.Interpreter;
+namespace Tokenez.Interpreter.Interfaces;
 
 /// <summary>
 /// Interface for PowerScript interpreter that executes PowerScript code.

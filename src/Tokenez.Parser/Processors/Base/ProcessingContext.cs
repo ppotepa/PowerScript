@@ -1,7 +1,7 @@
-using Tokenez.Core.Syntax.Tokens.Base;
 using Tokenez.Core.AST;
+using Tokenez.Core.Syntax.Tokens.Base;
 
-namespace Tokenez.Parser.Processors
+namespace Tokenez.Parser.Processors.Base
 {
     /// <summary>
     ///     Context information passed through the token processing pipeline.

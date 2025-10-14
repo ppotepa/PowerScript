@@ -1,7 +1,7 @@
-using Tokenez.Interpreter;
 using NUnit.Framework;
+using Tokenez.Interpreter;
 
-namespace TuringCompletenessTests
+namespace Tokenez.Integration.Tests
 {
     [TestFixture]
     [Category("Complex")]
