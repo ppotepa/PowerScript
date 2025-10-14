@@ -1,0 +1,8 @@
+FLEX count = 0
+CYCLE 20 AS i {
+    FLEX num = i + 1
+    IF num > 5 AND num < 15 {
+        FLEX count = count + 1
+    }
+}
+PRINT count

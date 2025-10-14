@@ -1,0 +1,10 @@
+FLEX total = 0
+CYCLE 4 AS row {
+    FLEX r = row + 1
+    CYCLE 5 AS col {
+        FLEX c = col + 1
+        FLEX product = r * c
+        FLEX total = total + product
+    }
+}
+PRINT total
