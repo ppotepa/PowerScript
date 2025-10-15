@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -22,6 +21,69 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokenez.Integration.Tests", "tests\Tokenez.Integration.Tests\Tokenez.Integration.Tests.csproj", "{527BBD73-BE09-41D5-98B9-4BC0063E9299}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test-scripts", "test-scripts", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "complex", "complex", "{BF4586A0-1578-4592-A23B-7E1A73B1BC84}"
+	ProjectSection(SolutionItems) = preProject
+		test-scripts\complex\3_10_gcd.ps = test-scripts\complex\3_10_gcd.ps
+		test-scripts\complex\3_11_nested_conditions.ps = test-scripts\complex\3_11_nested_conditions.ps
+		test-scripts\complex\3_12_loop_breaking.ps = test-scripts\complex\3_12_loop_breaking.ps
+		test-scripts\complex\3_13_stack_simulation.ps = test-scripts\complex\3_13_stack_simulation.ps
+		test-scripts\complex\3_14_queue_simulation.ps = test-scripts\complex\3_14_queue_simulation.ps
+		test-scripts\complex\3_15_power_function.ps = test-scripts\complex\3_15_power_function.ps
+		test-scripts\complex\3_16_square_root.ps = test-scripts\complex\3_16_square_root.ps
+		test-scripts\complex\3_17_array_reversal.ps = test-scripts\complex\3_17_array_reversal.ps
+		test-scripts\complex\3_18_linear_search.ps = test-scripts\complex\3_18_linear_search.ps
+		test-scripts\complex\3_19_deep_nesting.ps = test-scripts\complex\3_19_deep_nesting.ps
+		test-scripts\complex\3_1_bubble_sort.ps = test-scripts\complex\3_1_bubble_sort.ps
+		test-scripts\complex\3_1_bubble_sort_stats.ps = test-scripts\complex\3_1_bubble_sort_stats.ps
+		test-scripts\complex\3_20_large_array.ps = test-scripts\complex\3_20_large_array.ps
+		test-scripts\complex\3_21_zero_iterations.ps = test-scripts\complex\3_21_zero_iterations.ps
+		test-scripts\complex\3_22_division_modulo.ps = test-scripts\complex\3_22_division_modulo.ps
+		test-scripts\complex\3_23_operator_precedence.ps = test-scripts\complex\3_23_operator_precedence.ps
+		test-scripts\complex\3_24_integration_test.ps = test-scripts\complex\3_24_integration_test.ps
+		test-scripts\complex\3_25_collatz_sequence.ps = test-scripts\complex\3_25_collatz_sequence.ps
+		test-scripts\complex\3_2_matrix_operations.ps = test-scripts\complex\3_2_matrix_operations.ps
+		test-scripts\complex\3_2_state_machine.ps = test-scripts\complex\3_2_state_machine.ps
+		test-scripts\complex\3_3_maze_solver.ps = test-scripts\complex\3_3_maze_solver.ps
+		test-scripts\complex\3_4_auto_generated_variables.ps = test-scripts\complex\3_4_auto_generated_variables.ps
+		test-scripts\complex\3_5_triple_nested_loops.ps = test-scripts\complex\3_5_triple_nested_loops.ps
+		test-scripts\complex\3_6_mixed_loop_variables.ps = test-scripts\complex\3_6_mixed_loop_variables.ps
+		test-scripts\complex\3_7_factorial.ps = test-scripts\complex\3_7_factorial.ps
+		test-scripts\complex\3_8_fibonacci.ps = test-scripts\complex\3_8_fibonacci.ps
+		test-scripts\complex\3_9_prime_detection.ps = test-scripts\complex\3_9_prime_detection.ps
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "moderate", "moderate", "{02ACEAFC-B35D-471D-889D-C84ED7959B66}"
+	ProjectSection(SolutionItems) = preProject
+		test-scripts\moderate\2_10_sum_and_product.ps = test-scripts\moderate\2_10_sum_and_product.ps
+		test-scripts\moderate\2_1_sum_of_numbers.ps = test-scripts\moderate\2_1_sum_of_numbers.ps
+		test-scripts\moderate\2_2_conditional_counting.ps = test-scripts\moderate\2_2_conditional_counting.ps
+		test-scripts\moderate\2_3_even_odd_sum.ps = test-scripts\moderate\2_3_even_odd_sum.ps
+		test-scripts\moderate\2_4_multiplication_table_sum.ps = test-scripts\moderate\2_4_multiplication_table_sum.ps
+		test-scripts\moderate\2_5_fibonacci.ps = test-scripts\moderate\2_5_fibonacci.ps
+		test-scripts\moderate\2_6_power_calculation.ps = test-scripts\moderate\2_6_power_calculation.ps
+		test-scripts\moderate\2_7_find_maximum.ps = test-scripts\moderate\2_7_find_maximum.ps
+		test-scripts\moderate\2_8_count_primes.ps = test-scripts\moderate\2_8_count_primes.ps
+		test-scripts\moderate\2_9_complex_expressions.ps = test-scripts\moderate\2_9_complex_expressions.ps
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "simple", "simple", "{39FDB67C-2548-4C04-8E64-03841627695A}"
+	ProjectSection(SolutionItems) = preProject
+		test-scripts\simple\1_10_nested_conditionals.ps = test-scripts\simple\1_10_nested_conditionals.ps
+		test-scripts\simple\1_11_nested_loops.ps = test-scripts\simple\1_11_nested_loops.ps
+		test-scripts\simple\1_12_loop_with_conditional.ps = test-scripts\simple\1_12_loop_with_conditional.ps
+		test-scripts\simple\1_1_variables.ps = test-scripts\simple\1_1_variables.ps
+		test-scripts\simple\1_2_arithmetic.ps = test-scripts\simple\1_2_arithmetic.ps
+		test-scripts\simple\1_3_conditional_simple.ps = test-scripts\simple\1_3_conditional_simple.ps
+		test-scripts\simple\1_4_loop_simple.ps = test-scripts\simple\1_4_loop_simple.ps
+		test-scripts\simple\1_5_loop_counter.ps = test-scripts\simple\1_5_loop_counter.ps
+		test-scripts\simple\1_6_factorial.ps = test-scripts\simple\1_6_factorial.ps
+		test-scripts\simple\1_7_parentheses.ps = test-scripts\simple\1_7_parentheses.ps
+		test-scripts\simple\1_8_boolean_and.ps = test-scripts\simple\1_8_boolean_and.ps
+		test-scripts\simple\1_9_boolean_or.ps = test-scripts\simple\1_9_boolean_or.ps
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -142,5 +204,12 @@ Global
 		{A1B2C3D4-E5F6-4789-9012-3456789ABCDE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{DE5C91AB-C4BF-49BD-9201-D2A9D569F90E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{527BBD73-BE09-41D5-98B9-4BC0063E9299} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{BF4586A0-1578-4592-A23B-7E1A73B1BC84} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{02ACEAFC-B35D-471D-889D-C84ED7959B66} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{39FDB67C-2548-4C04-8E64-03841627695A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {45062FBB-DCF1-4F5A-96C4-6C8ED9ECF4BB}
 	EndGlobalSection
 EndGlobal
