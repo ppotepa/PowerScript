@@ -4,7 +4,7 @@ namespace PowerScript.Core.AST;
 
 /// <summary>
 ///     Represents a function declaration.
-///     Example: "FUNCTION add(a, b) { ... }" or "FUNCTION multiply(INT A, INT B)[INT] { ... }"
+///     Example: "FUNCTION add(a, b) { ... }" or "FUNCTION multiply(INT[8] A, INT[8] B)[INT[16]] { ... }"
 /// </summary>
 public class FunctionDeclaration(Token identifier) : Declaration(identifier)
 {
@@ -16,4 +16,7 @@ public class FunctionDeclaration(Token identifier) : Declaration(identifier)
 
     /// <summary>The return type token (e.g., INT), or null for void functions</summary>
     public Token? ReturnType { get; set; }
+
+    /// <summary>Optional bit-width specification for the return type (e.g., INT[8], NUMBER[16])</summary>
+    public int? ReturnTypeBitWidth { get; set; }
 }

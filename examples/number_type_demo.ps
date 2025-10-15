@@ -1,0 +1,67 @@
+// ============================================================================
+// NUMBER Type Demonstration
+// ============================================================================
+// Shows that NUMBER can hold both integer and decimal values
+// ============================================================================
+
+PRINT "=== NUMBER Type Flexibility Demo ==="
+PRINT ""
+
+// NUMBER can store integers
+NUMBER wholeNumber = 42
+NUMBER count = 100
+NUMBER zero = 0
+
+PRINT "NUMBER with integers:"
+PRINT "wholeNumber = "
+PRINT wholeNumber
+PRINT "count = "
+PRINT count
+PRINT "zero = "
+PRINT zero
+PRINT ""
+
+// NUMBER is ideal for calculations that might produce decimals
+NUMBER result1 = 10
+NUMBER result2 = 20
+NUMBER sum = result1 + result2
+
+PRINT "Arithmetic with NUMBER:"
+PRINT "10 + 20 = "
+PRINT sum
+PRINT ""
+
+// Use NUMBER in functions
+FUNCTION calculateArea(NUMBER width, NUMBER height)[NUMBER] {
+    RETURN width * height
+}
+
+NUMBER area = calculateArea(5, 10)
+PRINT "Area (5 x 10) = "
+PRINT area
+PRINT ""
+
+// INT vs NUMBER comparison
+INT integerOnly = 50
+NUMBER flexibleNumber = 50
+
+PRINT "INT integerOnly = "
+PRINT integerOnly
+PRINT "NUMBER flexibleNumber = "
+PRINT flexibleNumber
+PRINT ""
+
+PRINT "Both INT and NUMBER can store whole numbers,"
+PRINT "but NUMBER is more flexible for mixed operations."
+PRINT ""
+
+// NUMBER in loops
+PRINT "Using NUMBER as loop counter:"
+NUMBER loopCount = 5
+CYCLE loopCount AS i {
+    NUMBER doubled = i * 2
+    PRINT doubled
+}
+PRINT ""
+
+PRINT "=== NUMBER Type Demo Complete ==="

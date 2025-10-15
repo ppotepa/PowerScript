@@ -49,6 +49,7 @@ public partial class TokenTree
         { "PREC", typeof(PrecToken) }, // Precision/float type keyword
         { "CHAR", typeof(CharToken) }, // Character type keyword
         { "STRING", typeof(StringToken) }, // String type keyword (CHAR CHAIN)
+        { "NUMBER", typeof(NumberToken) }, // Number type keyword
         { "CHAIN", typeof(ChainToken) }, // Collection/array type modifier
         { "{", typeof(ScopeStartToken) }, // Scope/block start
         { "}", typeof(ScopeEndToken) }, // Scope/block end
@@ -174,7 +175,9 @@ public partial class TokenTree
         Type? targetType;
 
         // First priority: Check static map for exact string matches
-        if (_map.TryGetValue(rawToken.Text, out Type? mappedType))
+        // Keywords must be UPPERCASE in the source code to be recognized
+        // If lowercase, treat as identifier even if it matches a keyword when uppercased
+        if (_map.TryGetValue(rawToken.Text, out Type? mappedType) && rawToken.OriginalText == rawToken.Text)
         {
             _ = index;
             targetType = mappedType;

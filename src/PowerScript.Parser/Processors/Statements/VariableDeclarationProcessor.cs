@@ -3,6 +3,7 @@ using PowerScript.Core.AST;
 using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Syntax.Tokens.Base;
+using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
 using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
@@ -87,7 +88,12 @@ public class VariableDeclarationProcessor : ITokenProcessor
         // Parse the initial value expression
         Expression initialValue;
 
-        if (currentToken is ValueToken valueToken)
+        if (currentToken is BracketOpen)
+        {
+            // Array literal: [1, 2, 3] or nested: [[1, 2], [3, 4]]
+            initialValue = ParseArrayLiteral(ref currentToken);
+        }
+        else         if (currentToken is ValueToken valueToken)
         {
             initialValue = new LiteralExpression(valueToken);
             currentToken = valueToken.Next!;
@@ -106,7 +112,7 @@ public class VariableDeclarationProcessor : ITokenProcessor
         else
         {
             throw new InvalidOperationException(
-                $"Expected value, string, or identifier after '=' in variable declaration, found {currentToken.GetType().Name}");
+                $"Expected value, string, identifier, or array literal after '=' in variable declaration, found {currentToken.GetType().Name}");
         }
 
         // Create the variable declaration
@@ -130,5 +136,92 @@ public class VariableDeclarationProcessor : ITokenProcessor
             $"✓ Registered variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
         return TokenProcessingResult.Continue(currentToken);
+    }
+
+    /// <summary>
+    ///     Parses an array literal expression: [1, 2, 3] or [[1, 2], [3, 4]]
+    ///     Supports nested arrays for multidimensional arrays.
+    /// </summary>
+    private static ArrayLiteralExpression ParseArrayLiteral(ref Token? token)
+    {
+        if (token is not BracketOpen)
+        {
+            throw new InvalidOperationException("Expected '[' at start of array literal");
+        }
+
+        token = token.Next; // Move past '['
+
+        List<Expression> elements = [];
+
+        // Handle empty array []
+        if (token is BracketClosed)
+        {
+            token = token.Next; // Move past ']'
+            return new ArrayLiteralExpression(elements);
+        }
+
+        // Parse array elements
+        while (token != null)
+        {
+            // Parse element expression (recursively handles nested arrays)
+            Expression elementExpr;
+
+            if (token is BracketOpen)
+            {
+                // Nested array: [[1, 2], [3, 4]]
+                elementExpr = ParseArrayLiteral(ref token);
+            }
+            else if (token is ValueToken valueToken)
+            {
+                elementExpr = new LiteralExpression(valueToken);
+                token = token.Next;
+            }
+            else if (token is StringLiteralToken stringToken)
+            {
+                elementExpr = new StringLiteralExpression(stringToken);
+                token = token.Next;
+            }
+            else if (token is IdentifierToken identifierToken)
+            {
+                elementExpr = new IdentifierExpression(identifierToken);
+                token = token.Next;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Unexpected token in array literal: {token.GetType().Name}");
+            }
+
+            elements.Add(elementExpr);
+
+            // Check for comma or closing bracket
+            if (token is CommaToken)
+            {
+                token = token.Next; // Move past comma
+
+                // Allow trailing comma: [1, 2, 3,]
+                if (token is BracketClosed)
+                {
+                    break;
+                }
+            }
+            else if (token is BracketClosed)
+            {
+                break;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Expected ',' or ']' in array literal, found {token?.GetType().Name}");
+            }
+        }
+
+        if (token is not BracketClosed)
+        {
+            throw new InvalidOperationException("Expected ']' at end of array literal");
+        }
+
+        token = token.Next; // Move past ']'
+        return new ArrayLiteralExpression(elements);
     }
 }

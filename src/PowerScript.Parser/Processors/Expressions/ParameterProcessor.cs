@@ -4,7 +4,9 @@ using PowerScript.Core.Exceptions;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Interfaces;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
+using PowerScript.Core.Syntax.Tokens.Values;
 
 namespace PowerScript.Parser.Processors.Expressions;
 
@@ -106,6 +108,47 @@ public class ParameterProcessor
 
         Token typeToken = token;
         Token currentToken = token.Next;
+        int? bitWidth = null;
+
+        // Check for bit-width specification [N]
+        if (currentToken is BracketOpen)
+        {
+            LoggerService.Logger.Debug("[ParameterProcessor] Found bit-width specification");
+            currentToken = currentToken.Next!;
+
+            if (currentToken is not ValueToken bitWidthToken)
+            {
+                throw new UnexpectedTokenException(
+                    currentToken,
+                    "Expected numeric value for bit-width specification",
+                    typeof(ValueToken)
+                );
+            }
+
+            string bitWidthText = bitWidthToken.RawToken!.Text;
+            if (!int.TryParse(bitWidthText, out int parsedBitWidth))
+            {
+                throw new InvalidOperationException(
+                    $"Invalid bit-width value '{bitWidthText}' - must be an integer"
+                );
+            }
+
+            bitWidth = parsedBitWidth;
+            LoggerService.Logger.Debug($"[ParameterProcessor] Bit-width: {bitWidth}");
+
+            currentToken = bitWidthToken.Next!;
+
+            if (currentToken is not BracketClosed)
+            {
+                throw new UnexpectedTokenException(
+                    currentToken,
+                    "Expected closing bracket ']' after bit-width value",
+                    typeof(BracketClosed)
+                );
+            }
+
+            currentToken = currentToken.Next!;
+        }
 
         // Check if this is a composite type (e.g., INT CHAIN, PREC CHAIN)
         if (currentToken is ChainToken chainToken)
@@ -122,8 +165,8 @@ public class ParameterProcessor
             throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
         }
 
-        // Add parameter to the list (using the base type token for now)
-        parameters.Declarations.Add(new ParameterDeclaration(typeToken, identifierToken));
+        // Add parameter to the list with bit-width if specified
+        parameters.Declarations.Add(new ParameterDeclaration(typeToken, identifierToken, bitWidth));
         nextToken = identifierToken.Next;
         return true;
     }

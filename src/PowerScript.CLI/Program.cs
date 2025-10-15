@@ -192,6 +192,8 @@ public static class Program
                 ParameterProcessor parameterProcessor = new();
 
                 // Register all token processors
+                // Order matters: more specific processors should come first
+                reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
                 reg.Register(new FunctionProcessor(parameterProcessor));
                 reg.Register(new FunctionCallProcessor());
                 // TODO: LinkStatementProcessor not yet migrated to new structure
@@ -203,7 +205,7 @@ public static class Program
                 reg.Register(new PrintStatementProcessor());
                 reg.Register(new ExecuteCommandProcessor());
                 reg.Register(new NetMethodCallProcessor());
-                reg.Register(new VariableDeclarationProcessor());
+                reg.Register(new VariableDeclarationProcessor()); // VAR
                 // NOTE: ScopeProcessor creates circular reference - ScopeBuilder handles scopes internally
                 // reg.Register(new ScopeProcessor(reg, scopeBuilder));
             };

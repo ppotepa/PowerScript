@@ -47,9 +47,20 @@ public class CompilationResult
         bool isSuccess = true,
         IReadOnlyList<string>? errors = null)
     {
-        TokenTree = tokenTree ?? throw new ArgumentNullException(nameof(tokenTree));
-        RootScope = rootScope ?? throw new ArgumentNullException(nameof(rootScope));
-        Functions = functions ?? throw new ArgumentNullException(nameof(functions));
+        // Only validate non-null when compilation succeeded
+        if (isSuccess)
+        {
+            TokenTree = tokenTree ?? throw new ArgumentNullException(nameof(tokenTree));
+            RootScope = rootScope ?? throw new ArgumentNullException(nameof(rootScope));
+            Functions = functions ?? throw new ArgumentNullException(nameof(functions));
+        }
+        else
+        {
+            TokenTree = tokenTree!;
+            RootScope = rootScope!;
+            Functions = functions ?? new Dictionary<string, FunctionDeclaration>();
+        }
+
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         IsSuccess = isSuccess;
         Errors = errors ?? Array.Empty<string>();

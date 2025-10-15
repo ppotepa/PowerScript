@@ -1,0 +1,11 @@
+// Test: Mixed bit-width and non-bit-width types
+INT[8] small = 50
+INT large = 1000
+NUMBER[16] medium = 500
+
+PRINT small
+PRINT large
+PRINT medium
+
+FLEX result = small + large
+PRINT result

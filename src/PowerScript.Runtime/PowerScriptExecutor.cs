@@ -256,6 +256,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             BinaryExpression binaryExpr => EvaluateBinaryExpression(binaryExpr),
             LogicalExpression logicalExpr => EvaluateLogicalExpression(logicalExpr),
             ArrayLiteralExpression arrayExpr => EvaluateArrayLiteral(arrayExpr),
+            ArrayCreationExpression arrayCreation => EvaluateArrayCreation(arrayCreation),
             IndexExpression indexExpr => EvaluateIndexExpression(indexExpr),
             TemplateStringExpression templateExpr => EvaluateTemplateString(templateExpr),
             FunctionCallExpression functionCallExpr => EvaluateFunctionCall(functionCallExpr),
@@ -432,6 +433,37 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         {
             var value = EvaluateExpression(element);
             result.Add(value);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Evaluates an array creation expression (CHAIN syntax).
+    /// Creates a new array with the specified size.
+    /// Example: FLEX arr = CHAIN 10
+    /// </summary>
+    private object? EvaluateArrayCreation(ArrayCreationExpression expression)
+    {
+        // Get the size from the token
+        var sizeText = expression.SizeToken.RawToken?.Text ?? "0";
+        if (!int.TryParse(sizeText, out int size))
+        {
+            throw new InvalidOperationException($"Array size must be an integer, got: {sizeText}");
+        }
+
+        if (size < 0)
+        {
+            throw new InvalidOperationException($"Array size cannot be negative: {size}");
+        }
+
+        LoggerService.Logger.Debug($"[EXECUTOR] Creating array with size {size}");
+
+        // Create a list with the specified size, initialized with default values (0)
+        var result = new List<object?>(size);
+        for (int i = 0; i < size; i++)
+        {
+            result.Add(0); // Default to 0 for numeric arrays
         }
 
         return result;

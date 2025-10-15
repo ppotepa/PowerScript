@@ -4,9 +4,11 @@ using PowerScript.Core.Exceptions;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Interfaces;
 using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Scoping;
+using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
 using PowerScript.Parser.Processors.Expressions;
 
@@ -98,6 +100,47 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
             // Cast to Token to access Token properties
             Token returnTypeToken = (Token)returnTypeInterface;
             Token currentReturnToken = returnTypeToken.Next;
+            int? returnTypeBitWidth = null;
+
+            // Check for bit-width specification in return type (e.g., [INT[8]])
+            if (currentReturnToken is BracketOpen)
+            {
+                LoggerService.Logger.Debug($"[FunctionProcessor] Found bit-width in return type");
+                currentReturnToken = currentReturnToken.Next!;
+
+                if (currentReturnToken is not ValueToken bitWidthToken)
+                {
+                    throw new UnexpectedTokenException(
+                        currentReturnToken,
+                        "Expected numeric value for bit-width specification in return type",
+                        typeof(ValueToken)
+                    );
+                }
+
+                string bitWidthText = bitWidthToken.RawToken!.Text;
+                if (!int.TryParse(bitWidthText, out int parsedBitWidth))
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid bit-width value '{bitWidthText}' in return type - must be an integer"
+                    );
+                }
+
+                returnTypeBitWidth = parsedBitWidth;
+                LoggerService.Logger.Debug($"[FunctionProcessor] Return type bit-width: {returnTypeBitWidth}");
+
+                currentReturnToken = bitWidthToken.Next!;
+
+                if (currentReturnToken is not BracketClosed)
+                {
+                    throw new UnexpectedTokenException(
+                        currentReturnToken,
+                        "Expected closing bracket ']' after bit-width value in return type",
+                        typeof(BracketClosed)
+                    );
+                }
+
+                currentReturnToken = currentReturnToken.Next!;
+            }
 
             // Check if this is a composite return type (e.g., INT CHAIN, PREC CHAIN)
             if (currentReturnToken is ChainToken)
@@ -108,12 +151,16 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
             }
             else
             {
+                string typeSpec = returnTypeBitWidth.HasValue
+                    ? $"{returnTypeToken.RawToken?.Text}[{returnTypeBitWidth}]"
+                    : returnTypeToken.RawToken?.Text!;
                 LoggerService.Logger.Debug(
-                    $"Function '{functionName}' has return type: {returnTypeToken.RawToken?.Text}");
+                    $"Function '{functionName}' has return type: {typeSpec}");
             }
 
             // Store the return type in the function declaration (using base type for now)
             declaration.ReturnType = returnTypeToken;
+            declaration.ReturnTypeBitWidth = returnTypeBitWidth;
 
             // Expect closing bracket after the return type
             if (currentReturnToken is not BracketClosed)

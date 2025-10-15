@@ -1,0 +1,64 @@
+// Simple Bit-Width Demo (No Functions)
+PRINT "=== Bit-Width Specification Demo ===\"
+PRINT ""
+
+// 8-bit integers
+INT[8] byte1 = 255
+INT[8] byte2 = 100
+PRINT "8-bit variables:"
+PRINT "byte1 = "
+PRINT byte1
+PRINT "byte2 = "
+PRINT byte2
+PRINT ""
+
+// 16-bit integers
+INT[16] short1 = 30000
+INT[16] short2 = 15000
+PRINT "16-bit variables:"
+PRINT "short1 = "
+PRINT short1
+PRINT "short2 = "
+PRINT short2
+PRINT ""
+
+// 32-bit integers
+INT[32] int1 = 2000000000
+NUMBER[32] num1 = 1500000000
+PRINT "32-bit variables:"
+PRINT "int1 = "
+PRINT int1
+PRINT "num1 = "
+PRINT num1
+PRINT ""
+
+// Custom bit-widths
+INT[3] tiny = 7
+INT[4] nibble = 15
+INT[10] medium = 1023
+PRINT "Custom bit-widths:"
+PRINT "INT[3] tiny = "
+PRINT tiny
+PRINT "INT[4] nibble = "
+PRINT nibble
+PRINT "INT[10] medium = "
+PRINT medium
+PRINT ""
+
+// Arithmetic with bit-width types
+INT[8] a = 100
+INT[8] b = 50
+INT[8] sum = a + b
+INT[8] diff = a - b
+PRINT "Arithmetic with INT[8]:"
+PRINT "a = "
+PRINT a
+PRINT "b = "
+PRINT b
+PRINT "a + b = "
+PRINT sum
+PRINT "a - b = "
+PRINT diff
+PRINT ""
+
+PRINT "=== Success! Bit-width parsing works! ==="

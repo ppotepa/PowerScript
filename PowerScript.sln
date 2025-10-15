@@ -20,7 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.CLI", "src\Powe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.TuringCompleteness.Tests", "tests\PowerScript.Integration.Tests\PowerScript.TuringCompleteness.Tests.csproj", "{527BBD73-BE09-41D5-98B9-4BC0063E9299}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.TuringCompleteness.Tests", "tests\PowerScript.TuringCompleteness.Tests\PowerScript.TuringCompleteness.Tests.csproj", "{527BBD73-BE09-41D5-98B9-4BC0063E9299}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test-scripts", "test-scripts", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject

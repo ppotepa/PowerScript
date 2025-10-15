@@ -1,0 +1,100 @@
+// ============================================================================
+// Bit-Width Specification Demo
+// ============================================================================
+// Demonstrates the bit-width feature for numeric types
+// Syntax: TYPE[bits] variableName = value
+// ============================================================================
+
+PRINT "=== Bit-Width Specification Demo ==="
+PRINT ""
+
+// Standard types without bit-width (default)
+INT standardInt = 42
+NUMBER standardNumber = 100
+
+PRINT "Standard types (no bit-width specified):"
+PRINT "INT standardInt = "
+PRINT standardInt
+PRINT "NUMBER standardNumber = "
+PRINT standardNumber
+PRINT ""
+
+// 8-bit types (0-255 unsigned, or -128 to 127 signed)
+INT[8] byte1 = 200
+INT[8] byte2 = 55
+NUMBER[8] smallNum = 127
+
+PRINT "8-bit types:"
+PRINT "INT[8] byte1 = "
+PRINT byte1
+PRINT "INT[8] byte2 = "
+PRINT byte2
+PRINT "NUMBER[8] smallNum = "
+PRINT smallNum
+PRINT ""
+
+// 16-bit types (0-65535 unsigned, or -32768 to 32767 signed)
+INT[16] short1 = 30000
+NUMBER[16] mediumNum = 10000
+
+PRINT "16-bit types:"
+PRINT "INT[16] short1 = "
+PRINT short1
+PRINT "NUMBER[16] mediumNum = "
+PRINT mediumNum
+PRINT ""
+
+// 32-bit types (standard integer range)
+INT[32] int32 = 2000000000
+NUMBER[32] bigNum = 1500000000
+
+PRINT "32-bit types:"
+PRINT "INT[32] int32 = "
+PRINT int32
+PRINT "NUMBER[32] bigNum = "
+PRINT bigNum
+PRINT ""
+
+// Custom bit-widths for specific hardware needs
+INT[3] threeBit = 7
+INT[4] fourBit = 15
+INT[10] tenBit = 1023
+
+PRINT "Custom bit-widths:"
+PRINT "INT[3] threeBit = "
+PRINT threeBit
+PRINT "INT[4] fourBit = "
+PRINT fourBit
+PRINT "INT[10] tenBit = "
+PRINT tenBit
+PRINT ""
+
+// Using bit-width types in calculations
+INT[8] a = 100
+INT[8] b = 50
+INT[8] sum = a + b
+
+PRINT "Arithmetic with bit-width types:"
+PRINT "INT[8] a = 100, b = 50"
+PRINT "sum = a + b = "
+PRINT sum
+PRINT ""
+
+// Bit-width in function parameters
+FUNCTION addBytes(INT[8] x, INT[8] y)[INT[8]] {
+    RETURN x + y
+}
+
+INT[8] result = addBytes(10, 20)
+PRINT "Function with INT[8] parameters:"
+PRINT "addBytes(10, 20) = "
+PRINT result
+PRINT ""
+
+PRINT "=== Bit-Width Demo Complete ==="
+PRINT ""
+PRINT "Bit-width specification allows:"
+PRINT "- Memory optimization"
+PRINT "- Hardware interfacing"
+PRINT "- Precise value range control"
+PRINT "- Embedded systems support"
