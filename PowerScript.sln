@@ -14,13 +14,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.Compiler", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.Interpreter", "src\PowerScript.Interpreter\PowerScript.Interpreter.csproj", "{413E6259-23B8-4426-BB8C-0885DD6C7306}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokenez.Runtime", "src\PowerScript.Runtime\PowerScript.Runtime.csproj", "{A1B2C3D4-E5F6-4789-9012-3456789ABCDE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.Runtime", "src\PowerScript.Runtime\PowerScript.Runtime.csproj", "{A1B2C3D4-E5F6-4789-9012-3456789ABCDE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.CLI", "src\PowerScript.CLI\PowerScript.CLI.csproj", "{DE5C91AB-C4BF-49BD-9201-D2A9D569F90E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokenez.Integration.Tests", "tests\PowerScript.Integration.Tests\PowerScript.Integration.Tests.csproj", "{527BBD73-BE09-41D5-98B9-4BC0063E9299}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerScript.TuringCompleteness.Tests", "tests\PowerScript.Integration.Tests\PowerScript.TuringCompleteness.Tests.csproj", "{527BBD73-BE09-41D5-98B9-4BC0063E9299}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test-scripts", "test-scripts", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
