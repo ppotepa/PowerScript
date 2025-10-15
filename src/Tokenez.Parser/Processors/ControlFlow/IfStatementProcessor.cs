@@ -224,28 +224,18 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             // Check for function call: identifier(...)
             if (identifierToken.Next is ParenthesisOpen)
             {
+                currentToken = identifierToken.Next; // Move to '('
+
+                // Parse function arguments
+                var (arguments, tokenAfterArgs) = ParseFunctionArguments(currentToken);
+
                 FunctionCallExpression funcCall = new()
                 {
                     FunctionName = identifierToken
                 };
+                funcCall.Arguments.AddRange(arguments);
 
-                currentToken = identifierToken.Next; // Move to '('
-                currentToken = currentToken.Next; // Move past '('
-
-                // Parse function arguments (simple for now - skip to closing paren)
-                // TODO: Implement proper argument parsing
-                while (currentToken is not null and not ParenthesisClosed)
-                {
-                    currentToken = currentToken.Next;
-                }
-
-                if (currentToken is not ParenthesisClosed)
-                {
-                    throw new InvalidOperationException(
-                        $"Expected ')' after function call, got {currentToken?.GetType().Name}");
-                }
-
-                currentToken = currentToken.Next; // Move past ')'
+                currentToken = tokenAfterArgs;
                 return funcCall;
             }
 
@@ -413,5 +403,129 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             or LessThanOrEqualToken
             or EqualsEqualsToken
             or NotEqualsToken;
+    }
+
+    /// <summary>
+    ///     Parses function call arguments from opening parenthesis to closing parenthesis.
+    ///     Returns the list of argument expressions and the token after the closing parenthesis.
+    /// </summary>
+    private static (List<Expression> Arguments, Token? NextToken) ParseFunctionArguments(Token openParenToken)
+    {
+        List<Expression> arguments = new();
+        Token? currentToken = openParenToken.Next; // Start after '('
+
+        // Handle empty argument list
+        if (currentToken is ParenthesisClosed)
+        {
+            return (arguments, currentToken.Next);
+        }
+
+        // Parse comma-separated arguments
+        while (currentToken != null && currentToken is not ParenthesisClosed)
+        {
+            // Collect tokens for this argument until we hit a comma or closing paren
+            List<Token> argumentTokens = new();
+            int parenDepth = 0;
+
+            while (currentToken != null)
+            {
+                // Track parenthesis depth for nested expressions
+                if (currentToken is ParenthesisOpen)
+                {
+                    parenDepth++;
+                    argumentTokens.Add(currentToken);
+                    currentToken = currentToken.Next;
+                    continue;
+                }
+
+                if (currentToken is ParenthesisClosed)
+                {
+                    if (parenDepth == 0)
+                    {
+                        // End of argument list
+                        break;
+                    }
+                    parenDepth--;
+                    argumentTokens.Add(currentToken);
+                    currentToken = currentToken.Next;
+                    continue;
+                }
+
+                // Comma at depth 0 means end of this argument
+                if (currentToken is CommaToken && parenDepth == 0)
+                {
+                    currentToken = currentToken.Next; // Skip comma
+                    break;
+                }
+
+                argumentTokens.Add(currentToken);
+                currentToken = currentToken.Next;
+            }
+
+            // Build expression from collected tokens
+            if (argumentTokens.Count > 0)
+            {
+                Expression argExpr = BuildSimpleExpression(argumentTokens);
+                arguments.Add(argExpr);
+            }
+        }
+
+        // CurrentToken should now be at ParenthesisClosed
+        Token? nextToken = currentToken is ParenthesisClosed ? currentToken.Next : currentToken;
+        return (arguments, nextToken);
+    }
+
+    /// <summary>
+    ///     Builds a simple expression from a list of tokens.
+    ///     Supports literals, identifiers, and binary operations.
+    /// </summary>
+    private static Expression BuildSimpleExpression(List<Token> tokens)
+    {
+        if (tokens.Count == 0)
+        {
+            throw new InvalidOperationException("Cannot build expression from empty token list");
+        }
+
+        if (tokens.Count == 1)
+        {
+            Token token = tokens[0];
+            return token switch
+            {
+                ValueToken valueToken => new LiteralExpression(valueToken),
+                IdentifierToken identifierToken => new IdentifierExpression(identifierToken),
+                _ => throw new InvalidOperationException($"Unexpected single token type: {token.GetType().Name}")
+            };
+        }
+
+        // For multi-token expressions, create a binary expression
+        // Simple left-to-right evaluation (no operator precedence for now)
+        Expression left = tokens[0] switch
+        {
+            ValueToken vt => new LiteralExpression(vt),
+            IdentifierToken it => new IdentifierExpression(it),
+            _ => throw new InvalidOperationException($"Unexpected token type: {tokens[0].GetType().Name}")
+        };
+
+        for (int i = 1; i < tokens.Count; i += 2)
+        {
+            if (i + 1 >= tokens.Count)
+            {
+                throw new InvalidOperationException("Expected value after operator");
+            }
+
+            Token operatorToken = tokens[i];
+            Token rightToken = tokens[i + 1];
+
+            Expression right = rightToken switch
+            {
+                ValueToken vt => new LiteralExpression(vt),
+                IdentifierToken it => new IdentifierExpression(it),
+                _ => throw new InvalidOperationException($"Unexpected token type: {rightToken.GetType().Name}")
+            };
+
+            left = new BinaryExpression(left, operatorToken, right);
+        }
+
+        return left;
     }
 }

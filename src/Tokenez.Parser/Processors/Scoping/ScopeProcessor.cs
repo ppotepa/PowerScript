@@ -99,8 +99,10 @@ public class ScopeProcessor(ITokenProcessorRegistry registry, IScopeBuilder scop
                 // recursively build that scope
                 if (result.ModifiedScope != null)
                 {
-                    // Create a new context for the nested scope
-                    ProcessingContext nestedContext = new(result.ModifiedScope, scopeDepth);
+                    // Create a new context for the nested scope, cloning to preserve parent context
+                    ProcessingContext nestedContext = scopeContext.Clone();
+                    nestedContext.CurrentScope = result.ModifiedScope;
+                    nestedContext.Depth = scopeDepth;
 
                     // If the new scope is a function, mark it in the context
                     if (result.ModifiedScope.Type == ScopeType.Function)
@@ -109,7 +111,7 @@ public class ScopeProcessor(ITokenProcessorRegistry registry, IScopeBuilder scop
                     }
 
                     // Build the nested scope recursively with the new context
-                    _scopeBuilder.BuildScope(result.NextToken, result.ModifiedScope, scopeDepth);
+                    _scopeBuilder.BuildScope(result.NextToken, result.ModifiedScope, nestedContext);
 
                     // Find the scope end token to continue after the nested scope
                     Token? nestedToken = result.NextToken;

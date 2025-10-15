@@ -4,6 +4,9 @@ using Tokenez.Interpreter;
 using Tokenez.Interpreter.DotNet;
 using Tokenez.Parser.Processors.Base;
 using Tokenez.Parser.Processors.Scoping;
+using Tokenez.Parser.Processors.Statements;
+using Tokenez.Parser.Processors.Expressions;
+using Tokenez.Parser.Processors.ControlFlow;
 using Tokenez.Runtime;
 
 namespace Tokenez.Integration.Tests;
@@ -21,6 +24,9 @@ public class ModerateFeatureTests
         var dotNetLinker = new DotNetLinker();
         var scopeBuilder = new ScopeBuilder(registry);
 
+        // Register all the processors (like CLI does)
+        RegisterProcessors(registry, scopeBuilder);
+
         var compiler = new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
         var executor = new PowerScriptExecutor();
         _interpreter = new PowerScriptInterpreter(compiler, executor);
@@ -35,6 +41,27 @@ public class ModerateFeatureTests
 
         _output = new StringWriter();
         Console.SetOut(_output);
+    }
+
+    private void RegisterProcessors(TokenProcessorRegistry registry, ScopeBuilder scopeBuilder)
+    {
+        // Create parameter processor (helper, not a token processor)
+        var parameterProcessor = new ParameterProcessor();
+
+        // Register all token processors (same as CLI)
+        registry.Register(new FunctionProcessor(parameterProcessor));
+        registry.Register(new FunctionCallProcessor());
+        registry.Register(new FlexVariableProcessor());
+        registry.Register(new CycleLoopProcessor(scopeBuilder));
+        registry.Register(new IfStatementProcessor(scopeBuilder));
+        registry.Register(new ReturnStatementProcessor());
+        registry.Register(new PrintStatementProcessor());
+        registry.Register(new ExecuteCommandProcessor());
+        registry.Register(new NetMethodCallProcessor());
+        registry.Register(new VariableDeclarationProcessor());
+        // NOTE: ScopeProcessor should NOT be registered here as it creates circular reference
+        // The ScopeBuilder already handles scope processing internally
+        // registry.Register(new ScopeProcessor(registry, scopeBuilder));
     }
 
     [TearDown]

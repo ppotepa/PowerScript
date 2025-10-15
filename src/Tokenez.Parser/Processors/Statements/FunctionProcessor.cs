@@ -134,8 +134,7 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
         }
 
         LoggerService.Logger.Debug($"Passing control to ScopeProcessor for function '{functionName}'");
-        // Return control to continue processing the ScopeStartToken without modifying the parent context
-        // The ScopeProcessor will handle the function scope internally
-        return TokenProcessingResult.Continue(nextToken);
+        // Return control with the new function scope so ScopeProcessor knows we're inside a function
+        return TokenProcessingResult.ContinueWithScope(nextToken, functionScope);
     }
 }

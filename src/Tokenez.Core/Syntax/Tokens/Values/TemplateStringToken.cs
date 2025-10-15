@@ -56,11 +56,29 @@ public class TemplateStringToken : Token
                     currentText = "";
                 }
 
-                // Extract variable name (letters, digits, underscore)
                 i++; // Skip @
-                string varName = "";
-                while (i < content.Length && (char.IsLetterOrDigit(content[i]) || content[i] == '_'))
+
+                // Check if variable is in braces: @{varName}
+                bool hasBraces = false;
+                if (i < content.Length && content[i] == '{')
                 {
+                    hasBraces = true;
+                    i++; // Skip {
+                }
+
+                // Extract variable name (letters, digits, underscore)
+                string varName = "";
+                while (i < content.Length)
+                {
+                    if (hasBraces && content[i] == '}')
+                    {
+                        i++; // Skip }
+                        break;
+                    }
+                    if (!hasBraces && !char.IsLetterOrDigit(content[i]) && content[i] != '_')
+                    {
+                        break;
+                    }
                     varName += content[i];
                     i++;
                 }

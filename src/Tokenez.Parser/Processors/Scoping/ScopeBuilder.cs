@@ -75,7 +75,31 @@ public class ScopeBuilder : IScopeBuilder
                 {
                     LoggerService.Logger.Debug(
                         $"Scope modified by processor. New scope: {result.ModifiedScope.ScopeName}");
-                    context.CurrentScope = result.ModifiedScope;
+
+                    // Create a nested context for the new scope
+                    ProcessingContext nestedContext = context.Clone();
+                    nestedContext.CurrentScope = result.ModifiedScope;
+
+                    // If entering a function scope, mark the context
+                    if (result.ModifiedScope.Type == ScopeType.Function)
+                    {
+                        nestedContext.EnterFunction();
+                    }
+
+                    // Recursively build the nested scope
+                    BuildScope(result.NextToken, result.ModifiedScope, nestedContext);
+
+                    // Find the end of the nested scope to continue processing
+                    Token? scopeEndToken = result.NextToken;
+                    int braceCount = 1;
+                    while (scopeEndToken != null && braceCount > 0)
+                    {
+                        scopeEndToken = scopeEndToken.Next;
+                        if (scopeEndToken is ScopeStartToken) braceCount++;
+                        if (scopeEndToken is ScopeEndToken) braceCount--;
+                    }
+                    currentToken = scopeEndToken?.Next;
+                    continue;
                 }
 
                 currentToken = result.NextToken;

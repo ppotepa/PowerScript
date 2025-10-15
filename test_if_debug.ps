@@ -1,0 +1,18 @@
+// Simple test for IF in CYCLE
+FUNCTION isEven(INT n)[INT] {
+    RETURN (n % 2 == 0)
+}
+
+FLEX sum = 0
+CYCLE 3 AS i {
+    FLEX num = i + 1
+    PRINT num
+    IF isEven(num) == 1 {
+        PRINT "EVEN"
+        FLEX squared = num * num
+        FLEX sum = sum + squared
+    }
+}
+
+PRINT "Final sum:"
+PRINT sum

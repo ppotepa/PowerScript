@@ -203,7 +203,8 @@ public static class Program
                 reg.Register(new ExecuteCommandProcessor());
                 reg.Register(new NetMethodCallProcessor());
                 reg.Register(new VariableDeclarationProcessor());
-                reg.Register(new ScopeProcessor(reg, scopeBuilder));
+                // NOTE: ScopeProcessor creates circular reference - ScopeBuilder handles scopes internally
+                // reg.Register(new ScopeProcessor(reg, scopeBuilder));
             };
         });
 

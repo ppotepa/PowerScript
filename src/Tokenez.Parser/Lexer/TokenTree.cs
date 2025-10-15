@@ -239,7 +239,7 @@ public partial class TokenTree
     /// </summary>
     private static bool IsStringLiteral(string text)
     {
-        return text.StartsWith('\\') && text.EndsWith('\\') && text.Length >= 2;
+        return text.StartsWith('"') && text.EndsWith('"') && text.Length >= 2;
     }
 
     /// <summary>

@@ -4,6 +4,9 @@ using Tokenez.Interpreter;
 using Tokenez.Interpreter.DotNet;
 using Tokenez.Parser.Processors.Base;
 using Tokenez.Parser.Processors.Scoping;
+using Tokenez.Parser.Processors.Statements;
+using Tokenez.Parser.Processors.Expressions;
+using Tokenez.Parser.Processors.ControlFlow;
 using Tokenez.Runtime;
 
 namespace Tokenez.Integration.Tests;
@@ -21,6 +24,9 @@ public class ComplexFeatureTests
         var dotNetLinker = new DotNetLinker();
         var scopeBuilder = new ScopeBuilder(registry);
 
+        // Register all the processors (like CLI does)
+        RegisterProcessors(registry, scopeBuilder);
+
         var compiler = new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
         var executor = new PowerScriptExecutor();
         _interpreter = new PowerScriptInterpreter(compiler, executor);
@@ -35,6 +41,27 @@ public class ComplexFeatureTests
 
         _output = new StringWriter();
         Console.SetOut(_output);
+    }
+
+    private void RegisterProcessors(TokenProcessorRegistry registry, ScopeBuilder scopeBuilder)
+    {
+        // Create parameter processor (helper, not a token processor)
+        var parameterProcessor = new ParameterProcessor();
+
+        // Register all token processors (same as CLI)
+        registry.Register(new FunctionProcessor(parameterProcessor));
+        registry.Register(new FunctionCallProcessor());
+        registry.Register(new FlexVariableProcessor());
+        registry.Register(new CycleLoopProcessor(scopeBuilder));
+        registry.Register(new IfStatementProcessor(scopeBuilder));
+        registry.Register(new ReturnStatementProcessor());
+        registry.Register(new PrintStatementProcessor());
+        registry.Register(new ExecuteCommandProcessor());
+        registry.Register(new NetMethodCallProcessor());
+        registry.Register(new VariableDeclarationProcessor());
+        // NOTE: ScopeProcessor should NOT be registered here as it creates circular reference
+        // The ScopeBuilder already handles scope processing internally
+        // registry.Register(new ScopeProcessor(registry, scopeBuilder));
     }
 
     [TearDown]
@@ -87,7 +114,7 @@ public class ComplexFeatureTests
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
-        Assert.That(output, Does.Contain("Path found"), "Should find a path through the maze");
+        Assert.That(output, Does.Contain("GOAL REACHED"), "Should find a path through the maze");
         Assert.That(output, Does.Contain("8"), "Path length should be 8");
     }
 
@@ -121,7 +148,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Loops")]
     [Description("Test 3.6: Mixed explicit and auto-generated loop variables")]
-    [Ignore("Parser loop variable name handling issue - see PARSER_ISSUES.md")]
     public void Test_3_6_MixedLoopVariables()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_6_mixed_loop_variables.ps");
@@ -136,8 +162,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Recursion")]
     [Description("Test 3.7: Factorial using recursion")]
-    [Ignore(
-        "Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
     public void Test_3_7_Factorial()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_7_factorial.ps");
@@ -150,8 +174,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Recursion")]
     [Description("Test 3.8: Fibonacci sequence using recursion")]
-    [Ignore(
-        "Stack overflow due to evaluation order in recursive calls with expression arguments. Requires refactoring of ParseFunctionArguments and BuildExpressionFromTokens to use lazy evaluation.")]
     public void Test_3_8_Fibonacci()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_8_fibonacci.ps");
@@ -164,7 +186,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Algorithms")]
     [Description("Test 3.9: Prime number detection")]
-    [Ignore("Parser does not populate FunctionCallExpression.Arguments - see PARSER_ISSUES.md")]
     public void Test_3_9_PrimeDetection()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_9_prime_detection.ps");
@@ -178,7 +199,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Algorithms")]
     [Description("Test 3.10: Greatest Common Divisor (GCD) using Euclidean algorithm")]
-    [Ignore("Parser does not populate FunctionCallExpression.Arguments - see PARSER_ISSUES.md")]
     public void Test_3_10_GCD()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_10_gcd.ps");
@@ -240,7 +260,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Math")]
     [Description("Test 3.15: Power function (exponentiation)")]
-    [Ignore("Parser does not populate FunctionCallExpression.Arguments - see PARSER_ISSUES.md")]
     public void Test_3_15_PowerFunction()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_15_power_function.ps");
@@ -253,7 +272,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Math")]
     [Description("Test 3.16: Square root approximation using Newton's method")]
-    [Ignore("Parser does not populate FunctionCallExpression.Arguments - see PARSER_ISSUES.md")]
     public void Test_3_16_SquareRoot()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_16_square_root.ps");
@@ -353,7 +371,6 @@ public class ComplexFeatureTests
     [Test]
     [Category("Integration")]
     [Description("Test 3.24: Complete program combining multiple features")]
-    [Ignore("Parser does not populate FunctionCallExpression.Arguments - see PARSER_ISSUES.md")]
     public void Test_3_24_IntegrationTest()
     {
         string script = File.ReadAllText("../../../../../test-scripts/complex/3_24_integration_test.ps");
