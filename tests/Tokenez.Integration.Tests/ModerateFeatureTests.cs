@@ -46,7 +46,7 @@ public class ModerateFeatureTests
     [Description("Test 2.1: Sum of numbers from 1 to 10 (should be 55)")]
     public void Test_2_1_SumOfNumbers()
     {
-        string script = File.ReadAllText("scripts/moderate/2_1_sum_of_numbers.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_1_sum_of_numbers.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -58,7 +58,7 @@ public class ModerateFeatureTests
     [Description("Test 2.2: Count numbers between 5 and 15 (should be 9)")]
     public void Test_2_2_ConditionalCounting()
     {
-        string script = File.ReadAllText("scripts/moderate/2_2_conditional_counting.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_2_conditional_counting.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -70,7 +70,7 @@ public class ModerateFeatureTests
     [Description("Test 2.3: Calculate separate sums for even and odd numbers")]
     public void Test_2_3_EvenOddSum()
     {
-        string script = File.ReadAllText("scripts/moderate/2_3_even_odd_sum.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_3_even_odd_sum.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -83,7 +83,7 @@ public class ModerateFeatureTests
     [Description("Test 2.4: Sum all products in a 4x5 multiplication table")]
     public void Test_2_4_MultiplicationTableSum()
     {
-        string script = File.ReadAllText("scripts/moderate/2_4_multiplication_table_sum.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_4_multiplication_table_sum.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -95,7 +95,7 @@ public class ModerateFeatureTests
     [Description("Test 2.5: Calculate 8th Fibonacci number")]
     public void Test_2_5_Fibonacci()
     {
-        string script = File.ReadAllText("scripts/moderate/2_5_fibonacci.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_5_fibonacci.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -108,7 +108,7 @@ public class ModerateFeatureTests
     [Description("Test 2.6: Calculate power (2^5 = 32)")]
     public void Test_2_6_PowerCalculation()
     {
-        string script = File.ReadAllText("scripts/moderate/2_6_power_calculation.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_6_power_calculation.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -120,7 +120,7 @@ public class ModerateFeatureTests
     [Description("Test 2.7: Find maximum value in a computed sequence")]
     public void Test_2_7_FindMaximum()
     {
-        string script = File.ReadAllText("scripts/moderate/2_7_find_maximum.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_7_find_maximum.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -132,7 +132,7 @@ public class ModerateFeatureTests
     [Description("Test 2.8: Count prime numbers using trial division")]
     public void Test_2_8_CountPrimes()
     {
-        string script = File.ReadAllText("scripts/moderate/2_8_count_primes.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_8_count_primes.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -145,7 +145,7 @@ public class ModerateFeatureTests
     [Description("Test 2.9: Evaluate complex nested expressions")]
     public void Test_2_9_ComplexExpressions()
     {
-        string script = File.ReadAllText("scripts/moderate/2_9_complex_expressions.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_9_complex_expressions.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -158,7 +158,7 @@ public class ModerateFeatureTests
     [Description("Test 2.10: Calculate both sum and product with conditions")]
     public void Test_2_10_SumAndProduct()
     {
-        string script = File.ReadAllText("scripts/moderate/2_10_sum_and_product.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/moderate/2_10_sum_and_product.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();

@@ -1,8 +1,0 @@
-FUNCTION fib RETURNS NUMBER WITH n {
-    IF n <= 1 {
-        RETURN n
-    }
-    RETURN fib(n - 1) + fib(n - 2)
-}
-
-PRINT fib(7)

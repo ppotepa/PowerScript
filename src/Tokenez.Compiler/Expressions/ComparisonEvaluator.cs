@@ -32,6 +32,11 @@ public class ComparisonEvaluator
             return EvaluateEquals(leftValue, rightValue);
         }
 
+        if (expression.Operator is EqualsEqualsToken)
+        {
+            return EvaluateEquals(leftValue, rightValue);
+        }
+
         if (expression.Operator is NotEqualsToken)
         {
             return EvaluateNotEquals(leftValue, rightValue);
@@ -42,13 +47,22 @@ public class ComparisonEvaluator
             return EvaluateLessThan(leftValue, rightValue);
         }
 
-        return expression.Operator is LessThanOrEqualToken
-            ? EvaluateLessThanOrEqual(leftValue, rightValue)
-            : expression.Operator is GreaterThanToken
-            ? EvaluateGreaterThan(leftValue, rightValue)
-            : expression.Operator is GreaterThanOrEqualToken
-            ? EvaluateGreaterThanOrEqual(leftValue, rightValue)
-            : throw new InvalidOperationException($"Unknown comparison operator: {expression.Operator.GetType().Name}");
+        if (expression.Operator is LessThanOrEqualToken)
+        {
+            return EvaluateLessThanOrEqual(leftValue, rightValue);
+        }
+
+        if (expression.Operator is GreaterThanToken)
+        {
+            return EvaluateGreaterThan(leftValue, rightValue);
+        }
+
+        if (expression.Operator is GreaterThanOrEqualToken)
+        {
+            return EvaluateGreaterThanOrEqual(leftValue, rightValue);
+        }
+
+        throw new InvalidOperationException($"Unknown comparison operator: {expression.Operator.GetType().Name}");
     }
 
     private static bool EvaluateEquals(object left, object right)

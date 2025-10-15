@@ -1,0 +1,86 @@
+// Maze Pathfinding Algorithm - Finding path through a 5x5 grid
+// Uses a simple greedy algorithm (right-first, then down)
+
+FLEX width = 5
+FLEX height = 5
+
+// Create maze as 2D array (0=path, 1=wall)
+FLEX maze = [
+    [0, 1, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 1, 0],
+    [1, 1, 0, 0, 0],
+    [0, 0, 1, 1, 0]
+]
+
+PRINT "=== MAZE SOLVER ==="
+PRINT "Maze Layout:"
+
+// Print maze dynamically from 2D array
+CYCLE 5 AS row {
+    CYCLE 5 AS col {
+        FLEX cellValue = maze[row][col]
+        IF cellValue == 0 {
+            PRINT "."
+        } ELSE {
+            PRINT "#"
+        }
+    }
+}
+
+FLEX startX = 0
+FLEX startY = 0
+FLEX endX = 4
+FLEX endY = 4
+FLEX currentX = 0
+FLEX currentY = 0
+FLEX pathLength = 0
+FLEX foundPath = 0
+
+PRINT `Starting from (@{startX},@{startY}) to (@{endX},@{endY})`
+
+CYCLE 50 AS step {
+    IF foundPath == 0 {
+        // Check if we reached the goal
+        IF currentX == endX AND currentY == endY {
+            FLEX foundPath = 1
+            PRINT "Goal reached!"
+        } ELSE {
+            FLEX moved = 0
+            FLEX nextX = currentX + 1
+            FLEX nextY = currentY + 1
+            
+            // Try moving right first
+            IF moved == 0 AND nextX < width {
+                FLEX cellValue = maze[currentY][nextX]
+                
+                IF cellValue == 0 {
+                    FLEX currentX = nextX
+                    FLEX pathLength = pathLength + 1
+                    FLEX moved = 1
+                }
+            }
+            
+            // Try moving down if right was blocked
+            IF moved == 0 AND nextY < height {
+                FLEX cellValue = maze[nextY][currentX]
+                
+                IF cellValue == 0 {
+                    FLEX currentY = nextY
+                    FLEX pathLength = pathLength + 1
+                    FLEX moved = 1
+                }
+            }
+            
+            // No valid moves - stuck
+            IF moved == 0 {
+                FLEX foundPath = 1
+                PRINT "No path found"
+            }
+        }
+    }
+}
+
+PRINT "=== RESULTS ==="
+PRINT pathLength
+

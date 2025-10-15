@@ -27,7 +27,7 @@ public class VariableStatementHandler
         }
 
         string variableName = GetVariableName(variableStatement);
-        object value = _evaluateExpression(variableStatement.Expression);
+        object value = _evaluateExpression(variableStatement.InitialValue);
 
         if (_variableRegistry.IsVariableDeclared(variableName))
         {
@@ -43,17 +43,22 @@ public class VariableStatementHandler
 
     private static string GetVariableName(VariableDeclarationStatement variableStatement)
     {
-        if (variableStatement.VarKeyword == null)
+        if (variableStatement.Declaration == null)
         {
-            throw new InvalidOperationException("Variable statement has no VAR keyword.");
+            throw new InvalidOperationException("Variable statement has no declaration.");
         }
 
-        if (variableStatement.VarKeyword.RawToken == null)
+        if (variableStatement.Declaration.Identifier == null)
         {
-            throw new InvalidOperationException("VAR keyword has no raw token.");
+            throw new InvalidOperationException("Variable declaration has no identifier.");
         }
 
-        string? variableName = variableStatement.VarKeyword.RawToken.Text;
+        if (variableStatement.Declaration.Identifier.RawToken == null)
+        {
+            throw new InvalidOperationException("Variable identifier has no raw token.");
+        }
+
+        string? variableName = variableStatement.Declaration.Identifier.RawToken.Text;
 
         return string.IsNullOrWhiteSpace(variableName)
             ? throw new InvalidOperationException("Variable name is empty or whitespace.")

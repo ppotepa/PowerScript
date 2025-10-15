@@ -1,1444 +1,192 @@
-using System.Reflection;
-using System.Text;
 using Tokenez.Common.Logging;
-using Tokenez.Compiler.Diagnostics;
+using Tokenez.Compiler.ControlFlow;
+using Tokenez.Compiler.Core;
+using Tokenez.Compiler.Core.Variables;
+using Tokenez.Compiler.Expressions;
+using Tokenez.Compiler.Functions;
+using Tokenez.Compiler.Integration;
 using Tokenez.Compiler.Interfaces;
+using Tokenez.Compiler.Statements;
 using Tokenez.Core.AST;
 using Tokenez.Core.AST.Expressions;
 using Tokenez.Core.AST.Statements;
-using Tokenez.Core.Syntax.Tokens.Base;
-using Tokenez.Core.Syntax.Tokens.Delimiters;
-using Tokenez.Core.Syntax.Tokens.Identifiers;
-using Tokenez.Core.Syntax.Tokens.Keywords;
-using Tokenez.Core.Syntax.Tokens.Operators;
-using Tokenez.Core.Syntax.Tokens.Values;
 using Tokenez.Parser.Lexer;
-using ParameterExpression = System.Linq.Expressions.ParameterExpression;
-using SysExpression = System.Linq.Expressions.Expression;
-using TreeBinaryExpression = Tokenez.Core.AST.Expressions.BinaryExpression;
-using TreeExpression = Tokenez.Core.AST.Expressions.Expression;
-using TreeIdentifierExpression = Tokenez.Core.AST.Expressions.IdentifierExpression;
-using TreeLiteralExpression = Tokenez.Core.AST.Expressions.LiteralExpression;
-using TreeStringLiteralExpression = Tokenez.Core.AST.Expressions.StringLiteralExpression;
 
 namespace Tokenez.Compiler;
 
 /// <summary>
-///     Compiles PowerScript token trees into executable .NET Lambda expressions.
-///     Handles function compilation, parameter binding, and expression tree building.
+/// Facade for PowerScript compilation and execution.
+/// Orchestrates all compilation components following clean architecture.
+/// Single Responsibility: Coordination and lifecycle management
 /// </summary>
-public class PowerScriptCompiler(TokenTree tree) : IPowerScriptCompiler
+public class PowerScriptCompiler : IPowerScriptCompiler
 {
-    private const int MaxRecursionDepth = 1000;
-    private readonly List<string> _callStack = [];
-    private readonly TokenTree _tree = tree ?? throw new ArgumentNullException(nameof(tree));
-    private readonly Dictionary<string, object> _variables = [];
-    private int _recursionDepth;
+    private readonly TokenTree _tree;
+    private readonly CompilerContext _context;
+    private readonly VariableRegistry _variableRegistry;
+    private readonly FunctionRegistry _functionRegistry;
+    private readonly FunctionCompiler _functionCompiler;
+    private readonly FunctionCaller _functionCaller;
+    private readonly ExpressionEvaluator _expressionEvaluator;
+    private readonly ConditionEvaluator _conditionEvaluator;
+    private readonly StatementProcessor _statementProcessor;
+    private readonly ScopeProcessor _scopeProcessor;
+
+    public PowerScriptCompiler(TokenTree tree)
+    {
+        _tree = tree ?? throw new ArgumentNullException(nameof(tree));
+
+        if (tree.RootScope == null)
+        {
+            throw new ArgumentException("Token tree must have a root scope", nameof(tree));
+        }
+
+        // Initialize core components
+        _context = new CompilerContext(tree.RootScope);
+        _variableRegistry = new VariableRegistry(_context.Variables);
+        _functionRegistry = new FunctionRegistry();
+
+        // Initialize function components
+        _functionCompiler = new FunctionCompiler(_context, ExecuteScope);
+
+        // Initialize expression evaluator (with function call callback)
+        _expressionEvaluator = new ExpressionEvaluator(_variableRegistry, EvaluateFunctionCall);
+        _functionCaller = new FunctionCaller(_context, _functionRegistry, _functionCompiler, obj => _expressionEvaluator.Evaluate((Expression)obj));
+
+        // Initialize condition evaluator
+        _conditionEvaluator = new ConditionEvaluator(obj => _expressionEvaluator.Evaluate((Expression)obj));
+
+        // Initialize control flow processors
+        var ifProcessor = new IfProcessor(_context, _conditionEvaluator.EvaluateCondition, ExecuteScope);
+        var cycleProcessor = new CycleProcessor(_context, _variableRegistry, obj => _expressionEvaluator.Evaluate((Expression)obj), ExecuteScope);
+
+        // Initialize statement handlers
+        var printHandler = new PrintStatementHandler(obj => _expressionEvaluator.Evaluate((Expression)obj));
+        var variableHandler = new VariableStatementHandler(_variableRegistry, obj => _expressionEvaluator.Evaluate((Expression)obj));
+        var returnHandler = new ReturnStatementHandler(_context, obj => _expressionEvaluator.Evaluate((Expression)obj));
+        var executeHandler = new ExecuteStatementHandler();
+        var arrayAssignmentHandler = new ArrayAssignmentStatementHandler(_variableRegistry, obj => _expressionEvaluator.Evaluate((Expression)obj));
+        var netMethodCallHandler = new NetMethodCallHandler(obj => _expressionEvaluator.Evaluate((Expression)obj));
+
+        // Initialize statement processor
+        _statementProcessor = new StatementProcessor(
+            _context,
+            printHandler,
+            variableHandler,
+            returnHandler,
+            executeHandler,
+            arrayAssignmentHandler,
+            ifProcessor,
+            cycleProcessor,
+            netMethodCallHandler);
+
+        // Initialize scope processor
+        _scopeProcessor = new ScopeProcessor();
+    }
 
     /// <summary>
-    ///     Executes the provided scope and returns the result.
+    /// Executes the provided scope and returns the result.
     /// </summary>
     public object? Execute(Scope scope)
     {
-        object? result = null;
-
-        // Execute all statements in the scope
-        foreach (Statement stmt in scope.Statements)
+        if (scope == null)
         {
-            try
-            {
-                ExecuteStatement(stmt);
-
-                // If the statement returns a value, capture it
-                if (stmt is ReturnStatement returnStmt && returnStmt.ReturnValue != null)
-                {
-                    result = EvaluateExpressionValue(returnStmt.ReturnValue);
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Logger.Error($"✗ Execution failed: {ex.Message}");
-                throw;
-            }
+            throw new ArgumentNullException(nameof(scope));
         }
+
+        LoggerService.Logger.Debug("[COMPILER] Starting scope execution");
+
+        RegisterFunctionsInScope(scope);
+
+        object? result = ExecuteScope(scope);
+
+        LoggerService.Logger.Debug($"[COMPILER] Scope execution completed. Result: {result}");
 
         return result;
     }
 
     /// <summary>
-    ///     Registers a function in the root scope.
+    /// Compiles and executes the root scope.
+    /// This method is provided for backward compatibility.
+    /// </summary>
+    public object? CompileAndExecute()
+    {
+        if (_tree.RootScope == null)
+        {
+            throw new InvalidOperationException("Cannot execute: token tree has no root scope");
+        }
+
+        return Execute(_tree.RootScope);
+    }
+
+    /// <summary>
+    /// Registers a function in the compiler's function table.
     /// </summary>
     public void RegisterFunction(string functionName, FunctionDeclaration declaration)
     {
         if (string.IsNullOrWhiteSpace(functionName))
         {
-            throw new ArgumentException("Function name cannot be null or empty.", nameof(functionName));
+            throw new ArgumentException("Function name cannot be null or whitespace", nameof(functionName));
         }
 
-        _tree.RootScope!.Decarations[functionName] = declaration ?? throw new ArgumentNullException(nameof(declaration));
+        if (declaration == null)
+        {
+            throw new ArgumentNullException(nameof(declaration));
+        }
+
+        _functionRegistry.RegisterFunction(declaration);
+        LoggerService.Logger.Debug($"[COMPILER] Registered function: {functionName}");
     }
 
     /// <summary>
-    ///     Checks if a function is registered in the root scope.
+    /// Checks if a function is registered.
     /// </summary>
     public bool IsFunctionRegistered(string functionName)
     {
-        return !string.IsNullOrWhiteSpace(functionName)
-               && _tree.RootScope!.Decarations.ContainsKey(functionName) &&
-                    _tree.RootScope.Decarations[functionName] is FunctionDeclaration;
+        if (string.IsNullOrWhiteSpace(functionName))
+        {
+            return false;
+        }
+
+        return _functionRegistry.IsFunctionDeclared(functionName);
     }
 
-    /// <summary>
-    ///     Compiles all functions in the root scope and executes them.
-    ///     Also runs diagnostic analysis to provide warnings and suggestions.
-    /// </summary>
-    public void CompileAndExecute()
+    private void RegisterFunctionsInScope(Scope scope)
     {
-        // First, run diagnostic analysis
-        RunDiagnosticAnalysis();
-
-        LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
-        LoggerService.Logger.Info("║     COMPILING & EXECUTING FUNCTIONS    ║");
-        LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
-
-        // Iterate through all function declarations in root scope
-        foreach (FunctionDeclaration decl in _tree.RootScope!.Decarations.Values.OfType<FunctionDeclaration>())
+        if (scope.Decarations == null)
         {
-            _ = decl.Scope;
-
-            LoggerService.Logger.Warning($"📦 Compiling function: {decl.Identifier.RawToken.Text}");
-
-            try
-            {
-                CompileFunction(decl);
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Logger.Error($"  ✗ Compilation failed: {ex.Message}");
-            }
-        }
-
-        // Now execute any statements in the root scope (like PRINT statements)
-        if (_tree.RootScope.Statements.Count > 0)
-        {
-            LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
-            LoggerService.Logger.Info("║       EXECUTING ROOT STATEMENTS        ║");
-            LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
-
-            foreach (Statement stmt in _tree.RootScope.Statements)
-            {
-                try
-                {
-                    ExecuteStatement(stmt);
-                }
-                catch (Exception ex)
-                {
-                    LoggerService.Logger.Error($"✗ Execution failed: {ex.Message}");
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    ///     Executes a statement (like PRINT, NET method calls, or EXECUTE).
-    /// </summary>
-    private void ExecuteStatement(Statement stmt)
-    {
-        if (stmt is PrintStatement printStmt)
-        {
-            // Evaluate and print the expression
-            if (printStmt.Expression is TemplateStringExpression templateExpr)
-            {
-                // Evaluate template string with variable interpolation
-                string result = EvaluateTemplateString(templateExpr);
-                Console.WriteLine(result);
-            }
-            else if (printStmt.Expression is TreeStringLiteralExpression stringExpr)
-            {
-                // Remove quotes from string literal
-                string text = stringExpr.Value.RawToken.Text.Trim('"');
-                Console.WriteLine(text);
-            }
-            else if (printStmt.Expression is IdentifierExpression identExpr)
-            {
-                // Print variable value
-                string varName = identExpr.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-                if (_variables.TryGetValue(varName, out object? value))
-                {
-                    Console.WriteLine(value);
-                }
-                else
-                {
-                    LoggerService.Logger.Warning($"[WARN] Variable '{varName}' not found");
-                }
-            }
-            else if (printStmt.Expression is LiteralExpression litExpr)
-            {
-                // Print literal value directly
-                Console.WriteLine(litExpr.Value.RawToken?.Text ?? litExpr.ToString());
-            }
-            else if (printStmt.Expression is IndexExpression indexExpr)
-            {
-                // Evaluate array index access and print
-                object value = EvaluateExpressionValue(indexExpr);
-                Console.WriteLine(value);
-            }
-            else if (printStmt.Expression is FunctionCallExpression funcCallExpr)
-            {
-                // Evaluate function call and print result
-                object result = EvaluateFunctionCall(funcCallExpr);
-                Console.WriteLine(result);
-            }
-            else
-            {
-                // Fall back to ToString() for other expression types
-                Console.WriteLine(printStmt.Expression.ToString());
-            }
-        }
-        else if (stmt is VariableDeclarationStatement varDeclStmt)
-        {
-            ExecuteVariableDeclaration(varDeclStmt);
-        }
-        else if (stmt is ArrayAssignmentStatement arrayAssignStmt)
-        {
-            ExecuteArrayAssignment(arrayAssignStmt);
-        }
-        else if (stmt is IfStatement ifStmt)
-        {
-            ExecuteIfStatement(ifStmt);
-        }
-        else if (stmt is FunctionCallStatement funcCallStmt)
-        {
-            ExecuteFunctionCall(funcCallStmt);
-        }
-        else if (stmt is CycleLoopStatement cycleStmt)
-        {
-            ExecuteCycleLoop(cycleStmt);
-        }
-        else if (stmt is NetMethodCallStatement netStmt)
-        {
-            ExecuteNetMethodCall(netStmt);
-        }
-        else if (stmt is ExecuteStatement execStmt)
-        {
-            ExecuteScriptFile(execStmt.FilePath);
-        }
-    }
-
-    /// <summary>
-    ///     Executes a variable declaration (FLEX x = value).
-    /// </summary>
-    private void ExecuteVariableDeclaration(VariableDeclarationStatement varStmt)
-    {
-        string varName = varStmt.Declaration.Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-        object value = EvaluateExpressionValue(varStmt.InitialValue);
-
-        _variables[varName] = value;
-
-        LoggerService.Logger.Debug($"[EXEC] Variable {varName} = {value}");
-    }
-
-    /// <summary>
-    ///     Executes an array element assignment (FLEX arr[index] = value).
-    /// </summary>
-    private void ExecuteArrayAssignment(ArrayAssignmentStatement arrayAssignStmt)
-    {
-        string arrayName = arrayAssignStmt.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-
-        if (!_variables.TryGetValue(arrayName, out object? arrayObj))
-        {
-            throw new InvalidOperationException($"Array '{arrayName}' not found");
-        }
-
-        // Evaluate the index
-        object indexValue = EvaluateExpressionValue(arrayAssignStmt.IndexExpression);
-        int index = Convert.ToInt32(ConvertToNumber(indexValue));
-
-        // Evaluate the value to assign
-        object value = EvaluateExpressionValue(arrayAssignStmt.ValueExpression);
-
-        // Assign to array
-        if (arrayObj is List<object> list)
-        {
-            if (index < 0 || index >= list.Count)
-            {
-                throw new InvalidOperationException(
-                    $"Index {index} out of range for array {arrayName} (size: {list.Count})");
-            }
-
-            list[index] = value;
-        }
-        else if (arrayObj is double[] doubleArray)
-        {
-            if (index < 0 || index >= doubleArray.Length)
-            {
-                throw new InvalidOperationException(
-                    $"Index {index} out of range for array {arrayName} (size: {doubleArray.Length})");
-            }
-
-            doubleArray[index] = ConvertToNumber(value);
-        }
-        else
-        {
-            throw new InvalidOperationException($"Cannot assign to index of non-array variable '{arrayName}'");
-        }
-
-        LoggerService.Logger.Debug($"[EXEC] {arrayName}[{index}] = {value}");
-    }
-
-    /// <summary>
-    ///     Evaluates a template string by replacing @variable references with their runtime values.
-    ///     Example: `Hello @name` where name = "World" -> "Hello World"
-    /// </summary>
-    private string EvaluateTemplateString(TemplateStringExpression templateExpr)
-    {
-        StringBuilder result = new();
-
-        foreach (TemplatePart part in templateExpr.Template.Parts)
-        {
-            if (part.IsLiteral)
-            {
-                // Just append the literal text
-                result.Append(part.Text);
-            }
-            else
-            {
-                // Look up the variable value
-                string varName = part.Text.ToUpperInvariant();
-                if (_variables.TryGetValue(varName, out object? value))
-                {
-                    result.Append(value);
-                }
-                else
-                {
-                    // Variable not found - leave the @var syntax or show error
-                    result.Append($"@{part.Text}");
-                    LoggerService.Logger.Warning($"Variable '{varName}' not found in template string");
-                }
-            }
-        }
-
-        return result.ToString();
-    }
-
-    /// <summary>
-    ///     Executes an IF statement by evaluating the condition and executing the appropriate branch.
-    /// </summary>
-    private void ExecuteIfStatement(IfStatement ifStmt)
-    {
-        LoggerService.Logger.Info($"[EXEC] Evaluating IF condition: {ifStmt.Condition}");
-
-        // Evaluate the condition
-        bool conditionResult = EvaluateCondition(ifStmt.Condition);
-
-        LoggerService.Logger.Info($"[EXEC] Condition result: {conditionResult}");
-
-        if (conditionResult)
-        {
-            // Execute THEN branch
-            LoggerService.Logger.Info("[EXEC] Executing THEN branch");
-
-            foreach (Statement stmt in ifStmt.ThenScope.Statements)
-            {
-                ExecuteStatement(stmt);
-            }
-        }
-        else if (ifStmt.ElseScope != null)
-        {
-            // Execute ELSE branch
-            LoggerService.Logger.Info("[EXEC] Executing ELSE branch");
-
-            foreach (Statement stmt in ifStmt.ElseScope.Statements)
-            {
-                ExecuteStatement(stmt);
-            }
-        }
-    }
-
-    /// <summary>
-    ///     Evaluates a condition expression to a boolean result.
-    /// </summary>
-    private bool EvaluateCondition(Expression condition)
-    {
-        // Handle comparison expressions
-        if (condition is BinaryExpression binaryExpr)
-        {
-            // Get left and right values
-            object left = EvaluateExpressionValue(binaryExpr.Left);
-            object right = EvaluateExpressionValue(binaryExpr.Right);
-
-            // Get operator string from token
-            string op = binaryExpr.Operator.RawToken?.Text ?? "";
-
-            // Perform comparison based on operator
-            return op switch
-            {
-                "<" => CompareValues(left, right) < 0,
-                ">" => CompareValues(left, right) > 0,
-                "<=" => CompareValues(left, right) <= 0,
-                ">=" => CompareValues(left, right) >= 0,
-                "==" => CompareValues(left, right) == 0,
-                "!=" => CompareValues(left, right) != 0,
-                _ => throw new InvalidOperationException($"Unknown comparison operator: {op}")
-            };
-        }
-
-        // Handle logical expressions (AND/OR)
-        if (condition is LogicalExpression logicalExpr)
-        {
-            bool leftResult = EvaluateCondition(logicalExpr.Left);
-
-            string op = logicalExpr.Operator.RawToken?.Text ?? "";
-
-            if (op == "AND")
-            {
-                // Short-circuit evaluation for AND
-                return leftResult && EvaluateCondition(logicalExpr.Right);
-            }
-
-            if (op == "OR")
-            {
-                // Short-circuit evaluation for OR
-                return leftResult || EvaluateCondition(logicalExpr.Right);
-            }
-
-            throw new InvalidOperationException($"Unknown logical operator: {op}");
-        }
-
-        throw new InvalidOperationException($"Cannot evaluate condition of type: {condition.GetType().Name}");
-    }
-
-    /// <summary>
-    ///     Evaluates an expression to get its runtime value.
-    /// </summary>
-    private object EvaluateExpressionValue(Expression expr)
-    {
-        return expr switch
-        {
-            ArrayLiteralExpression arrayLiteralExpr => EvaluateArrayLiteral(arrayLiteralExpr),
-            ArrayCreationExpression arrayCreationExpr => EvaluateArrayCreation(arrayCreationExpr),
-            TreeStringLiteralExpression stringLiteralExpr => EvaluateStringLiteral(stringLiteralExpr),
-            LiteralExpression literalExpr => EvaluateLiteral(literalExpr),
-            IndexExpression indexExpr => EvaluateIndexExpression(indexExpr),
-            IdentifierExpression identifierExpr => EvaluateIdentifier(identifierExpr),
-            BinaryExpression binaryExpr => EvaluateBinaryExpression(binaryExpr),
-            FunctionCallExpression funcCallExpr => EvaluateFunctionCall(funcCallExpr),
-            _ => throw new InvalidOperationException($"Cannot evaluate expression of type: {expr.GetType().Name}")
-        };
-    }
-
-    /// <summary>
-    ///     Evaluates an array literal expression.
-    /// </summary>
-    private List<object> EvaluateArrayLiteral(ArrayLiteralExpression arrayLiteralExpr)
-    {
-        List<object> array = [];
-
-        foreach (TreeExpression elementExpr in arrayLiteralExpr.Elements)
-        {
-            object elementValue = EvaluateExpressionValue(elementExpr);
-            array.Add(elementValue);
-        }
-
-        LoggerService.Logger.Debug($"[EXEC] Created array literal with {array.Count} elements");
-        return array;
-    }
-
-    /// <summary>
-    ///     Evaluates an array creation expression with specified size.
-    /// </summary>
-    private static List<object> EvaluateArrayCreation(ArrayCreationExpression arrayCreationExpr)
-    {
-        string sizeText = arrayCreationExpr.SizeToken.RawToken?.Text ?? "0";
-        int size = int.Parse(sizeText);
-
-        List<object> array = new(size);
-        for (int i = 0; i < size; i++)
-        {
-            array.Add(0.0);
-        }
-
-        return array;
-    }
-
-    /// <summary>
-    ///     Evaluates a string literal expression by removing quotes.
-    /// </summary>
-    private static string EvaluateStringLiteral(TreeStringLiteralExpression stringLiteralExpr)
-    {
-        string text = stringLiteralExpr.Value.RawToken?.Text ?? "";
-        return text.Trim('"');
-    }
-
-    /// <summary>
-    ///     Evaluates a literal expression (number or text).
-    /// </summary>
-    private static object EvaluateLiteral(LiteralExpression literalExpr)
-    {
-        string text = literalExpr.Value.RawToken?.Text ?? "";
-
-        // Try parsing as integer first
-        if (int.TryParse(text, out int intValue))
-        {
-            return intValue;
-        }
-
-        // Try parsing as double
-        if (double.TryParse(text, out double doubleValue))
-        {
-            return doubleValue;
-        }
-
-        // Fall back to string
-        return text;
-    }
-
-    /// <summary>
-    ///     Evaluates an array index access expression.
-    /// </summary>
-    private object EvaluateIndexExpression(IndexExpression indexExpr)
-    {
-        string? arrayName = indexExpr.ArrayIdentifier.RawToken?.Text?.ToUpperInvariant();
-
-        if (string.IsNullOrEmpty(arrayName) || !_variables.TryGetValue(arrayName, out object? arrayObj))
-        {
-            throw new InvalidOperationException($"Array not found: {arrayName}");
-        }
-
-        object indexValue = EvaluateExpressionValue(indexExpr.Index);
-        int index = Convert.ToInt32(ConvertToNumber(indexValue));
-
-        return arrayObj switch
-        {
-            List<object> list => GetListElement(list, index, arrayName),
-            double[] doubleArray => GetArrayElement(doubleArray, index, arrayName),
-            object[] objArray => GetArrayElement(objArray, index, arrayName),
-            _ => throw new InvalidOperationException(
-                $"Variable {arrayName} is not an array (type: {arrayObj.GetType().Name})")
-        };
-    }
-
-    /// <summary>
-    ///     Gets an element from a List with bounds checking.
-    /// </summary>
-    private static object GetListElement(List<object> list, int index, string arrayName)
-    {
-        return index < 0 || index >= list.Count
-            ? throw new InvalidOperationException(
-                $"Index {index} out of range for array {arrayName} (size: {list.Count})")
-            : list[index];
-    }
-
-    /// <summary>
-    ///     Gets an element from an array with bounds checking.
-    /// </summary>
-    private static object GetArrayElement(Array array, int index, string arrayName)
-    {
-        return index < 0 || index >= array.Length
-            ? throw new InvalidOperationException(
-                $"Index {index} out of range for array {arrayName} (size: {array.Length})")
-            : array.GetValue(index)!;
-    }
-
-    /// <summary>
-    ///     Evaluates an identifier by looking up its value.
-    /// </summary>
-    private object EvaluateIdentifier(IdentifierExpression identifierExpr)
-    {
-        string? varName = identifierExpr.Identifier.RawToken?.Text?.ToUpperInvariant();
-
-        return string.IsNullOrEmpty(varName) || !_variables.TryGetValue(varName, out object? value)
-            ? throw new InvalidOperationException($"Variable not found: {varName}")
-            : value;
-    }
-
-    /// <summary>
-    ///     Evaluates a binary expression (e.g., a + b, x * y).
-    /// </summary>
-    private double EvaluateBinaryExpression(BinaryExpression expr)
-    {
-        // For arithmetic operators, convert to numbers
-        double leftNum = ConvertToNumber(EvaluateExpressionValue(expr.Left));
-        double rightNum = ConvertToNumber(EvaluateExpressionValue(expr.Right));
-
-        // Perform the operation based on operator type
-        if (expr.Operator is PlusToken)
-        {
-            double result = leftNum + rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} + {rightNum} = {result}");
-            return result;
-        }
-
-        if (expr.Operator is MinusToken)
-        {
-            double result = leftNum - rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} - {rightNum} = {result}");
-            return result;
-        }
-
-        if (expr.Operator is MultiplyToken)
-        {
-            double result = leftNum * rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} * {rightNum} = {result}");
-            return result;
-        }
-
-        if (expr.Operator is DivideToken)
-        {
-            if (Math.Abs(rightNum) < double.Epsilon)
-            {
-                throw new InvalidOperationException("Division by zero");
-            }
-
-            double result = leftNum / rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} / {rightNum} = {result}");
-            return result;
-        }
-
-        if (expr.Operator is ModuloToken)
-        {
-            if (Math.Abs(rightNum) < double.Epsilon)
-            {
-                throw new InvalidOperationException("Modulo by zero");
-            }
-
-            double result = leftNum % rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} % {rightNum} = {result}");
-            return result;
-        }
-
-        // Comparison operators return 1.0 for true, 0.0 for false
-        if (expr.Operator is EqualsEqualsToken)
-        {
-            bool result = Math.Abs(leftNum - rightNum) < double.Epsilon;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} == {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        if (expr.Operator is NotEqualsToken)
-        {
-            bool result = Math.Abs(leftNum - rightNum) >= double.Epsilon;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} != {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        if (expr.Operator is LessThanToken)
-        {
-            bool result = leftNum < rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} < {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        if (expr.Operator is LessThanOrEqualToken)
-        {
-            bool result = leftNum <= rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} <= {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        if (expr.Operator is GreaterThanToken)
-        {
-            bool result = leftNum > rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} > {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        if (expr.Operator is GreaterThanOrEqualToken)
-        {
-            bool result = leftNum >= rightNum;
-            LoggerService.Logger.Debug($"[EXEC] {leftNum} >= {rightNum} = {result}");
-            return result ? 1.0 : 0.0;
-        }
-
-        throw new InvalidOperationException($"Unknown binary operator: {expr.Operator.GetType().Name}");
-    }
-
-    /// <summary>
-    ///     Converts a value to a number (double).
-    /// </summary>
-    private static double ConvertToNumber(object value)
-    {
-        return value switch
-        {
-            int intValue => intValue,
-            double doubleValue => doubleValue,
-            string stringValue when double.TryParse(stringValue, out double parsed) => parsed,
-            _ when double.TryParse(value.ToString(), out double parsed) => parsed,
-            _ => throw new InvalidOperationException($"Cannot convert '{value}' to number")
-        };
-    }
-
-    /// <summary>
-    ///     Compares two values and returns -1, 0, or 1.
-    /// </summary>
-    private static int CompareValues(object left, object right)
-    {
-        // Try numeric comparison
-        if (left is int leftInt && right is int rightInt)
-        {
-            return leftInt.CompareTo(rightInt);
-        }
-
-        if (left is double leftDouble && right is double rightDouble)
-        {
-            return leftDouble.CompareTo(rightDouble);
-        }
-
-        // Try numeric conversion
-        if (double.TryParse(left.ToString(), out double leftNum) &&
-            double.TryParse(right.ToString(), out double rightNum))
-        {
-            return leftNum.CompareTo(rightNum);
-        }
-
-        // Fall back to string comparison
-        return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    ///     Executes a function call by looking up the function declaration and running its body.
-    /// </summary>
-    private void ExecuteFunctionCall(FunctionCallStatement funcCallStmt)
-    {
-        LoggerService.Logger.Info($"[EXEC] Calling function: {funcCallStmt.FunctionName}()");
-
-        // Find the function declaration in the root scope
-        if (!_tree.RootScope!.Decarations.TryGetValue(funcCallStmt.FunctionName, out Declaration? declaration))
-        {
-            throw new InvalidOperationException($"Function not found: {funcCallStmt.FunctionName}");
-        }
-
-        if (declaration is not FunctionDeclaration functionDecl)
-        {
-            throw new InvalidOperationException($"{funcCallStmt.FunctionName} is not a function");
-        }
-
-        // Execute all statements in the function's scope
-        foreach (Statement stmt in functionDecl.Scope.Statements)
-        {
-            ExecuteStatement(stmt);
-        }
-    }
-
-    /// <summary>
-    ///     Evaluates a function call expression with arguments and returns the result.
-    ///     This is used when functions are called as part of expressions (e.g., PRINT power(2, 8)).
-    /// </summary>
-    private object EvaluateFunctionCall(FunctionCallExpression funcCallExpr)
-    {
-        // Check recursion depth to prevent stack overflow
-        if (_recursionDepth >= MaxRecursionDepth)
-        {
-            LoggerService.Logger.Error($"Maximum recursion depth ({MaxRecursionDepth}) exceeded!");
-            LoggerService.Logger.Error(
-                $"Current variables: {string.Join(", ", _variables.Select(kv => $"{kv.Key}={kv.Value}"))}");
-            LoggerService.Logger.Error($"Call stack (last 20): {string.Join(" -> ", _callStack.TakeLast(20))}");
-            throw new InvalidOperationException($"Maximum recursion depth ({MaxRecursionDepth}) exceeded");
-        }
-
-        string functionName = funcCallExpr.FunctionName.RawToken?.Text?.ToUpperInvariant() ?? "";
-        _callStack.Add(functionName);
-        _recursionDepth++;
-        try
-        {
-            LoggerService.Logger.Warning($"[EXEC] >>> Calling {functionName} [depth={_recursionDepth}]");
-
-            // Find the function declaration in the root scope
-            if (!_tree.RootScope!.Decarations.TryGetValue(functionName, out Declaration? declaration))
-            {
-                throw new InvalidOperationException($"Function not found: {functionName}");
-            }
-
-            if (declaration is not FunctionDeclaration functionDecl)
-            {
-                throw new InvalidOperationException($"{functionName} is not a function");
-            }
-
-            // For now, parse arguments from the function call expression
-            // Note: The current FunctionCallExpression doesn't have parsed arguments yet
-            // We need to extract them from the tokens between ( and )
-            List<object> argumentValues = ParseFunctionArguments(funcCallExpr.FunctionName.Next);
-
-            // Validate argument count
-            if (argumentValues.Count != functionDecl.Parameters.Count)
-            {
-                throw new InvalidOperationException(
-                    $"Function {functionName} expects {functionDecl.Parameters.Count} arguments, but got {argumentValues.Count}");
-            }
-
-            // Bind arguments to parameters (do NOT save/restore - just set them)
-            for (int i = 0; i < functionDecl.Parameters.Count; i++)
-            {
-                string paramName = functionDecl.Parameters[i].Identifier.RawToken?.Text?.ToUpperInvariant() ?? "";
-                _variables[paramName] = argumentValues[i];
-                if (_recursionDepth <= 10)
-                {
-                    LoggerService.Logger.Debug($"  → Binding parameter: {paramName} = {argumentValues[i]}");
-                }
-            }
-
-            // Execute function body and capture return value
-            object? result = null;
-            foreach (Statement stmt in functionDecl.Scope.Statements)
-            {
-                if (_recursionDepth <= 3)
-                {
-                    LoggerService.Logger.Debug($"  [depth={_recursionDepth}] Executing: {stmt.GetType().Name}");
-                }
-
-                if (stmt is ReturnStatement returnStmt && returnStmt.ReturnValue != null)
-                {
-                    result = EvaluateExpressionValue(returnStmt.ReturnValue);
-                    break;
-                }
-
-                ExecuteStatement(stmt);
-            }
-
-            if (result == null)
-            {
-                throw new InvalidOperationException($"Function {functionName} did not return a value");
-            }
-
-            if (_recursionDepth <= 10)
-            {
-                LoggerService.Logger.Debug($"[EXEC] Function {functionName} returned: {result}");
-            }
-
-            return result;
-        }
-        finally
-        {
-            _recursionDepth--;
-            if (_callStack.Count > 0)
-            {
-                _callStack.RemoveAt(_callStack.Count - 1);
-            }
-        }
-    }
-
-    /// <summary>
-    ///     Parses function call arguments from the token stream.
-    ///     Starts at the token after the function name (should be '(')
-    /// </summary>
-    private List<object> ParseFunctionArguments(Token? startToken)
-    {
-        List<object> arguments = [];
-
-        // Skip to opening parenthesis
-        Token? current = startToken;
-        while (current is not ParenthesisOpen and not null)
-        {
-            current = current.Next;
-        }
-
-        if (current is ParenthesisOpen)
-        {
-            // No arguments
-            return arguments;
-        }
-
-        if (current != null)
-        {
-            current = current.Next; // Move past '('
-
-            // Parse arguments until ')'
-            List<Token> argumentTokens = [];
-            int parenDepth = 0;
-
-            while (current != null && !(current is ParenthesisClosed && parenDepth == 0))
-            {
-                if (current is ParenthesisOpen)
-                {
-                    parenDepth++;
-                    argumentTokens.Add(current);
-                }
-                else if (current is ParenthesisClosed)
-                {
-                    parenDepth--;
-                    argumentTokens.Add(current);
-                }
-                else if (current is CommaToken && parenDepth == 0)
-                {
-                    // End of argument, evaluate what we have
-                    if (argumentTokens.Count > 0)
-                    {
-                        TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
-                        object argValue = EvaluateExpressionValue(argExpression);
-                        arguments.Add(argValue);
-                        argumentTokens.Clear();
-                    }
-                }
-                else
-                {
-                    argumentTokens.Add(current);
-                }
-
-                current = current.Next;
-            }
-
-            // Evaluate the last argument
-            if (argumentTokens.Count > 0)
-            {
-                TreeExpression argExpression = BuildExpressionFromTokens(argumentTokens);
-                object argValue = EvaluateExpressionValue(argExpression);
-                arguments.Add(argValue);
-            }
-        }
-
-        return arguments;
-    }
-
-    private static Expression BuildExpressionFromTokens(List<Token> tokens)
-    {
-        if (tokens.Count == 0)
-        {
-            throw new InvalidOperationException("Cannot build expression from empty token list");
-        }
-
-        // Single token - simple case
-        if (tokens.Count == 1)
-        {
-            Token token = tokens[0];
-            return token switch
-            {
-                ValueToken valueToken => new LiteralExpression(valueToken),
-                StringLiteralToken strToken => new StringLiteralExpression(strToken),
-                IdentifierToken identToken => new IdentifierExpression(identToken),
-                _ => throw new InvalidOperationException($"Unexpected single token: {token.GetType().Name}")
-            };
-        }
-
-        // Multiple tokens - check for binary operators
-        // Find the operator with lowest precedence (rightmost in evaluation order)
-        int operatorIndex = -1;
-        int lowestPrecedence = int.MaxValue;
-        int parenDepth = 0;
-
-        for (int i = tokens.Count - 1; i >= 0; i--)
-        {
-            Token token = tokens[i];
-
-            if (token is ParenthesisClosed)
-            {
-                parenDepth++;
-            }
-            else if (token is ParenthesisOpen)
-            {
-                parenDepth--;
-            }
-            else if (parenDepth == 0 && IsOperatorToken(token))
-            {
-                int precedence = GetOperatorPrecedence(token);
-                if (precedence <= lowestPrecedence)
-                {
-                    lowestPrecedence = precedence;
-                    operatorIndex = i;
-                }
-            }
-        }
-
-        // If we found an operator, split and recurse
-        if (operatorIndex >= 0)
-        {
-            List<Token> leftTokens = [.. tokens.Take(operatorIndex)];
-            List<Token> rightTokens = [.. tokens.Skip(operatorIndex + 1)];
-
-            TreeExpression left = BuildExpressionFromTokens(leftTokens);
-            TreeExpression right = BuildExpressionFromTokens(rightTokens);
-
-            return new BinaryExpression(left, tokens[operatorIndex], right);
-        }
-
-        // No operator found - maybe parenthesized expression?
-        return tokens[0] is ParenthesisOpen && tokens[^1] is ParenthesisClosed
-            ? BuildExpressionFromTokens(tokens.Skip(1).Take(tokens.Count - 2).ToList())
-            : throw new InvalidOperationException(
-            $"Cannot build expression from tokens: {string.Join(", ", tokens.Select(t => t.GetType().Name))}");
-    }
-
-    private static bool IsOperatorToken(Token token)
-    {
-        return token is PlusToken or MinusToken or MultiplyToken or DivideToken or ModuloToken
-            or EqualsEqualsToken or NotEqualsToken
-            or LessThanToken or LessThanOrEqualToken or GreaterThanToken or GreaterThanOrEqualToken
-            or AndKeywordToken or OrKeywordToken;
-    }
-
-    private static int GetOperatorPrecedence(Token token)
-    {
-        // Lower number = lower precedence (evaluated later)
-        return token switch
-        {
-            OrKeywordToken => 1,
-            AndKeywordToken => 2,
-            EqualsEqualsToken or NotEqualsToken => 3,
-            LessThanToken or LessThanOrEqualToken or GreaterThanToken or GreaterThanOrEqualToken => 4,
-            PlusToken or MinusToken => 5,
-            MultiplyToken or DivideToken or ModuloToken => 6,
-            _ => int.MaxValue
-        };
-    }
-
-    /// <summary>
-    ///     Executes a CYCLE loop (count-based or collection-based).
-    /// </summary>
-    private void ExecuteCycleLoop(CycleLoopStatement cycleStmt)
-    {
-        if (cycleStmt.IsCountBased)
-        {
-            // Count-based loop: CYCLE 5 AS i { ... }
-            object countValue = EvaluateExpressionValue(cycleStmt.CollectionExpression);
-
-            if (!int.TryParse(countValue.ToString(), out int count))
-            {
-                throw new InvalidOperationException($"CYCLE count must be a number, got: {countValue}");
-            }
-
-            LoggerService.Logger.Info(
-                $"[EXEC] Starting count-based CYCLE loop: {count} iterations, variable '{cycleStmt.LoopVariableName}'");
-
-            // Execute the loop body 'count' times
-            for (int i = 0; i < count; i++)
-            {
-                // Set the loop variable to the current index
-                string varName = cycleStmt.LoopVariableName.ToUpperInvariant();
-                _variables[varName] = i;
-
-                LoggerService.Logger.Debug($"[EXEC] CYCLE iteration {i}, {varName} = {i}");
-
-                // Execute all statements in the loop body
-                if (cycleStmt.LoopBody != null)
-                {
-                    foreach (Statement stmt in cycleStmt.LoopBody.Statements)
-                    {
-                        ExecuteStatement(stmt);
-                    }
-                }
-            }
-
-            LoggerService.Logger.Info("[EXEC] CYCLE loop completed");
-        }
-        else
-        {
-            // Collection-based loop: CYCLE IN items AS item { ... }
-            // Collection-based loops are not yet implemented
-            throw new NotImplementedException(
-                "Collection-based CYCLE loops not yet implemented. Use count-based: CYCLE 5 { ... }");
-        }
-    }
-
-    /// <summary>
-    ///     Executes a NET:: method call using reflection.
-    /// </summary>
-    private void ExecuteNetMethodCall(NetMethodCallStatement netStmt)
-    {
-        try
-        {
-            // Parse the method path: System.Console.WriteLine or Console.WriteLine
-            string[] parts = netStmt.FullMethodPath.Split('.');
-            if (parts.Length < 2)
-            {
-                throw new InvalidOperationException($"Invalid NET method path: {netStmt.FullMethodPath}");
-            }
-
-            // The last part is the method name
-            string methodName = parts[^1];
-
-            // Everything before is the type name
-            string typeName = string.Join(".", parts[..^1]);
-
-            // Try to resolve the type using DotNetLinker (which knows about linked namespaces)
-            Type? type = _tree.DotNetLinker.ResolveType(typeName);
-
-            // Fallback: try direct resolution if DotNetLinker didn't find it
-            if (type == null)
-            {
-                // Try in System assemblies (with proper assembly name)
-                type = Type.GetType($"{typeName}, System.Console");
-            }
-
-            if (type == null)
-            {
-                type = Type.GetType(typeName);
-            }
-
-            // If still not found, search in all loaded assemblies
-            if (type == null)
-            {
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    type = assembly.GetType(typeName);
-                    if (type != null)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if (type == null)
-            {
-                throw new InvalidOperationException($"Type not found: {typeName}");
-            }
-
-            // Evaluate arguments and determine their types
-            object?[] args = new object?[netStmt.Arguments.Count];
-            Type[] argTypes = new Type[netStmt.Arguments.Count];
-
-            for (int i = 0; i < netStmt.Arguments.Count; i++)
-            {
-                args[i] = EvaluateExpression(netStmt.Arguments[i]);
-                argTypes[i] = args[i]?.GetType() ?? typeof(object);
-            }
-
-            // Find the method with matching parameter types
-            MethodInfo? method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance,
-                null, argTypes, null);
-
-            if (method == null)
-            {
-                // Try without exact parameter matching - get all methods and find best match
-                MethodInfo[] methods =
-                [
-                    .. type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                        .Where(m => m.Name == methodName)
-                ];
-
-                // Find method with matching parameter count
-                method = methods.FirstOrDefault(m => m.GetParameters().Length == args.Length);
-
-                if (method == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Method not found: {methodName} on type {typeName} with {args.Length} parameter(s)");
-                }
-            }
-
-            // Invoke the method
-            if (method.IsStatic)
-            {
-                method.Invoke(null, args);
-            }
-            else
-            {
-                // For instance methods, we need an instance
-                // For now, we'll only support static methods
-                throw new InvalidOperationException(
-                    $"Instance methods are not yet supported. Method {methodName} must be static.");
-            }
-        }
-        catch (Exception ex)
-        {
-            LoggerService.Logger.Error($"✗ NET method call failed: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    ///     Evaluates an expression to get its runtime value for NET method calls.
-    ///     Supports string literals, numeric literals, and identifiers.
-    /// </summary>
-    private static object? EvaluateExpression(TreeExpression expr)
-    {
-        return expr switch
-        {
-            TreeStringLiteralExpression stringExpr => EvaluateStringLiteralForNetCall(stringExpr),
-            TreeLiteralExpression literalExpr => EvaluateLiteralForNetCall(literalExpr),
-            TreeIdentifierExpression identifierExpr => EvaluateIdentifierForNetCall(identifierExpr),
-            TreeBinaryExpression => throw new InvalidOperationException(
-                "Binary expressions in NET calls not yet supported"),
-            _ => throw new InvalidOperationException($"Unsupported expression type: {expr.GetType().Name}")
-        };
-    }
-
-    /// <summary>
-    ///     Evaluates a string literal for use in NET method calls.
-    /// </summary>
-    private static string EvaluateStringLiteralForNetCall(TreeStringLiteralExpression stringExpr)
-    {
-        return stringExpr.Value.RawToken.Text.Trim('"');
-    }
-
-    /// <summary>
-    ///     Evaluates a literal expression for use in NET method calls.
-    ///     Attempts to parse as int, then double, otherwise returns as string.
-    /// </summary>
-    private static object EvaluateLiteralForNetCall(TreeLiteralExpression literalExpr)
-    {
-        string text = literalExpr.Value.RawToken.Text;
-
-        // Try parsing as integer
-        if (int.TryParse(text, out int intValue))
-        {
-            return intValue;
-        }
-
-        // Try parsing as double
-        if (double.TryParse(text, out double doubleValue))
-        {
-            return doubleValue;
-        }
-
-        // Fall back to string
-        return text;
-    }
-
-    /// <summary>
-    ///     Evaluates an identifier for use in NET method calls.
-    ///     Note: Returns the identifier name as a string.
-    ///     Full variable lookup would require access to runtime scope.
-    /// </summary>
-    private static string EvaluateIdentifierForNetCall(TreeIdentifierExpression identifierExpr)
-    {
-        return identifierExpr.Identifier.RawToken.Text;
-    }
-
-    /// <summary>
-    ///     Compiles a single function declaration.
-    /// </summary>
-    private void CompileFunction(FunctionDeclaration decl)
-    {
-        string funcName = decl.Identifier.RawToken.Text;
-        Scope funcScope = decl.Scope;
-
-        // Get the return statement
-        ReturnStatement? returnStmt = funcScope.Statements.OfType<ReturnStatement>().FirstOrDefault();
-        if (returnStmt == null)
-        {
-            LoggerService.Logger.Warning($"  ⚠ No return statement found in {funcName}");
             return;
         }
 
-        // Build parameter expressions
-        List<ParameterExpression> parameters =
-        [
-            .. decl.Parameters.Select(p =>
-                SysExpression.Parameter(typeof(int), p.Identifier.RawToken.Text))
-        ];
-
-        // Build the lambda expression
-        if (returnStmt.ReturnValue == null)
+        foreach (var declaration in scope.Decarations.Values)
         {
-            // Void return
-            LoggerService.Logger.Info($"  → Function {funcName} returns VOID");
-            System.Linq.Expressions.LambdaExpression voidLambda = SysExpression.Lambda(
-                SysExpression.Empty(),
-                parameters
-            );
-            _ = voidLambda.Compile();
-            LoggerService.Logger.Success("  ✓ Compiled as void function");
-        }
-        else
-        {
-            // Value return - compile and execute
-            SysExpression bodyExpression = BuildExpression(returnStmt.ReturnValue, parameters);
-
-            if (parameters.Count == 0)
+            if (declaration is FunctionDeclaration funcDecl)
             {
-                // Parameterless function - can execute immediately
-                System.Linq.Expressions.Expression<Func<int>> lambda = SysExpression.Lambda<Func<int>>(bodyExpression);
-                Func<int> compiled = lambda.Compile();
-
-                LoggerService.Logger.Info($"  → Lambda: () => {GetExpressionDescription(returnStmt.ReturnValue)}");
-
-                // Execute the function
-                int result = compiled();
-                LoggerService.Logger.Success($"  ✓ Executed: {funcName}() = {result}");
-            }
-            else if (parameters.Count == 2)
-            {
-                // Two-parameter function
-                System.Linq.Expressions.Expression<Func<int, int, int>> lambda = SysExpression.Lambda<Func<int, int, int>>(bodyExpression, parameters);
-                Func<int, int, int> compiled = lambda.Compile();
-
-                LoggerService.Logger.Info(
-                    $"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
-
-                // Example execution with test values
-                int result = compiled(10, 5);
-                LoggerService.Logger.Success($"  ✓ Compiled and tested: {funcName}(10, 5) = {result}");
-            }
-            else
-            {
-                LoggerService.Logger.Info(
-                    $"  → Lambda: ({string.Join(", ", parameters.Select(p => p.Name))}) => {GetExpressionDescription(returnStmt.ReturnValue)}");
-                LoggerService.Logger.Success(
-                    $"  ✓ Compiled successfully (execution requires {parameters.Count} parameters)");
+                _functionRegistry.RegisterFunction(funcDecl);
             }
         }
     }
 
-    /// <summary>
-    ///     Builds a .NET Expression from a PowerScript expression.
-    /// </summary>
-    private SysExpression BuildExpression(TreeExpression expr, List<ParameterExpression> parameters)
+    private object? ExecuteScope(Scope scope)
     {
-        return expr switch
-        {
-            TreeLiteralExpression literal =>
-                SysExpression.Constant(int.Parse(literal.Value.RawToken.Text)),
-
-            TreeIdentifierExpression ident =>
-                parameters.FirstOrDefault(p => p.Name == ident.Identifier.RawToken.Text)
-                ?? throw new InvalidOperationException($"Parameter '{ident.Identifier.RawToken.Text}' not found"),
-
-            TreeBinaryExpression binary =>
-                BuildBinaryExpression(binary, parameters),
-
-            _ => throw new NotImplementedException($"Expression type {expr.GetType().Name} not implemented")
-        };
+        return _scopeProcessor.ExecuteScope(scope, _context, ExecuteStatement);
     }
 
-    /// <summary>
-    ///     Builds a binary operation expression.
-    /// </summary>
-    private System.Linq.Expressions.BinaryExpression BuildBinaryExpression(TreeBinaryExpression binary,
-        List<ParameterExpression> parameters)
+    private void ExecuteScope(object scopeObj)
     {
-        SysExpression left = BuildExpression(binary.Left, parameters);
-        SysExpression right = BuildExpression(binary.Right, parameters);
-
-        return binary.Operator.RawToken.Text switch
+        if (scopeObj is Scope scope)
         {
-            "+" => SysExpression.Add(left, right),
-            "-" => SysExpression.Subtract(left, right),
-            "*" => SysExpression.Multiply(left, right),
-            "/" => SysExpression.Divide(left, right),
-            "%" => SysExpression.Modulo(left, right),
-            "==" => SysExpression.Equal(left, right),
-            "!=" => SysExpression.NotEqual(left, right),
-            "<" => SysExpression.LessThan(left, right),
-            "<=" => SysExpression.LessThanOrEqual(left, right),
-            ">" => SysExpression.GreaterThan(left, right),
-            ">=" => SysExpression.GreaterThanOrEqual(left, right),
-            _ => throw new NotImplementedException($"Operator '{binary.Operator.RawToken.Text}' not implemented")
-        };
-    }
-
-    /// <summary>
-    ///     Gets a human-readable description of an expression.
-    /// </summary>
-    private static string GetExpressionDescription(TreeExpression expr)
-    {
-        return expr switch
-        {
-            TreeLiteralExpression literal => literal.Value.RawToken.Text,
-            TreeIdentifierExpression ident => ident.Identifier.RawToken.Text,
-            TreeBinaryExpression binary =>
-                $"{GetExpressionDescription(binary.Left)} {binary.Operator.RawToken.Text} {GetExpressionDescription(binary.Right)}",
-            _ => expr.ExpressionType
-        };
-    }
-
-    /// <summary>
-    ///     Executes an external PowerScript file using the interpreter.
-    /// </summary>
-    public static void ExecuteScriptFile(string filePath)
-    {
-        try
-        {
-            // Import the interpreter namespace here to avoid circular dependencies
-            Type? interpreterType = Type.GetType("Tokenez.Interpreter.PowerScriptInterpreter, Tokenez.Interpreter");
-            if (interpreterType == null)
-            {
-                throw new InvalidOperationException(
-                    "PowerScriptInterpreter type not found. Cannot execute external scripts.");
-            }
-
-            // Create an instance using the CreateNew static method
-            MethodInfo? createNewMethod = interpreterType.GetMethod("CreateNew", BindingFlags.Public | BindingFlags.Static);
-            object? interpreter = createNewMethod?.Invoke(null, null);
-
-            if (interpreter == null)
-            {
-                throw new InvalidOperationException("Failed to create PowerScriptInterpreter instance.");
-            }
-
-            // Call ExecuteFile method
-            MethodInfo? executeFileMethod =
-                interpreterType.GetMethod("ExecuteFile", BindingFlags.Public | BindingFlags.Instance);
-            _ = executeFileMethod?.Invoke(interpreter, [filePath]);
-        }
-        catch (Exception ex)
-        {
-            LoggerService.Logger.Error($"✗ EXECUTE failed: {ex.Message}");
+            ExecuteScope(scope);
         }
     }
 
-    /// <summary>
-    ///     Runs diagnostic analysis and displays warnings, errors, and suggestions.
-    /// </summary>
-    private void RunDiagnosticAnalysis()
+    private void ExecuteStatement(Statement statement)
     {
-        LoggerService.Logger.Info("\n╔════════════════════════════════════════╗");
-        LoggerService.Logger.Info("║           DIAGNOSTIC ANALYSIS          ║");
-        LoggerService.Logger.Info("╚════════════════════════════════════════╝\n");
+        _statementProcessor.ExecuteStatement(statement);
+    }
 
-        DiagnosticAnalyzer analyzer = new();
-        List<Diagnostic> diagnostics = analyzer.Analyze(_tree.RootScope!, _tree.Tokens!);
-
-        if (diagnostics.Count == 0)
-        {
-            LoggerService.Logger.Success("✅ No issues found - your code looks good!");
-            return;
-        }
-
-        // Group diagnostics by severity
-        List<Diagnostic> errors = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
-        List<Diagnostic> warnings = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)];
-        List<Diagnostic> suggestions = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Suggestion)];
-        List<Diagnostic> info = [.. diagnostics.Where(d => d.Severity == DiagnosticSeverity.Info)];
-
-        // Display errors first
-        if (errors.Count > 0)
-        {
-            LoggerService.Logger.Error("ERRORS:");
-            foreach (Diagnostic error in errors)
-            {
-                LoggerService.Logger.Error($"  {error}");
-            }
-
-            LoggerService.Logger.Error("");
-        }
-
-        // Then warnings
-        if (warnings.Count > 0)
-        {
-            LoggerService.Logger.Warning("WARNINGS:");
-            foreach (Diagnostic warning in warnings)
-            {
-                LoggerService.Logger.Warning($"  {warning}");
-            }
-
-            LoggerService.Logger.Warning("");
-        }
-
-        // Then suggestions
-        if (suggestions.Count > 0)
-        {
-            LoggerService.Logger.Info("SUGGESTIONS:");
-            foreach (Diagnostic suggestion in suggestions)
-            {
-                LoggerService.Logger.Info($"  {suggestion}");
-            }
-
-            LoggerService.Logger.Info("");
-        }
-
-        // Finally info (only show if verbose or if there are no other diagnostics)
-        if (info.Count > 0 && errors.Count + warnings.Count + suggestions.Count == 0)
-        {
-            LoggerService.Logger.Info("INFO:");
-            foreach (Diagnostic infoItem in info)
-            {
-                LoggerService.Logger.Info($"  {infoItem}");
-            }
-
-            LoggerService.Logger.Info("");
-        }
-
-        // Summary
-        LoggerService.Logger.Info(
-            $"📊 Analysis complete: {errors.Count} errors, {warnings.Count} warnings, {suggestions.Count} suggestions");
+    private object EvaluateFunctionCall(FunctionCallExpression functionCall)
+    {
+        return _functionCaller.CallFunction(functionCall);
     }
 }

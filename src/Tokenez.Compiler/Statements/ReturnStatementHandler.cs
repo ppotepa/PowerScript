@@ -26,7 +26,12 @@ public class ReturnStatementHandler
             throw new ArgumentNullException(nameof(returnStatement));
         }
 
-        object returnValue = _evaluateExpression(returnStatement.Expression);
+        object? returnValue = null;
+
+        if (returnStatement.ReturnValue != null)
+        {
+            returnValue = _evaluateExpression(returnStatement.ReturnValue);
+        }
 
         _context.LastReturnValue = returnValue;
         _context.HasReturned = true;

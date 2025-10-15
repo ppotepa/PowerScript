@@ -45,20 +45,31 @@ public class FlexVariableProcessor : ITokenProcessor
 
         currentToken = currentToken.Next;
 
-        // Check if this is an array element assignment (FLEX arr[0] = value)
+        // Check if this is an array element assignment (FLEX arr[0] = value or FLEX arr[0][1] = value)
         if (currentToken is BracketOpen)
         {
-            // Parse array index assignment
-            currentToken = currentToken.Next; // Move past '['
-            Expression indexExpr = ParseExpression(ref currentToken);
+            // Build IndexExpression (supports chaining for 2D arrays)
+            Expression currentExpr = new IdentifierExpression(identifierToken);
 
-            // Expect closing bracket
-            if (currentToken is not BracketClosed)
+            while (currentToken is BracketOpen)
             {
-                throw new UnexpectedTokenException(currentToken!, typeof(BracketClosed));
-            }
+                currentToken = currentToken.Next; // Move past '['
+                Expression indexExpr = ParseExpression(ref currentToken);
 
-            currentToken = currentToken.Next; // Skip ']'
+                // Expect closing bracket
+                if (currentToken is not BracketClosed)
+                {
+                    throw new UnexpectedTokenException(currentToken!, typeof(BracketClosed));
+                }
+
+                currentToken = currentToken.Next; // Skip ']'
+
+                currentExpr = new IndexExpression
+                {
+                    ArrayExpression = currentExpr,
+                    Index = indexExpr
+                };
+            }
 
             // Expect assignment operator
             if (currentToken is not EqualsToken)
@@ -72,7 +83,7 @@ public class FlexVariableProcessor : ITokenProcessor
             Expression valueExpr = ParseExpression(ref currentToken);
 
             // Create an ArrayAssignmentStatement
-            ArrayAssignmentStatement arrayAssignStmt = new(identifierToken, indexExpr, valueExpr)
+            ArrayAssignmentStatement arrayAssignStmt = new((IndexExpression)currentExpr, valueExpr)
             {
                 StartToken = flexToken
             };
@@ -277,12 +288,23 @@ public class FlexVariableProcessor : ITokenProcessor
             return expr;
         }
 
+        if (token is TemplateStringToken templateToken)
+        {
+            TemplateStringExpression expr = new(templateToken);
+            token = token.Next;
+            return expr;
+        }
+
         if (token is IdentifierToken identifierToken)
         {
-            // Check if it's an array index access
-            if (identifierToken.Next is BracketOpen)
+            // Start with identifier expression
+            Expression currentExpr = new IdentifierExpression(identifierToken);
+            token = identifierToken.Next;
+
+            // Check for array index access (supports chaining: arr[0][1][2])
+            while (token is BracketOpen)
             {
-                token = identifierToken.Next.Next; // Move past '[' to index expression
+                token = token.Next; // Move past '['
                 Expression indexExpr = ParseExpression(ref token);
 
                 // Expect closing bracket
@@ -293,22 +315,21 @@ public class FlexVariableProcessor : ITokenProcessor
 
                 token = token.Next; // Skip ']'
 
-                return new IndexExpression
+                currentExpr = new IndexExpression
                 {
-                    ArrayIdentifier = identifierToken,
+                    ArrayExpression = currentExpr,
                     Index = indexExpr
                 };
             }
-            // Check if it's a function call
 
-            if (identifierToken.Next is ParenthesisOpen)
+            // Check if it's a function call (only if no array indexing was done)
+            if (currentExpr is IdentifierExpression && token is ParenthesisOpen)
             {
                 FunctionCallExpression funcCallExpr = new()
                 {
                     FunctionName = identifierToken
                 };
-                token = identifierToken.Next; // Move to (
-                token = token!.Next; // Move past (
+                token = token.Next; // Move past (
 
                 // Parse function call arguments - not implemented yet
 
@@ -326,9 +347,8 @@ public class FlexVariableProcessor : ITokenProcessor
                 return funcCallExpr;
             }
 
-            IdentifierExpression expr = new(identifierToken);
-            token = token.Next;
-            return expr;
+            // Return the expression (could be IdentifierExpression or IndexExpression)
+            return currentExpr;
         }
 
         // Handle unary minus for negative numbers

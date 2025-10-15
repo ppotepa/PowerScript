@@ -27,6 +27,13 @@ public class IdentifierProcessor
 
         string variableName = GetVariableName(identifier);
 
+        // Workaround: If the variable name starts and ends with quotes, it's actually a string literal
+        // This happens due to parser quirk
+        if (variableName.StartsWith("\"") && variableName.EndsWith("\""))
+        {
+            return variableName.Substring(1, variableName.Length - 2);
+        }
+
         if (!_variableRegistry.IsVariableDeclared(variableName))
         {
             throw new InvalidOperationException($"Variable '{variableName}' is not declared.");
@@ -34,7 +41,10 @@ public class IdentifierProcessor
 
         object value = _variableRegistry.GetVariable(variableName);
 
-        return identifier.ArrayIndex != null ? _expressionEvaluator.GetArrayElement(value, identifier.ArrayIndex) : value;
+        // TODO: Array indexing support if needed
+        // Current AST doesn't have ArrayIndex property
+
+        return value;
     }
 
     private static string GetVariableName(IdentifierExpression identifier)

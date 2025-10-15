@@ -1,0 +1,14 @@
+// Compute sum of squares of even numbers from 1 to 10
+FUNCTION isEven(INT n)[INT] {
+    RETURN (n % 2 == 0)
+}
+
+FLEX sum = 0
+CYCLE 10 AS i {
+    FLEX num = i + 1
+    IF isEven(num) == 1 {
+        FLEX sum = sum + (num * num)
+    }
+}
+
+PRINT sum

@@ -1,9 +1,0 @@
-FLEX max = 0
-FLEX numbers = 10
-CYCLE 10 AS i {
-    FLEX num = (i + 1) * (i + 1)
-    IF num > max {
-        FLEX max = num
-    }
-}
-PRINT max

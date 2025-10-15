@@ -46,7 +46,7 @@ public class SimpleFeatureTests
     [Description("Test 1.1: Basic variable declaration and assignment")]
     public void Test_1_1_Variables()
     {
-        string script = File.ReadAllText("scripts/simple/1_1_variables.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_1_variables.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -60,7 +60,7 @@ public class SimpleFeatureTests
     [Description("Test 1.2: Arithmetic operations (+, -, *, /)")]
     public void Test_1_2_Arithmetic()
     {
-        string script = File.ReadAllText("scripts/simple/1_2_arithmetic.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_2_arithmetic.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -75,7 +75,7 @@ public class SimpleFeatureTests
     [Description("Test 1.3: Simple IF/ELSE conditional statements")]
     public void Test_1_3_ConditionalSimple()
     {
-        string script = File.ReadAllText("scripts/simple/1_3_conditional_simple.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_3_conditional_simple.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -88,7 +88,7 @@ public class SimpleFeatureTests
     [Description("Test 1.4: Simple CYCLE loop with accumulation")]
     public void Test_1_4_LoopSimple()
     {
-        string script = File.ReadAllText("scripts/simple/1_4_loop_simple.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_4_loop_simple.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -100,7 +100,7 @@ public class SimpleFeatureTests
     [Description("Test 1.5: CYCLE loop with counter variable")]
     public void Test_1_5_LoopCounter()
     {
-        string script = File.ReadAllText("scripts/simple/1_5_loop_counter.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_5_loop_counter.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -114,7 +114,7 @@ public class SimpleFeatureTests
     [Description("Test 1.6: Factorial calculation (5! = 120)")]
     public void Test_1_6_Factorial()
     {
-        string script = File.ReadAllText("scripts/simple/1_6_factorial.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_6_factorial.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -126,7 +126,7 @@ public class SimpleFeatureTests
     [Description("Test 1.7: Expression evaluation with parentheses")]
     public void Test_1_7_Parentheses()
     {
-        string script = File.ReadAllText("scripts/simple/1_7_parentheses.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_7_parentheses.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -139,7 +139,7 @@ public class SimpleFeatureTests
     [Description("Test 1.8: AND boolean logic")]
     public void Test_1_8_BooleanAnd()
     {
-        string script = File.ReadAllText("scripts/simple/1_8_boolean_and.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_8_boolean_and.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -151,7 +151,7 @@ public class SimpleFeatureTests
     [Description("Test 1.9: OR boolean logic")]
     public void Test_1_9_BooleanOr()
     {
-        string script = File.ReadAllText("scripts/simple/1_9_boolean_or.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_9_boolean_or.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -163,7 +163,7 @@ public class SimpleFeatureTests
     [Description("Test 1.10: Nested IF/ELSE statements")]
     public void Test_1_10_NestedConditionals()
     {
-        string script = File.ReadAllText("scripts/simple/1_10_nested_conditionals.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_10_nested_conditionals.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -175,7 +175,7 @@ public class SimpleFeatureTests
     [Description("Test 1.11: Nested CYCLE loops")]
     public void Test_1_11_NestedLoops()
     {
-        string script = File.ReadAllText("scripts/simple/1_11_nested_loops.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_11_nested_loops.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();
@@ -190,7 +190,7 @@ public class SimpleFeatureTests
     [Description("Test 1.12: CYCLE loop combined with IF conditional")]
     public void Test_1_12_LoopWithConditional()
     {
-        string script = File.ReadAllText("scripts/simple/1_12_loop_with_conditional.ps");
+        string script = File.ReadAllText("../../../../../test-scripts/simple/1_12_loop_with_conditional.ps");
         Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
 
         string output = GetOutput();

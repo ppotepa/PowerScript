@@ -4,8 +4,9 @@ using Tokenez.Core.Syntax.Tokens.Raw;
 namespace Tokenez.Core.Syntax.Tokens.Keywords;
 
 /// <summary>
-///     Token representing the 'WITH' keyword in alternative function syntax.
-///     Used in: FUNCTION name RETURNS TYPE WITH params { }
+///     Token representing the 'WITH' keyword.
+///     Note: The alternative function syntax (FUNCTION name RETURNS TYPE WITH params) has been removed.
+///     Standard syntax is: FUNCTION name(TYPE param)[RETURNTYPE]
 /// </summary>
 public class WithKeywordToken : Token
 {

@@ -4,14 +4,15 @@ namespace Tokenez.Core.AST.Expressions;
 
 /// <summary>
 ///     Represents an array/collection index access expression.
-///     Example: numbers[5], array[i+1]
+///     Example: numbers[5], array[i+1], matrix[0][1] (2D)
 /// </summary>
 public class IndexExpression : Expression
 {
     /// <summary>
-    ///     The array/collection being indexed
+    ///     The array/collection being indexed.
+    ///     Can be an IdentifierExpression for simple arrays, or another IndexExpression for multi-dimensional arrays.
     /// </summary>
-    public required IdentifierToken ArrayIdentifier { get; init; }
+    public required Expression ArrayExpression { get; init; }
 
     /// <summary>
     ///     The index expression (can be a literal, variable, or complex expression)
@@ -22,6 +23,6 @@ public class IndexExpression : Expression
 
     public override string ToString()
     {
-        return $"{ArrayIdentifier.RawToken.Text}[{Index}]";
+        return $"{ArrayExpression}[{Index}]";
     }
 }

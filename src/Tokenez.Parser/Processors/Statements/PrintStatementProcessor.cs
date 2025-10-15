@@ -80,26 +80,35 @@ public class PrintStatementProcessor : ITokenProcessor
 
                 nextToken = currentToken?.Next; // Move past ')'
             }
-            // Check if it's an array index access
+            // Check if it's an array index access (supports chaining: arr[0][1])
             else if (identifierToken.Next is BracketOpen)
             {
-                // Parse array indexing expression
-                Token currentToken = identifierToken.Next.Next; // Move past '[' 
-                Expression indexExpr = ParseSimpleExpression(ref currentToken);
+                Expression currentExpr = new IdentifierExpression(identifierToken);
+                Token currentToken = identifierToken.Next; // Move to '['
 
-                // Expect closing bracket
-                if (currentToken is not BracketClosed)
+                // Support chained indexing
+                while (currentToken is BracketOpen)
                 {
-                    throw new InvalidOperationException(
-                        $"Expected ']' after array index but found {currentToken?.GetType().Name}");
+                    currentToken = currentToken.Next; // Move past '['
+                    Expression indexExpr = ParseSimpleExpression(ref currentToken);
+
+                    // Expect closing bracket
+                    if (currentToken is not BracketClosed)
+                    {
+                        throw new InvalidOperationException(
+                            $"Expected ']' after array index but found {currentToken?.GetType().Name}");
+                    }
+
+                    currentExpr = new IndexExpression
+                    {
+                        ArrayExpression = currentExpr,
+                        Index = indexExpr
+                    };
+                    currentToken = currentToken.Next; // Move past ']'
                 }
 
-                expression = new IndexExpression
-                {
-                    ArrayIdentifier = identifierToken,
-                    Index = indexExpr
-                };
-                nextToken = currentToken.Next; // Skip ']'
+                expression = currentExpr;
+                nextToken = currentToken;
             }
             else
             {

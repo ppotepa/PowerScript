@@ -1,74 +1,69 @@
 using Tokenez.Common.Logging;
 using Tokenez.Compiler.Core;
+using Tokenez.Compiler.Core.Variables;
+using Tokenez.Core.AST.Statements;
 
 namespace Tokenez.Compiler.ControlFlow;
 
-/// <summary>
-/// Executes loop (CYCLE) statements.
-/// Single Responsibility: Loop processing
-/// </summary>
 public class CycleProcessor
 {
     private readonly CompilerContext _context;
-    private readonly Func<object, bool> _evaluateCondition;
+    private readonly VariableRegistry _variableRegistry;
+    private readonly Func<object, object> _evaluateExpression;
     private readonly Action<object> _executeScope;
     private const int MaxIterations = 100000;
 
     public CycleProcessor(
         CompilerContext context,
-        Func<object, bool> evaluateCondition,
+        VariableRegistry variableRegistry,
+        Func<object, object> evaluateExpression,
         Action<object> executeScope)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _evaluateCondition = evaluateCondition ?? throw new ArgumentNullException(nameof(evaluateCondition));
+        _variableRegistry = variableRegistry ?? throw new ArgumentNullException(nameof(variableRegistry));
+        _evaluateExpression = evaluateExpression ?? throw new ArgumentNullException(nameof(evaluateExpression));
         _executeScope = executeScope ?? throw new ArgumentNullException(nameof(executeScope));
     }
 
-    public void ExecuteCycle(CycleStatement cycleStatement)
+    public void ExecuteCycle(CycleLoopStatement cycleStatement)
     {
-        if (cycleStatement == null)
+        if (cycleStatement == null) throw new ArgumentNullException(nameof(cycleStatement));
+        if (cycleStatement.LoopBody == null) return;
+
+        string loopVarName = cycleStatement.LoopVariableName;
+
+        LoggerService.Logger.Debug($"[CYCLE] LoopVariableName from parser: '{loopVarName}'");
+
+        // Ensure we have a valid loop variable name
+        if (string.IsNullOrWhiteSpace(loopVarName))
         {
-            throw new ArgumentNullException(nameof(cycleStatement));
+            loopVarName = "A"; // Default loop variable name
+            LoggerService.Logger.Debug($"[CYCLE] Using default loop variable name: '{loopVarName}'");
         }
 
-        LoggerService.Logger.Debug("[EXEC] Starting CYCLE loop");
-
-        int iterationCount = 0;
-
-        while (true)
+        if (cycleStatement.IsCountBased)
         {
-            ValidateIterationCount(iterationCount);
-
-            bool conditionResult = _evaluateCondition(cycleStatement.Condition);
-
-            if (!conditionResult)
+            object countValue = _evaluateExpression(cycleStatement.CollectionExpression);
+            int count = Convert.ToInt32(countValue);
+            for (int i = 0; i < count; i++)
             {
-                LoggerService.Logger.Debug($"[EXEC] CYCLE condition false after {iterationCount} iterations");
-                break;
+                _variableRegistry.DeclareOrUpdateVariable(loopVarName, i);
+                _executeScope(cycleStatement.LoopBody);
+                if (_context.HasReturned) return;
             }
-
-            LoggerService.Logger.Debug($"[EXEC] CYCLE iteration {iterationCount + 1}");
-
-            _executeScope(cycleStatement.BodyScope);
-
-            if (_context.HasReturned)
-            {
-                LoggerService.Logger.Debug($"[EXEC] CYCLE terminated by RETURN after {iterationCount + 1} iterations");
-                break;
-            }
-
-            iterationCount++;
         }
-
-        LoggerService.Logger.Debug($"[EXEC] CYCLE completed with {iterationCount} iterations");
-    }
-
-    private static void ValidateIterationCount(int iterationCount)
-    {
-        if (iterationCount >= MaxIterations)
+        else
         {
-            throw new InvalidOperationException(
-                $"Infinite loop detected: CYCLE exceeded maximum iteration count of {MaxIterations}");
+            object collectionValue = _evaluateExpression(cycleStatement.CollectionExpression);
+            if (collectionValue is System.Collections.IEnumerable enumerable)
+            {
+                foreach (object item in enumerable)
+                {
+                    _variableRegistry.DeclareOrUpdateVariable(loopVarName, item);
+                    _executeScope(cycleStatement.LoopBody);
+                    if (_context.HasReturned) return;
+                }
+            }
         }
     }
 }

@@ -70,4 +70,15 @@ public class VariableRegistry
     {
         _variables.Clear();
     }
+
+    public void DeclareOrUpdateVariable(string name, object value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Variable name cannot be null or empty.", nameof(name));
+        }
+
+        string upperName = name.ToUpperInvariant();
+        _variables[upperName] = value;
+    }
 }

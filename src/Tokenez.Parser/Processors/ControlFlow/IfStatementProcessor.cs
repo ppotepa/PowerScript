@@ -249,10 +249,14 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
                 return funcCall;
             }
 
-            // Check for array indexing: identifier[index]
-            if (identifierToken.Next is BracketOpen)
+            // Start with identifier expression
+            Expression currentExpr = new IdentifierExpression(identifierToken);
+            currentToken = identifierToken.Next;
+
+            // Check for array indexing (supports chaining: arr[0][1])
+            while (currentToken is BracketOpen)
             {
-                currentToken = identifierToken.Next.Next; // Move past identifier and '['
+                currentToken = currentToken.Next; // Move past '['
 
                 // Parse the index expression
                 Expression indexExpr = ParseSimpleValue(ref currentToken);
@@ -266,16 +270,14 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
 
                 currentToken = currentToken.Next; // Move past ']'
 
-                return new IndexExpression
+                currentExpr = new IndexExpression
                 {
-                    ArrayIdentifier = identifierToken,
+                    ArrayExpression = currentExpr,
                     Index = indexExpr
                 };
             }
 
-            IdentifierExpression expr = new(identifierToken);
-            currentToken = currentToken.Next;
-            return expr;
+            return currentExpr;
         }
 
         if (currentToken is ValueToken valueToken)
