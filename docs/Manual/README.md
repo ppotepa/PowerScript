@@ -192,7 +192,7 @@ Essential reading:
 All code examples in this manual are tested and verified. They can be run directly with the PowerScript compiler:
 
 ```bash
-ppotepa.tokenez.exe example.ps
+powerscript.exe example.ps
 ```
 
 ---

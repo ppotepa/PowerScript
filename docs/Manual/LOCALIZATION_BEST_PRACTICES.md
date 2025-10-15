@@ -85,7 +85,7 @@ MessageKeys.Shell.  // <- IntelliSense shows: Banner, Welcome, History
   <EmbeddedResource Update="Resources\Messages.resx">
     <Generator>ResXFileCodeGenerator</Generator>
     <LastGenOutput>Messages.Designer.cs</LastGenOutput>
-    <CustomToolNamespace>ppotepa.tokenez.Resources</CustomToolNamespace>
+    <CustomToolNamespace>PowerScript.Resources</CustomToolNamespace>
   </EmbeddedResource>
 </ItemGroup>
 ```
@@ -95,7 +95,7 @@ MessageKeys.Shell.  // <- IntelliSense shows: Banner, Welcome, History
 3. **Generated `Messages.Designer.cs`:**
 
 ```csharp
-namespace ppotepa.tokenez.Resources
+namespace PowerScript.Resources
 {
     [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     internal class Messages
@@ -112,7 +112,7 @@ namespace ppotepa.tokenez.Resources
 ### **Usage:**
 
 ```csharp
-using ppotepa.tokenez.Resources;
+using PowerScript.Resources;
 
 // Direct access - compile-time safe!
 string message = Messages.App_Welcome;

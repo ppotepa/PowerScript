@@ -309,14 +309,14 @@ FUNCTION divide(INT a, INT b)[INT] {
 ### Running PowerScript
 ```bash
 # Execute a script
-ppotepa.tokenez.exe script.ps
+powerscript.exe script.ps
 
 # Build project
 dotnet build
 
 # Run from output directory
 cd bin/Debug/net8.0
-ppotepa.tokenez.exe script.ps
+powerscript.exe script.ps
 ```
 
 ---

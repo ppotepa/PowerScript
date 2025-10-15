@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PowerScript.Compiler</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PowerScript.Core\PowerScript.Core.csproj" />
+    <ProjectReference Include="..\PowerScript.Parser\PowerScript.Parser.csproj" />
+    <ProjectReference Include="..\PowerScript.Common\PowerScript.Common.csproj" />
+  </ItemGroup>
+
+</Project>

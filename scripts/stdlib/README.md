@@ -4,7 +4,7 @@
 The `Libs` folder contains PowerScript library files that are always copied to the output directory.
 
 ## Location
-- **Source**: `ppotepa.tokenez/Libs/`
+- **Source**: `PowerScript/Libs/`
 - **Output**: `bin/Debug/net8.0/Libs/` (and `bin/Release/net8.0/Libs/`)
 
 ## Configuration
@@ -48,7 +48,7 @@ PRINT x
 Test files are configured to automatically link StdLib.ps:
 
 ```csharp
-var stdLibPath = Path.Combine("..", "..", "..", "..", "ppotepa.tokenez", "Libs", "StdLib.ps");
+var stdLibPath = Path.Combine("..", "..", "..", "..", "PowerScript", "Libs", "StdLib.ps");
 if (File.Exists(stdLibPath))
 {
     _interpreter.LinkLibrary(stdLibPath);

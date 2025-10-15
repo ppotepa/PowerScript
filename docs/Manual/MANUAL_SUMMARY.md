@@ -226,10 +226,10 @@ Manual/
 ## 📍 Location
 
 **Full Path:**  
-`d:\git\ppotepa\tokenez\tokenez\Manual\`
+`d:\git\ppotepa\powerscript\powerscript\Manual\`
 
 **Repository:**  
-`ppotepa/tokenez` - Main branch
+`ppotepa/powerscript` - Main branch
 
 ---
 
