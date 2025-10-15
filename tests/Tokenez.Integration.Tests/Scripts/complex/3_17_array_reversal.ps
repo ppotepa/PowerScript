@@ -1,0 +1,13 @@
+FLEX arr = [1, 2, 3, 4, 5]
+FLEX len = 5
+FLEX i = 0
+
+CYCLE len / 2 {
+    FLEX temp = arr[i]
+    FLEX arr[i] = arr[len - i - 1]
+    FLEX arr[len - i - 1] = temp
+    FLEX i = i + 1
+}
+
+PRINT arr[0]
+PRINT arr[4]

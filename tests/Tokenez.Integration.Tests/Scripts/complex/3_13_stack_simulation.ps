@@ -1,0 +1,14 @@
+FLEX stack = [0, 0, 0, 0, 0]
+FLEX top = 0
+
+// Push 3 values
+FLEX stack[top] = 10
+FLEX top = top + 1
+FLEX stack[top] = 20
+FLEX top = top + 1
+FLEX stack[top] = 30
+FLEX top = top + 1
+
+// Pop one value
+FLEX top = top - 1
+PRINT stack[top]

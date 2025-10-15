@@ -1,0 +1,8 @@
+FUNCTION gcd RETURNS NUMBER WITH a, b {
+    IF b == 0 {
+        RETURN a
+    }
+    RETURN gcd(b, a % b)
+}
+
+PRINT gcd(48, 18)

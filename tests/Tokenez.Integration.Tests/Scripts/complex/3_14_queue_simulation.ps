@@ -1,0 +1,15 @@
+FLEX queue = [0, 0, 0, 0, 0]
+FLEX front = 0
+FLEX rear = 0
+
+// Enqueue 3 values
+FLEX queue[rear] = 5
+FLEX rear = rear + 1
+FLEX queue[rear] = 10
+FLEX rear = rear + 1
+FLEX queue[rear] = 15
+FLEX rear = rear + 1
+
+// Dequeue one value
+PRINT queue[front]
+FLEX front = front + 1

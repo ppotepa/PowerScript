@@ -1,0 +1,15 @@
+FLEX found = 0
+FLEX target = 7
+FLEX i = 0
+
+CYCLE 20 {
+    IF i == target {
+        FLEX found = 1
+        PRINT "Found target"
+    }
+    FLEX i = i + 1
+}
+
+IF found == 1 {
+    PRINT "Search successful"
+}

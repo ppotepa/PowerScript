@@ -1,0 +1,17 @@
+FLEX n = 10
+FLEX steps = 0
+
+CYCLE 100 {
+    IF n == 1 {
+        PRINT steps
+        RETURN
+    }
+    
+    IF n % 2 == 0 {
+        FLEX n = n / 2
+    } ELSE {
+        FLEX n = n * 3 + 1
+    }
+    
+    FLEX steps = steps + 1
+}
