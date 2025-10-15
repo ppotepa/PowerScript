@@ -13,6 +13,8 @@ using Tokenez.Interpreter;
 using Tokenez.Interpreter.DotNet;
 using Tokenez.Interpreter.Interfaces;
 using Tokenez.Parser.Lexer;
+using Tokenez.Runtime;
+using Tokenez.Runtime.Interfaces;
 using Tokenez.Parser.Processors.Base;
 using Tokenez.Parser.Processors.ControlFlow;
 using Tokenez.Parser.Processors.Expressions;
@@ -206,15 +208,23 @@ public static class Program
         });
 
         // Transient services (new instance per request)
-        services.AddTransient<IPowerScriptInterpreter, PowerScriptInterpreter>();
 
-        services.AddTransient<IPowerScriptCompiler>(provider =>
+        // Register the new separated domain components
+        services.AddTransient<IPowerScriptCompilerNew>(provider =>
         {
-            ITokenProcessorRegistry reg = provider.GetRequiredService<ITokenProcessorRegistry>();
-            IDotNetLinker dotNetLinker = provider.GetRequiredService<IDotNetLinker>();
-            IScopeBuilder scopeBuilder = provider.GetRequiredService<IScopeBuilder>();
-            TokenTree tokenTree = new(reg, dotNetLinker, scopeBuilder);
-            return new PowerScriptCompiler(tokenTree);
+            var registry = provider.GetRequiredService<ITokenProcessorRegistry>();
+            var dotNetLinker = provider.GetRequiredService<IDotNetLinker>();
+            var scopeBuilder = provider.GetRequiredService<IScopeBuilder>();
+            return new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
+        });
+
+        services.AddTransient<IPowerScriptExecutor, PowerScriptExecutor>();
+
+        services.AddTransient<IPowerScriptInterpreter>(provider =>
+        {
+            var compiler = provider.GetRequiredService<IPowerScriptCompilerNew>();
+            var executor = provider.GetRequiredService<IPowerScriptExecutor>();
+            return new PowerScriptInterpreter(compiler, executor);
         });
         services.AddTransient<TokenTree>();
     }

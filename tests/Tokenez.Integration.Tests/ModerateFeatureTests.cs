@@ -1,5 +1,10 @@
 using NUnit.Framework;
+using Tokenez.Compiler;
 using Tokenez.Interpreter;
+using Tokenez.Interpreter.DotNet;
+using Tokenez.Parser.Processors.Base;
+using Tokenez.Parser.Processors.Scoping;
+using Tokenez.Runtime;
 
 namespace Tokenez.Integration.Tests;
 
@@ -11,15 +16,21 @@ public class ModerateFeatureTests
     [SetUp]
     public void Setup()
     {
-#pragma warning disable CS0618 // Type or member is obsolete
-        _interpreter = PowerScriptInterpreter.CreateNew();
-#pragma warning restore CS0618
+        // Initialize the new separated domains architecture
+        var registry = new TokenProcessorRegistry();
+        var dotNetLinker = new DotNetLinker();
+        var scopeBuilder = new ScopeBuilder(registry);
+
+        var compiler = new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
+        var executor = new PowerScriptExecutor();
+        _interpreter = new PowerScriptInterpreter(compiler, executor);
 
         // Link the standard library
         string stdLibPath = Path.Combine("..", "..", "scripts", "stdlib", "StdLib.ps");
         if (File.Exists(stdLibPath))
         {
-            _interpreter.LinkLibrary(stdLibPath);
+            // TODO: Update this to use the new executor's LinkLibrary method
+            // _interpreter.LinkLibrary(stdLibPath);
         }
 
         _output = new StringWriter();

@@ -1,303 +1,138 @@
-using System.Text;
-using Tokenez.Common.Logging;
-using Tokenez.Compiler;
-using Tokenez.Core.DotNet;
-using Tokenez.Interpreter.DotNet;
+using Tokenez.Compiler.Interfaces;
+using Tokenez.Compiler.Models;
 using Tokenez.Interpreter.Interfaces;
-using Tokenez.Parser.Lexer;
-using Tokenez.Parser.Processors.Base;
-using Tokenez.Parser.Processors.ControlFlow;
-using Tokenez.Parser.Processors.Expressions;
-using Tokenez.Parser.Processors.Scoping;
-using Tokenez.Parser.Processors.Statements;
-using Tokenez.Parser.Prompt;
+using Tokenez.Runtime.Interfaces;
+using Tokenez.Runtime.Models;
 
 namespace Tokenez.Interpreter;
 
 /// <summary>
-///     Core interpreter for PowerScript language that handles script execution.
-///     Can execute code from strings or files, maintaining a global execution context.
+/// New PowerScript interpreter that separates compilation and execution domains.
+/// This class orchestrates both the compiler and executor components.
 /// </summary>
 public class PowerScriptInterpreter : IPowerScriptInterpreter
 {
-    private readonly Dictionary<string, TokenTree> _compiledScripts = [];
-    private readonly IDotNetLinker _dotNetLinker;
-    private readonly List<string> _linkedLibraries = [];
+    private readonly IPowerScriptCompilerNew _compiler;
+    private readonly IPowerScriptExecutor _executor;
+    private readonly Dictionary<string, CompilationResult> _compilationCache = [];
 
-    private readonly ITokenProcessorRegistry _registry;
-    private readonly IScopeBuilder _scopeBuilder;
-    private string? _linkedLibraryCode;
-
-    /// <summary>
-    ///     Initializes a new PowerScriptInterpreter with dependency injection.
-    /// </summary>
     public PowerScriptInterpreter(
-        ITokenProcessorRegistry registry,
-        IDotNetLinker dotNetLinker,
-        IScopeBuilder scopeBuilder)
+        IPowerScriptCompilerNew compiler,
+        IPowerScriptExecutor executor)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _dotNetLinker = dotNetLinker ?? throw new ArgumentNullException(nameof(dotNetLinker));
-        _scopeBuilder = scopeBuilder ?? throw new ArgumentNullException(nameof(scopeBuilder));
+        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
     }
 
     /// <summary>
-    ///     Links a library file to be included with all script executions.
+    /// Executes PowerScript code from a string.
     /// </summary>
-    /// <param name="libraryPath">Path to the library .ps file</param>
-    public void LinkLibrary(string libraryPath)
-    {
-        string fullPath = ResolveFilePath(libraryPath);
-
-        if (!File.Exists(fullPath))
-        {
-            throw new FileNotFoundException($"Library file not found: {fullPath}");
-        }
-
-        if (!_linkedLibraries.Contains(fullPath))
-        {
-            _linkedLibraries.Add(fullPath);
-            // Reload library code
-            ReloadLibraries();
-        }
-    }
-
-    /// <summary>
-    ///     Executes PowerScript code directly from a string.
-    /// </summary>
-    /// <param name="code">The PowerScript source code to execute</param>
-    /// <returns>Execution result (if any)</returns>
     public object? ExecuteCode(string code)
     {
-        try
+        if (string.IsNullOrWhiteSpace(code))
         {
-            LoggerService.Logger.Info("Executing PowerScript code...");
+            throw new ArgumentException("Code cannot be null or empty", nameof(code));
+        }
 
-            // Preprocess: expand LINK "file.ps" statements
-            string expandedCode = ExpandLinkStatements(code);
+        // Check cache first (simple string-based caching)
+        string cacheKey = code.GetHashCode().ToString();
+        if (!_compilationCache.TryGetValue(cacheKey, out CompilationResult? compilationResult))
+        {
+            // Compile the code
+            compilationResult = _compiler.Compile(code);
 
-            // Combine library code with script code
-            string fullCode = expandedCode;
-            if (_linkedLibraryCode != null)
+            if (compilationResult.IsSuccess)
             {
-                fullCode = _linkedLibraryCode + "\n" + expandedCode;
+                _compilationCache[cacheKey] = compilationResult;
             }
-
-            // Create prompt and build token tree
-            UserPrompt prompt = new(fullCode);
-            TokenTree tree = new TokenTree(_registry, _dotNetLinker, _scopeBuilder).Create(prompt);
-
-            // Compile and execute
-            PowerScriptCompiler compiler = new(tree);
-            compiler.CompileAndExecute();
-
-            return null;
         }
-        catch (Exception ex)
+
+        if (!compilationResult.IsSuccess)
         {
-            LoggerService.Logger.Error($"Execution error: {ex.Message}");
-            LoggerService.Logger.Error($"Stack trace: {ex.StackTrace}");
-            throw;
+            throw new InvalidOperationException($"Compilation failed: {string.Join(", ", compilationResult.Errors)}");
         }
+
+        // Execute the compiled code
+        ExecutionResult executionResult = _executor.Execute(compilationResult);
+
+        return !executionResult.IsSuccess
+            ? throw new InvalidOperationException($"Execution failed: {string.Join(", ", executionResult.Errors)}")
+            : executionResult.ReturnValue;
     }
 
     /// <summary>
-    ///     Executes a PowerScript file.
+    /// Executes a PowerScript file.
     /// </summary>
-    /// <param name="filePath">Path to the .ps script file</param>
-    /// <returns>Execution result (if any)</returns>
     public object? ExecuteFile(string filePath)
     {
-        try
+        if (string.IsNullOrWhiteSpace(filePath))
         {
-            // Resolve the file path
-            string fullPath = ResolveFilePath(filePath);
+            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        }
 
-            if (!File.Exists(fullPath))
+        // Check cache first (file-based caching)
+        string cacheKey = Path.GetFullPath(filePath);
+        if (!_compilationCache.TryGetValue(cacheKey, out CompilationResult? compilationResult))
+        {
+            // Compile the file
+            compilationResult = _compiler.CompileFile(filePath);
+
+            if (compilationResult.IsSuccess)
             {
-                throw new FileNotFoundException($"Script file not found: {fullPath}");
+                _compilationCache[cacheKey] = compilationResult;
             }
-
-            // Read the file content
-            string code = File.ReadAllText(fullPath);
-
-            LoggerService.Logger.Info("");
-            LoggerService.Logger.Info("╔════════════════════════════════════════╗");
-            LoggerService.Logger.Info($"║  EXECUTING SCRIPT: {Path.GetFileName(fullPath),-20} ║");
-            LoggerService.Logger.Info("╚════════════════════════════════════════╝");
-
-            // Execute the code
-            return ExecuteCode(code);
         }
-        catch (FileNotFoundException ex)
+
+        if (!compilationResult.IsSuccess)
         {
-            LoggerService.Logger.Error($"File not found: {ex.Message}");
-            return null;
+            throw new InvalidOperationException($"Compilation failed: {string.Join(", ", compilationResult.Errors)}");
         }
-        catch (Exception ex)
-        {
-            LoggerService.Logger.Error($"Error executing file {filePath}: {ex.Message}");
-            return null;
-        }
+
+        // Execute the compiled code
+        ExecutionResult executionResult = _executor.Execute(compilationResult);
+
+        return !executionResult.IsSuccess
+            ? throw new InvalidOperationException($"Execution failed: {string.Join(", ", executionResult.Errors)}")
+            : executionResult.ReturnValue;
     }
 
     /// <summary>
-    ///     Reloads all linked libraries into a single code string.
+    /// Links a library file to make its functions available.
     /// </summary>
-    private void ReloadLibraries()
+    public void LinkLibrary(string libraryPath)
     {
-        if (_linkedLibraries.Count == 0)
-        {
-            _linkedLibraryCode = null;
-            return;
-        }
-
-        StringBuilder libraryCode = new();
-        foreach (string libPath in _linkedLibraries)
-        {
-            libraryCode.AppendLine($"// Linked library: {Path.GetFileName(libPath)}");
-            libraryCode.AppendLine(File.ReadAllText(libPath));
-            libraryCode.AppendLine();
-        }
-
-        _linkedLibraryCode = libraryCode.ToString();
+        _executor.LinkLibrary(libraryPath);
     }
 
     /// <summary>
-    ///     Resolves a file path, checking current directory and relative paths.
+    /// Compiles code without executing it.
     /// </summary>
-    private string ResolveFilePath(string filePath)
+    public CompilationResult CompileOnly(string code, string? sourceFile = null)
     {
-        // If the path is already absolute and exists, return it
-        if (Path.IsPathRooted(filePath) && File.Exists(filePath))
-        {
-            return filePath;
-        }
-
-        // Try relative to current directory
-        string currentDirPath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-        if (File.Exists(currentDirPath))
-        {
-            return currentDirPath;
-        }
-
-        // Return the original path (will fail if not found)
-        return filePath;
+        return _compiler.Compile(code, sourceFile);
     }
 
     /// <summary>
-    ///     Expands LINK "file.ps" statements by replacing them with the file content.
-    ///     Recursively processes nested LINK statements.
+    /// Executes previously compiled code.
     /// </summary>
-    private string ExpandLinkStatements(string code)
+    public ExecutionResult ExecuteOnly(CompilationResult compilationResult)
     {
-        LoggerService.Logger.Debug("Starting file expansion preprocessing...");
-
-        HashSet<string> linkedFiles = []; // Track to prevent circular references
-        string result = ExpandLinkStatementsRecursive(code, linkedFiles);
-
-        LoggerService.Logger.Debug($"File expansion completed. Linked {linkedFiles.Count} file(s).");
-
-        return result;
-    }
-
-    private string ExpandLinkStatementsRecursive(string code, HashSet<string> linkedFiles)
-    {
-        string[] lines = code.Split('\n');
-        StringBuilder result = new();
-
-        foreach (string line in lines)
-        {
-            string trimmed = line.Trim();
-
-            // Check if this is a LINK statement with a file path (string literal)
-            if (trimmed.StartsWith("LINK", StringComparison.OrdinalIgnoreCase) && trimmed.Contains("\""))
-            {
-                try
-                {
-                    // Extract the file path from the quotes
-                    int firstQuote = trimmed.IndexOf('"');
-                    int lastQuote = trimmed.LastIndexOf('"');
-
-                    if (firstQuote >= 0 && lastQuote > firstQuote)
-                    {
-                        string filePath = trimmed.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
-                        string resolvedPath = ResolveFilePath(filePath);
-
-                        // Check for circular references
-                        if (linkedFiles.Contains(resolvedPath))
-                        {
-                            LoggerService.Logger.Warning($"Skipping already linked file: {filePath}");
-                            result.AppendLine($"// {line} (already linked)");
-                            continue;
-                        }
-
-                        if (!File.Exists(resolvedPath))
-                        {
-                            LoggerService.Logger.Error($"File not found: {filePath} (resolved to: {resolvedPath})");
-                            result.AppendLine(line); // Keep original line
-                            continue;
-                        }
-
-                        linkedFiles.Add(resolvedPath);
-
-                        LoggerService.Logger.Success($"Expanding file: {filePath}");
-
-                        // Read the file content
-                        string fileContent = File.ReadAllText(resolvedPath);
-
-                        // Recursively expand any LINK statements in the linked file
-                        string expandedContent = ExpandLinkStatementsRecursive(fileContent, linkedFiles);
-
-                        // Add a comment to show what was linked
-                        result.AppendLine($"// === Linked from: {filePath} ===");
-                        result.AppendLine(expandedContent);
-                        result.AppendLine($"// === End of: {filePath} ===");
-                        continue;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LoggerService.Logger.Error($"Error processing LINK statement: {ex.Message}");
-                    result.AppendLine(line); // Keep original line on error
-                    continue;
-                }
-            }
-
-            // Not a file LINK statement, keep the line as-is
-            result.AppendLine(line);
-        }
-
-        return result.ToString();
+        return _executor.Execute(compilationResult);
     }
 
     /// <summary>
-    ///     Creates a new interpreter instance (deprecated - use DI instead).
-    ///     This method is kept for backward compatibility but creates dependencies manually.
+    /// Gets the current execution context.
     /// </summary>
-    [Obsolete("Use dependency injection instead. This method creates dependencies manually.")]
-    public static PowerScriptInterpreter CreateNew()
+    public IExecutionContext GetExecutionContext()
     {
-        // Create dependencies manually for backward compatibility
-        TokenProcessorRegistry registry = new();
-        DotNetLinker dotNetLinker = new();
-        ScopeBuilder scopeBuilder = new(registry);
+        return _executor.GetExecutionContext();
+    }
 
-        // Register all processors
-        ParameterProcessor parameterProcessor = new();
-        registry.Register(new FunctionProcessor(parameterProcessor));
-        registry.Register(new FunctionCallProcessor());
-        // registry.Register(new LinkStatementProcessor(dotNetLinker)); // TODO: Re-implement
-        registry.Register(new FlexVariableProcessor());
-        registry.Register(new CycleLoopProcessor(scopeBuilder));
-        registry.Register(new IfStatementProcessor(scopeBuilder));
-        registry.Register(new ReturnStatementProcessor());
-        registry.Register(new PrintStatementProcessor());
-        registry.Register(new ExecuteCommandProcessor());
-        registry.Register(new NetMethodCallProcessor());
-        registry.Register(new VariableDeclarationProcessor());
-        registry.Register(new ScopeProcessor(registry, scopeBuilder));
-
-        return new PowerScriptInterpreter(registry, dotNetLinker, scopeBuilder);
+    /// <summary>
+    /// Clears the compilation cache.
+    /// </summary>
+    public void ClearCache()
+    {
+        _compilationCache.Clear();
     }
 }

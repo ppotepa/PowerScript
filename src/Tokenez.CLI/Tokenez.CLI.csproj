@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Tokenez.Core\Tokenez.Core.csproj" />
     <ProjectReference Include="..\Tokenez.Parser\Tokenez.Parser.csproj" />
     <ProjectReference Include="..\Tokenez.Compiler\Tokenez.Compiler.csproj" />
+    <ProjectReference Include="..\Tokenez.Runtime\Tokenez.Runtime.csproj" />
     <ProjectReference Include="..\Tokenez.Interpreter\Tokenez.Interpreter.csproj" />
     <ProjectReference Include="..\Tokenez.Common\Tokenez.Common.csproj" />
   </ItemGroup>
