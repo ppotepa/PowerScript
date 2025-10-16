@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX count = 0
 CYCLE 20 AS i {
     FLEX num = i + 1
@@ -5,4 +8,4 @@ CYCLE 20 AS i {
         FLEX count = count + 1
     }
 }
-PRINT count
+PRINT(count)

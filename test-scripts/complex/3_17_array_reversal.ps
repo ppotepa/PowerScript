@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FLEX arr = [1, 2, 3, 4, 5]
 FLEX len = 5
 FLEX i = 0
@@ -9,5 +11,5 @@ CYCLE len / 2 {
     FLEX i = i + 1
 }
 
-PRINT arr[0]
-PRINT arr[4]
+PRINT(arr[0])
+PRINT(arr[4])

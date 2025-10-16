@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FUNCTION power(INT base, INT exp)[INT] {
     IF exp == 0 {
         RETURN 1
@@ -11,4 +13,4 @@ FUNCTION power(INT base, INT exp)[INT] {
     RETURN result
 }
 
-PRINT power(2, 8)
+PRINT(power(2, 8))

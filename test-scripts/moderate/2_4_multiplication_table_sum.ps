@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX total = 0
 CYCLE 4 AS row {
     FLEX r = row + 1
@@ -7,4 +10,4 @@ CYCLE 4 AS row {
         FLEX total = total + product
     }
 }
-PRINT total
+PRINT(total)

@@ -1,19 +1,22 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX n = 8
 FLEX a = 0
 FLEX b = 1
 FLEX result = 0
 IF n == 0 {
-    FLEX result = 0
+    result = 0
 } ELSE {
     IF n == 1 {
-        FLEX result = 1
+        result = 1
     } ELSE {
         CYCLE 6 AS i {
             FLEX next = a + b
-            FLEX a = b
-            FLEX b = next
-            FLEX result = next
+            a = b
+            b = next
+            result = next
         }
     }
 }
-PRINT result
+PRINT(result)

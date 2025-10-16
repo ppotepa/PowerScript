@@ -10,6 +10,7 @@ using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
+using PowerScript.Parser.Processors.Expressions;
 
 namespace PowerScript.Parser.Processors.Statements;
 
@@ -87,32 +88,17 @@ public class VariableDeclarationProcessor : ITokenProcessor
 
         // Parse the initial value expression
         Expression initialValue;
-
+        
+        // Special case: array literals must use dedicated parser since ExpressionParser doesn't handle them yet
         if (currentToken is BracketOpen)
         {
-            // Array literal: [1, 2, 3] or nested: [[1, 2], [3, 4]]
             initialValue = ParseArrayLiteral(ref currentToken);
-        }
-        else         if (currentToken is ValueToken valueToken)
-        {
-            initialValue = new LiteralExpression(valueToken);
-            currentToken = valueToken.Next!;
-        }
-        else if (currentToken is StringLiteralToken stringToken)
-        {
-            initialValue = new StringLiteralExpression(stringToken);
-            currentToken = stringToken.Next!;
-        }
-        else if (currentToken is IdentifierToken idToken)
-        {
-            // Could be a variable reference or function call
-            initialValue = new IdentifierExpression(idToken);
-            currentToken = idToken.Next!;
         }
         else
         {
-            throw new InvalidOperationException(
-                $"Expected value, string, identifier, or array literal after '=' in variable declaration, found {currentToken.GetType().Name}");
+            // Use ExpressionParser for all other expressions (binary ops, function calls, etc.)
+            var parser = new ExpressionParser();
+            initialValue = parser.Parse(ref currentToken);
         }
 
         // Create the variable declaration
@@ -223,5 +209,25 @@ public class VariableDeclarationProcessor : ITokenProcessor
 
         token = token.Next; // Move past ']'
         return new ArrayLiteralExpression(elements);
+    }
+
+    /// <summary>
+    ///     Parses a function call expression: FUNCTION_NAME(arg1, arg2, ...)
+    /// </summary>
+    private static FunctionCallExpression ParseFunctionCall(IdentifierToken functionNameToken, out Token nextToken)
+    {
+        // Use ExpressionParser to handle the function call which supports nested calls and complex expressions
+        var parser = new ExpressionParser();
+        Token currentToken = functionNameToken;
+        var expression = parser.Parse(ref currentToken);
+
+        nextToken = currentToken;
+
+        if (expression is not FunctionCallExpression funcCall)
+        {
+            throw new InvalidOperationException($"Expected function call expression but got {expression.GetType().Name}");
+        }
+
+        return funcCall;
     }
 }

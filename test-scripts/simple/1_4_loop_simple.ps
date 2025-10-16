@@ -1,5 +1,8 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX sum = 0
 CYCLE 5 AS i {
     FLEX sum = sum + 1
 }
-PRINT sum
+PRINT(sum)

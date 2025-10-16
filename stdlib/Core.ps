@@ -1,0 +1,121 @@
+// Core.ps - Essential basic operations for PowerScript
+// Provides fundamental math and comparison operations
+
+// ============================================================================
+// BASIC ARITHMETIC
+// ============================================================================
+
+FUNCTION ADD(INT a, INT b)[INT] {
+    RETURN a + b
+}
+
+FUNCTION SUB(INT a, INT b)[INT] {
+    RETURN a - b
+}
+
+FUNCTION MULT(INT a, INT b)[INT] {
+    RETURN a * b
+}
+
+FUNCTION DIV(INT a, INT b)[INT] {
+    RETURN a / b
+}
+
+FUNCTION MOD(INT a, INT b)[INT] {
+    RETURN a % b
+}
+
+// ============================================================================
+// COMPARISON OPERATIONS
+// ============================================================================
+
+FUNCTION EQUALS(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a == b) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION NOT_EQUALS(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a != b) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION GREATER_THAN(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a > b) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION LESS_THAN(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a < b) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION GREATER_THAN_OR_EQUAL(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a >= b) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION LESS_THAN_OR_EQUAL(INT a, INT b)[INT] {
+    FLEX result = 0
+    IF (a <= b) {
+        result = 1
+    }
+    RETURN result
+}
+
+// ============================================================================
+// MIN/MAX OPERATIONS
+// ============================================================================
+
+FUNCTION MAX(INT a, INT b)[INT] {
+    FLEX result = a
+    IF (b > a) {
+        result = b
+    }
+    RETURN result
+}
+
+FUNCTION MIN(INT a, INT b)[INT] {
+    FLEX result = a
+    IF (b < a) {
+        result = b
+    }
+    RETURN result
+}
+
+// ============================================================================
+// SIGN AND ABSOLUTE VALUE
+// ============================================================================
+
+FUNCTION ABS(INT n)[INT] {
+    FLEX result = n
+    IF (n < 0) {
+        result = 0 - n
+    }
+    RETURN result
+}
+
+FUNCTION SIGN(INT n)[INT] {
+    FLEX result = 0
+    IF (n > 0) {
+        result = 1
+    }
+    IF (n < 0) {
+        result = 0 - 1
+    }
+    RETURN result
+}

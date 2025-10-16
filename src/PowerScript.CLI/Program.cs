@@ -195,14 +195,17 @@ public static class Program
                 // Order matters: more specific processors should come first
                 reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
                 reg.Register(new FunctionProcessor(parameterProcessor));
-                reg.Register(new FunctionCallProcessor());
-                // TODO: LinkStatementProcessor not yet migrated to new structure
-                // reg.Register(new LinkStatementProcessor(dotNetLinker));
+                reg.Register(new NetMemberAccessStatementProcessor()); // Console -> WriteLine(42)
+                reg.Register(new LinkStatementProcessor()); // LINK System or LINK "file.ps"
                 reg.Register(new FlexVariableProcessor());
+                reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
+                reg.Register(new VariableAssignmentProcessor()); // identifier = value
                 reg.Register(new CycleLoopProcessor(scopeBuilder));
                 reg.Register(new IfStatementProcessor(scopeBuilder));
                 reg.Register(new ReturnStatementProcessor());
-                reg.Register(new PrintStatementProcessor());
+                reg.Register(new PrintStatementProcessor()); // PRINT statement - MUST come before FunctionCallStatementProcessor
+                reg.Register(new FunctionCallStatementProcessor()); // Single-param: PRINT x, Multi-param: FUNC(a,b) - MUST come before FunctionCallProcessor
+                reg.Register(new FunctionCallProcessor()); // Legacy processor - kept for backwards compatibility
                 reg.Register(new ExecuteCommandProcessor());
                 reg.Register(new NetMethodCallProcessor());
                 reg.Register(new VariableDeclarationProcessor()); // VAR

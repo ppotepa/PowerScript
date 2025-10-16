@@ -5,8 +5,10 @@ using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
+using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
 
@@ -100,26 +102,185 @@ public class StaticTypeVariableProcessor : ITokenProcessor
         // Parse the initial value expression
         Expression initialValue;
 
-        if (currentToken is ValueToken valueToken)
+        if (currentToken is ChainToken chainToken)
         {
-            initialValue = new LiteralExpression(valueToken);
-            currentToken = valueToken.Next!;
-        }
-        else if (currentToken is StringLiteralToken stringToken)
-        {
-            initialValue = new StringLiteralExpression(stringToken);
-            currentToken = stringToken.Next!;
-        }
-        else if (currentToken is IdentifierToken idToken)
-        {
-            // Could be a variable reference or function call
-            initialValue = new IdentifierExpression(idToken);
-            currentToken = idToken.Next!;
+            // Handle CHAIN syntax for arrays
+            // Two forms:
+            // 1. CHAIN OF [value1, value2, ...]  (array literal)
+            // 2. CHAIN size WITH value1, value2, ...  (sized array with initial values)
+
+            currentToken = chainToken.Next!;
+
+            if (currentToken is OfKeywordToken)
+            {
+                // CHAIN OF [...]  - array literal
+                currentToken = currentToken.Next!;
+
+                if (currentToken is not BracketOpen)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected '[' after 'CHAIN OF', found {currentToken.GetType().Name}");
+                }
+
+                currentToken = currentToken.Next!; // Move past '['
+
+                List<Expression> elements = new();
+
+                // Parse comma-separated values
+                while (currentToken != null && currentToken is not BracketClosed)
+                {
+                    if (currentToken is ValueToken vt)
+                    {
+                        elements.Add(new LiteralExpression(vt));
+                        currentToken = vt.Next!;
+                    }
+                    else if (currentToken is IdentifierToken it)
+                    {
+                        elements.Add(new IdentifierExpression(it));
+                        currentToken = it.Next!;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            $"Expected value or identifier in array literal, found {currentToken.GetType().Name}");
+                    }
+
+                    // Check for comma or end of array
+                    if (currentToken is CommaToken)
+                    {
+                        currentToken = currentToken.Next!; // Skip comma
+                    }
+                    else if (currentToken is not BracketClosed)
+                    {
+                        throw new InvalidOperationException(
+                            $"Expected ',' or ']' in array literal, found {currentToken.GetType().Name}");
+                    }
+                }
+
+                if (currentToken is not BracketClosed)
+                {
+                    throw new InvalidOperationException("Expected ']' to close array literal");
+                }
+
+                currentToken = currentToken.Next!; // Move past ']'
+
+                initialValue = new ArrayLiteralExpression(elements);
+            }
+            else if (currentToken is ValueToken sizeToken)
+            {
+                // Could be CHAIN size or CHAIN size WITH values
+                Expression sizeExpression = new LiteralExpression(sizeToken);
+                currentToken = sizeToken.Next!;
+
+                if (currentToken is WithKeywordToken)
+                {
+                    // CHAIN size WITH value1, value2, ...
+                    currentToken = currentToken.Next!; // Move past WITH
+
+                    List<Expression> initialValues = new();
+
+                    // Parse comma-separated values
+                    while (currentToken != null)
+                    {
+                        if (currentToken is ValueToken vt)
+                        {
+                            initialValues.Add(new LiteralExpression(vt));
+                            currentToken = vt.Next!;
+                        }
+                        else if (currentToken is IdentifierToken it)
+                        {
+                            initialValues.Add(new IdentifierExpression(it));
+                            currentToken = it.Next!;
+                        }
+                        else
+                        {
+                            // End of value list
+                            break;
+                        }
+
+                        // Check for comma to continue
+                        if (currentToken is CommaToken)
+                        {
+                            currentToken = currentToken.Next!; // Skip comma
+                        }
+                        else
+                        {
+                            // No more values
+                            break;
+                        }
+                    }
+
+                    initialValue = new ArrayLiteralExpression(initialValues);
+                }
+                else
+                {
+                    // CHAIN size (create empty array of given size)
+                    initialValue = new ArrayCreationExpression(sizeExpression);
+                }
+            }
+            else if (currentToken is IdentifierToken sizeIdentifier)
+            {
+                // CHAIN variableName - create array with size from variable
+                Expression sizeExpression = new IdentifierExpression(sizeIdentifier);
+                currentToken = sizeIdentifier.Next!;
+
+                if (currentToken is WithKeywordToken)
+                {
+                    // CHAIN size WITH value1, value2, ...
+                    currentToken = currentToken.Next!; // Move past WITH
+
+                    List<Expression> initialValues = new();
+
+                    // Parse comma-separated values
+                    while (currentToken != null)
+                    {
+                        if (currentToken is ValueToken vt)
+                        {
+                            initialValues.Add(new LiteralExpression(vt));
+                            currentToken = vt.Next!;
+                        }
+                        else if (currentToken is IdentifierToken it)
+                        {
+                            initialValues.Add(new IdentifierExpression(it));
+                            currentToken = it.Next!;
+                        }
+                        else
+                        {
+                            // End of value list
+                            break;
+                        }
+
+                        // Check for comma to continue
+                        if (currentToken is CommaToken)
+                        {
+                            currentToken = currentToken.Next!; // Skip comma
+                        }
+                        else
+                        {
+                            // No more values
+                            break;
+                        }
+                    }
+
+                    initialValue = new ArrayLiteralExpression(initialValues);
+                }
+                else
+                {
+                    initialValue = new ArrayCreationExpression(sizeExpression);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Expected 'OF', size value, or size identifier after 'CHAIN', found {currentToken.GetType().Name}");
+            }
         }
         else
         {
-            throw new InvalidOperationException(
-                $"Expected value, string, or identifier after '=' in variable declaration, found {currentToken.GetType().Name}");
+            // For any other token type, use ExpressionParser to handle the complete expression
+            // This includes: simple values, identifiers, binary operations, function calls, etc.
+            var parser = new ExpressionParser();
+            initialValue = parser.Parse(ref currentToken);
         }
 
         // Create the variable declaration with explicit type and optional bit width
@@ -140,6 +301,122 @@ public class StaticTypeVariableProcessor : ITokenProcessor
         LoggerService.Logger.Success(
             $"[StaticTypeVariableProcessor] Registered {typeSpec} variable '{variableName}' in scope '{context.CurrentScope.ScopeName}'");
 
+        if (currentToken == null)
+        {
+            throw new InvalidOperationException($"Unexpected end of tokens after variable declaration '{variableName}'");
+        }
+
         return TokenProcessingResult.Continue(currentToken);
+    }
+
+    /// <summary>
+    ///     Parses function call arguments from opening parenthesis to closing parenthesis.
+    ///     Returns the list of argument expressions and the token after the closing parenthesis.
+    /// </summary>
+    private static (List<Expression> Arguments, Token? NextToken) ParseFunctionArguments(Token openParenToken)
+    {
+        List<Expression> arguments = new();
+        Token? currentToken = openParenToken.Next; // Start after '('
+
+        // Handle empty argument list
+        if (currentToken is ParenthesisClosed)
+        {
+            return (arguments, currentToken.Next);
+        }
+
+        // Parse comma-separated arguments
+        while (currentToken != null && currentToken is not ParenthesisClosed)
+        {
+            // Collect tokens for this argument until we hit a comma or closing paren
+            List<Token> argumentTokens = new();
+            int parenDepth = 0;
+
+            while (currentToken != null)
+            {
+                // Track parenthesis depth for nested expressions
+                if (currentToken is ParenthesisOpen)
+                {
+                    parenDepth++;
+                    argumentTokens.Add(currentToken);
+                    currentToken = currentToken.Next;
+                    continue;
+                }
+
+                if (currentToken is ParenthesisClosed)
+                {
+                    if (parenDepth == 0)
+                    {
+                        // End of argument list
+                        break;
+                    }
+                    parenDepth--;
+                    argumentTokens.Add(currentToken);
+                    currentToken = currentToken.Next;
+                    continue;
+                }
+
+                // Comma at depth 0 means end of this argument
+                if (currentToken is CommaToken && parenDepth == 0)
+                {
+                    currentToken = currentToken.Next; // Skip comma
+                    break;
+                }
+
+                argumentTokens.Add(currentToken);
+                currentToken = currentToken.Next;
+            }
+
+            // Build expression from collected tokens
+            if (argumentTokens.Count > 0)
+            {
+                Expression argExpr = BuildSimpleExpression(argumentTokens);
+                arguments.Add(argExpr);
+            }
+        }
+
+        // CurrentToken should now be at ParenthesisClosed
+        Token? nextToken = currentToken is ParenthesisClosed ? currentToken.Next : currentToken;
+        return (arguments, nextToken);
+    }
+
+    /// <summary>
+    ///     Builds a simple expression from a list of tokens.
+    ///     Supports literals, identifiers, and binary operations.
+    /// </summary>
+    private static Expression BuildSimpleExpression(List<Token> tokens)
+    {
+        if (tokens.Count == 0)
+        {
+            throw new InvalidOperationException("Cannot build expression from empty token list");
+        }
+
+        // Ensure tokens are properly linked
+        for (int i = 0; i < tokens.Count - 1; i++)
+        {
+            if (tokens[i].Next != tokens[i + 1])
+            {
+                tokens[i].Next = tokens[i + 1];
+            }
+        }
+
+        // Use the ExpressionParser to handle all expression parsing including nested function calls
+        var parser = new ExpressionParser();
+        Token currentToken = tokens[0];
+        var expression = parser.Parse(ref currentToken);
+        return expression;
+    }
+
+    private static FunctionCallExpression ParseFunctionCallExpression(IdentifierToken functionNameToken)
+    {
+        Token openParen = functionNameToken.Next;
+        var (arguments, _) = ParseFunctionArguments(openParen);
+
+        FunctionCallExpression funcCall = new FunctionCallExpression
+        {
+            FunctionName = functionNameToken
+        };
+        funcCall.Arguments.AddRange(arguments);
+
+        return funcCall;
     }
 }

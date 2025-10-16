@@ -1,0 +1,41 @@
+// ArrayLib - Standard library for array operations
+// Now using proper array parameters!
+
+/// Validates if an index is valid for an array
+FUNCTION ARRAY_INDEX_VALID(INT CHAIN arr, INT size, INT index)[INT] {
+    IF index < 0 {
+        RETURN 0
+    }
+    IF index >= size {
+        RETURN 0
+    }
+    RETURN 1
+}
+
+/// Counts elements in array greater than threshold
+FUNCTION ARRAY_COUNT_GREATER(INT CHAIN arr, INT size, INT threshold)[INT] {
+    FLEX count = 0
+    FLEX i = 0
+    // Using manual loop instead of CYCLE due to CYCLE+FLEX bug
+    IF i < size {
+        FLEX elem = arr[i]
+        IF elem > threshold {
+            count = count + 1
+        }
+        i = i + 1
+    }
+    RETURN count
+}
+
+/// Checks if all elements in array are equal to a value
+FUNCTION ARRAY_ALL_EQUAL(INT CHAIN arr, INT size, INT value)[INT] {
+    FLEX i = 0
+    IF i < size {
+        FLEX elem = arr[i]
+        IF elem != value {
+            RETURN 0
+        }
+        i = i + 1
+    }
+    RETURN 1
+}

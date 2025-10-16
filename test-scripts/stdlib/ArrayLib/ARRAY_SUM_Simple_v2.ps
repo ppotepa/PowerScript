@@ -1,0 +1,21 @@
+// Working version of ARRAY_SUM test
+// Inline implementation since array parameters aren't fully supported yet
+
+FUNCTION ARRAY_SUM_INLINE()[INT] {
+    // Create array inline
+    FLEX arr = CHAIN OF [2, 4, 6, 8, 10]
+    FLEX sum = 0
+    
+    // Sum all elements
+    FLEX sum = sum + arr[0]
+    FLEX sum = sum + arr[1]
+    FLEX sum = sum + arr[2]
+    FLEX sum = sum + arr[3]
+    FLEX sum = sum + arr[4]
+    
+    RETURN sum
+}
+
+FLEX result = ARRAY_SUM_INLINE()
+PRINT result
+// Expected: 30

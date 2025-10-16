@@ -1,0 +1,175 @@
+// Math.ps - Advanced mathematical operations for PowerScript
+// Provides power, factorial, primality testing, and number theory functions
+
+// NOTE: This library requires stdlib/Core.ps to be linked first
+// Required functions: MOD, MULT, DIV, ABS
+
+// ============================================================================
+// POWER AND ROOTS
+// ============================================================================
+
+FUNCTION POWER(INT base, INT exp)[INT] {
+    FLEX result = 1
+    FLEX counter = 0
+    
+    CYCLE WHILE (counter < exp) {
+        result = MULT(result, base)
+        counter = ADD(counter, 1)
+    }
+    
+    RETURN result
+}
+
+FUNCTION SQUARE(INT n)[INT] {
+    RETURN MULT(n, n)
+}
+
+FUNCTION CUBE(INT n)[INT] {
+    RETURN MULT(MULT(n, n), n)
+}
+
+// Integer square root using Newton's method
+FUNCTION SQRT(INT n)[INT] {
+    IF (n < 2) {
+        RETURN n
+    }
+    
+    FLEX x = DIV(n, 2)
+    FLEX prev = 0
+    FLEX iterations = 0
+    
+    CYCLE WHILE (iterations < 20) {
+        prev = x
+        FLEX temp = ADD(x, DIV(n, x))
+        x = DIV(temp, 2)
+        
+        FLEX diff = ABS(SUB(x, prev))
+        IF (diff < 2) {
+            RETURN x
+        }
+        
+        iterations = ADD(iterations, 1)
+    }
+    
+    RETURN x
+}
+
+// ============================================================================
+// FACTORIAL
+// ============================================================================
+
+FUNCTION FACTORIAL(INT n)[INT] {
+    IF (n < 2) {
+        RETURN 1
+    }
+    
+    FLEX result = 1
+    FLEX counter = 2
+    
+    CYCLE WHILE (counter <= n) {
+        result = MULT(result, counter)
+        counter = ADD(counter, 1)
+    }
+    
+    RETURN result
+}
+
+// ============================================================================
+// NUMBER PROPERTIES
+// ============================================================================
+
+FUNCTION IS_EVEN(INT n)[INT] {
+    FLEX remainder = MOD(n, 2)
+    FLEX result = 0
+    IF (remainder == 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_ODD(INT n)[INT] {
+    FLEX remainder = MOD(n, 2)
+    FLEX result = 0
+    IF (remainder != 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_PRIME(INT n)[INT] {
+    IF (n < 2) {
+        RETURN 0
+    }
+    
+    IF (n == 2) {
+        RETURN 1
+    }
+    
+    FLEX isEven = IS_EVEN(n)
+    IF (isEven == 1) {
+        RETURN 0
+    }
+    
+    FLEX divisor = 3
+    FLEX sqrtN = SQRT(n)
+    
+    CYCLE WHILE (divisor <= sqrtN) {
+        FLEX remainder = MOD(n, divisor)
+        IF (remainder == 0) {
+            RETURN 0
+        }
+        divisor = ADD(divisor, 2)
+    }
+    
+    RETURN 1
+}
+
+FUNCTION IS_POWER_OF_TWO(INT n)[INT] {
+    IF (n < 1) {
+        RETURN 0
+    }
+    
+    CYCLE WHILE (n > 1) {
+        FLEX remainder = MOD(n, 2)
+        IF (remainder != 0) {
+            RETURN 0
+        }
+        n = DIV(n, 2)
+    }
+    
+    RETURN 1
+}
+
+// ============================================================================
+// NUMBER THEORY - GCD AND LCM
+// ============================================================================
+
+FUNCTION GCD(INT a, INT b)[INT] {
+    FLEX absA = ABS(a)
+    FLEX absB = ABS(b)
+    
+    CYCLE WHILE (absB != 0) {
+        FLEX temp = absB
+        absB = MOD(absA, absB)
+        absA = temp
+    }
+    
+    RETURN absA
+}
+
+FUNCTION LCM(INT a, INT b)[INT] {
+    IF (a == 0) {
+        RETURN 0
+    }
+    IF (b == 0) {
+        RETURN 0
+    }
+    
+    FLEX absA = ABS(a)
+    FLEX absB = ABS(b)
+    FLEX gcd = GCD(absA, absB)
+    FLEX product = MULT(absA, absB)
+    FLEX result = DIV(product, gcd)
+    
+    RETURN result
+}

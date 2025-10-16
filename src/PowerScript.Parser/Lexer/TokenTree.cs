@@ -32,7 +32,7 @@ public partial class TokenTree
         { "RETURN", typeof(ReturnKeywordToken) }, // Return statement keyword
         { "RETURNS", typeof(ReturnsKeywordToken) }, // Returns keyword (alt syntax)
         { "WITH", typeof(WithKeywordToken) }, // With keyword (alt syntax)
-        { "PRINT", typeof(PrintKeywordToken) }, // Print statement keyword
+        // PRINT is now a stdlib function, not a keyword
         { "EXECUTE", typeof(ExecuteKeywordToken) }, // Execute script file keyword
         { "NET", typeof(NetKeywordToken) }, // .NET access keyword
         { "#", typeof(NetKeywordToken) }, // .NET access shorthand (# for C#)
@@ -41,6 +41,12 @@ public partial class TokenTree
         { "CYCLE", typeof(CycleKeywordToken) }, // Loop keyword (foreach equivalent)
         { "IN", typeof(InKeywordToken) }, // In keyword for loops
         { "AS", typeof(AsKeywordToken) }, // As keyword for renaming
+        { "WHILE", typeof(WhileKeywordToken) }, // While keyword for CYCLE WHILE loops
+        { "TO", typeof(ToKeywordToken) }, // To keyword for CYCLE range loops
+        { "FROM", typeof(FromKeywordToken) }, // From keyword for CYCLE RANGE FROM ... TO loops
+        { "ELEMENTS", typeof(ElementsKeywordToken) }, // Elements keyword for CYCLE ELEMENTS OF loops
+        { "RANGE", typeof(RangeKeywordToken) }, // Range keyword for CYCLE RANGE FROM ... TO loops
+        { "OF", typeof(OfKeywordToken) }, // Of keyword for array literals (CHAIN OF [...])
         { "IF", typeof(IfKeywordToken) }, // Conditional statement keyword
         { "ELSE", typeof(ElseKeywordToken) }, // Else block keyword
         { "AND", typeof(AndKeywordToken) }, // Logical AND operator
@@ -57,6 +63,7 @@ public partial class TokenTree
         { "]", typeof(BracketClosed) }, // Return type bracket close
         { ",", typeof(CommaToken) }, // Comma delimiter
         { "+", typeof(PlusToken) }, // Addition operator
+        { "->", typeof(ArrowToken) }, // Arrow operator for .NET member access
         { "-", typeof(MinusToken) }, // Subtraction operator
         { "*", typeof(MultiplyToken) }, // Multiplication operator
         { "/", typeof(DivideToken) }, // Division operator
@@ -215,7 +222,8 @@ public partial class TokenTree
                     // Check if it's a numeric literal
                     else if (IsNumericLiteral(rawToken.Text))
                     {
-                        targetType = typeof(ValueToken);
+                        // Use DecimalToken if it contains a decimal point, otherwise ValueToken for integers
+                        targetType = rawToken.Text.Contains('.') ? typeof(DecimalToken) : typeof(ValueToken);
                     }
                     else
                     {
@@ -228,9 +236,27 @@ public partial class TokenTree
         }
 
         // Create instance of the appropriate token type
-        if (Activator.CreateInstance(targetType, rawToken) is not Token token)
+        Token token;
+        
+        // Special handling for DecimalToken - parse the value at creation time
+        if (targetType == typeof(DecimalToken))
         {
-            throw new InvalidOperationException($"Failed to create token of type {targetType.Name}");
+            if (double.TryParse(rawToken.Text, out double decimalValue))
+            {
+                token = new DecimalToken(rawToken, decimalValue);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Failed to parse decimal value: {rawToken.Text}");
+            }
+        }
+        else
+        {
+            if (Activator.CreateInstance(targetType, rawToken) is not Token createdToken)
+            {
+                throw new InvalidOperationException($"Failed to create token of type {targetType.Name}");
+            }
+            token = createdToken;
         }
 
         LoggerService.Logger.Debug($"\t[{index}] {rawToken.Text} → {targetType.Name}");

@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX sum = 0
 FLEX product = 1
 CYCLE 5 AS i {
@@ -7,5 +10,5 @@ CYCLE 5 AS i {
         FLEX product = product * num
     }
 }
-PRINT sum
-PRINT product
+PRINT(sum)
+PRINT(product)

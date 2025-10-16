@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FLEX x = 10
 FLEX y = 20
 FLEX z = 15
@@ -5,7 +7,7 @@ FLEX z = 15
 IF x < y {
     IF z > x {
         IF z < y {
-            PRINT "z is between x and y"
+            PRINT("z is between x and y")
         }
     }
 }

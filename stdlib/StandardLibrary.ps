@@ -1,0 +1,47 @@
+// StandardLibrary.ps - Complete PowerScript Standard Library
+// Links all standard library modules for easy import
+
+LINK "Core.ps"
+LINK "Math.ps"
+LINK "String.ps"
+LINK "IO.ps"
+LINK "Validation.ps"
+
+// This file provides access to all standard library functions:
+//
+// CORE OPERATIONS (Core.ps):
+//   - Arithmetic: ADD, SUB, MULT, DIV, MOD
+//   - Comparison: EQUALS, NOT_EQUALS, GREATER_THAN, LESS_THAN, etc.
+//   - Min/Max: MAX, MIN
+//   - Sign: ABS, SIGN
+//
+// MATH OPERATIONS (Math.ps):
+//   - Power: POWER, SQUARE, CUBE, SQRT
+//   - Factorial: FACTORIAL
+//   - Properties: IS_EVEN, IS_ODD, IS_PRIME, IS_POWER_OF_TWO
+//   - Number Theory: GCD, LCM
+//
+// STRING OPERATIONS (String.ps):
+//   - Properties: STR_LENGTH, IS_EMPTY
+//   - Transform: STR_UPPER, STR_LOWER, STR_REVERSE, STR_TRIM
+//   - Search: STR_INDEX_OF, STR_CONTAINS, STR_STARTS_WITH, STR_ENDS_WITH
+//   - Manipulation: STR_SUBSTRING, STR_REPLACE, STR_REMOVE, STR_INSERT
+//   - Split/Join: STR_SPLIT, STR_JOIN
+//   - Padding: STR_PAD_LEFT, STR_PAD_RIGHT
+//   - Repeat: STR_REPEAT
+//   - Comparison: STR_COMPARE, STR_EQUALS
+//
+// I/O OPERATIONS (IO.ps):
+//   - Basic: OUT, OUTLN, OUT_NUM, OUT_STR
+//   - Special: NEWLINE, SPACE
+//   - Multi: OUT_MULTI, OUT_THREE
+//   - Labeled: PRINT_LABELED
+//   - Legacy: PRINT, PRINT_STRING, PRINT_INLINE, PRINT_INT, PRINT_LINE
+//
+// VALIDATION OPERATIONS (Validation.ps):
+//   - Numeric: IS_POSITIVE, IS_NEGATIVE, IS_ZERO, IS_NON_NEGATIVE, IS_NON_POSITIVE
+//   - Range: IN_RANGE, BETWEEN, BETWEEN_INCLUSIVE
+//   - Divisibility: IS_DIVISIBLE, IS_MULTIPLE
+//   - Character: IS_ALPHA, IS_DIGIT, IS_ALPHANUMERIC, IS_UPPER, IS_LOWER, IS_WHITESPACE
+//   - String: VALIDATE_NOT_EMPTY, VALIDATE_LENGTH, VALIDATE_MIN_LENGTH, VALIDATE_MAX_LENGTH
+//   - Numeric Range: VALIDATE_RANGE, VALIDATE_MIN, VALIDATE_MAX

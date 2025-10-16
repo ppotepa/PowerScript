@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX primes = 0
 CYCLE 20 AS num_idx {
     FLEX num = num_idx + 2
@@ -18,4 +21,4 @@ CYCLE 20 AS num_idx {
         FLEX primes = primes + 1
     }
 }
-PRINT primes
+PRINT(primes)

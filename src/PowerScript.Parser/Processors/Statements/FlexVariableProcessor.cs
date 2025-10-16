@@ -166,13 +166,13 @@ public class FlexVariableProcessor : ITokenProcessor
     }
 
     /// <summary>
-    ///     Parses multiplication and division (left-to-right)
+    ///     Parses multiplication, division, and modulo (left-to-right)
     /// </summary>
     private Expression ParseMultiplicativeExpression(ref Token? token)
     {
         Expression left = ParsePrimaryExpression(ref token);
 
-        while (token is MultiplyToken or DivideToken)
+        while (token is MultiplyToken or DivideToken or ModuloToken)
         {
             Token operatorToken = token;
             token = token.Next;
@@ -261,16 +261,87 @@ public class FlexVariableProcessor : ITokenProcessor
 
         if (token is ChainToken)
         {
-            // CHAIN keyword for array creation: CHAIN <size>
+            // CHAIN keyword for array creation
             token = token.Next; // Move past CHAIN
 
-            if (token is not ValueToken sizeToken)
+            // Check if this is CHAIN OF [...] syntax (array literal)
+            if (token is OfKeywordToken)
             {
-                throw new UnexpectedTokenException(token!, typeof(ValueToken));
+                token = token.Next; // Move past OF
+
+                // Expect opening bracket [
+                if (token is not BracketOpen)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(BracketOpen));
+                }
+
+                token = token.Next; // Move past '['
+
+                List<Expression> elements = [];
+
+                // Handle empty array: CHAIN OF []
+                if (token is BracketClosed)
+                {
+                    token = token.Next; // Move past ']'
+                    return new ArrayLiteralExpression(elements);
+                }
+
+                // Parse array elements
+                while (token != null)
+                {
+                    // Parse element expression
+                    Expression elementExpr = ParsePrimaryExpression(ref token);
+                    elements.Add(elementExpr);
+
+                    // Check for comma or closing bracket
+                    if (token is CommaToken)
+                    {
+                        token = token.Next; // Move past comma
+
+                        // Allow trailing comma: CHAIN OF [1, 2, 3,]
+                        if (token is BracketClosed)
+                        {
+                            break;
+                        }
+                    }
+                    else if (token is BracketClosed)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        throw new UnexpectedTokenException(token!, typeof(CommaToken), typeof(BracketClosed));
+                    }
+                }
+
+                if (token is not BracketClosed)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(BracketClosed));
+                }
+
+                token = token.Next; // Move past ']'
+                return new ArrayLiteralExpression(elements);
             }
 
-            ArrayCreationExpression expr = new(sizeToken);
-            token = token.Next;
+            // Otherwise, it's CHAIN <size> syntax (array creation with size)
+            // Size can be a literal value or an identifier (variable/parameter)
+            Expression sizeExpr;
+            if (token is ValueToken sizeValueToken)
+            {
+                sizeExpr = new LiteralExpression(sizeValueToken);
+                token = token.Next;
+            }
+            else if (token is IdentifierToken sizeIdentToken)
+            {
+                sizeExpr = new IdentifierExpression(sizeIdentToken);
+                token = token.Next;
+            }
+            else
+            {
+                throw new UnexpectedTokenException(token!, typeof(ValueToken), typeof(IdentifierToken));
+            }
+
+            ArrayCreationExpression expr = new(sizeExpr);
             return expr;
         }
 
@@ -338,6 +409,38 @@ public class FlexVariableProcessor : ITokenProcessor
                 return funcCallExpr;
             }
 
+            // Check for arrow operator (-> for .NET member access)
+            if (token is ArrowToken)
+            {
+                token = token.Next; // Skip '->'
+
+                // Expect member name (identifier)
+                if (token is not IdentifierToken memberToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string memberName = memberToken.RawToken.OriginalText; // Preserve casing for .NET
+                token = memberToken.Next;
+
+                // Check if it's a method call (has parentheses)
+                if (token is ParenthesisOpen)
+                {
+                    // Parse method arguments
+                    var (arguments, tokenAfterArgs) = ParseFunctionArguments(token);
+                    token = tokenAfterArgs;
+
+                    NetMemberAccessExpression methodCallExpr = new(currentExpr, memberName, arguments);
+                    return methodCallExpr;
+                }
+                else
+                {
+                    // It's a property access (no parentheses)
+                    NetMemberAccessExpression propertyAccessExpr = new(currentExpr, memberName);
+                    return propertyAccessExpr;
+                }
+            }
+
             // Return the expression (could be IdentifierExpression or IndexExpression)
             return currentExpr;
         }
@@ -359,6 +462,91 @@ public class FlexVariableProcessor : ITokenProcessor
             // If it's not followed by a number, it might be a minus expression
             // Put the token back and let the caller handle it
             token = minusToken;
+        }
+
+        // Handle .NET type access: #Char, #Console, #String, etc.
+        if (token is NetKeywordToken netToken)
+        {
+            token = token.Next; // Move past #
+
+            // Expect an identifier (the .NET type/class name)
+            if (token is not IdentifierToken typeIdentToken)
+            {
+                throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+            }
+
+            // Start with identifier expression for the .NET type
+            Expression currentExpr = new IdentifierExpression(typeIdentToken);
+            token = typeIdentToken.Next;
+
+            // Check for dot notation (static method/property): #Char.IsLetter(c, 0)
+            if (token is DotToken)
+            {
+                token = token.Next; // Move past .
+
+                // Get the member name
+                if (token is not IdentifierToken memberToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
+                token = memberToken.Next; // Move past member name
+
+                // Check if it's a method call (has parentheses)
+                if (token is ParenthesisOpen)
+                {
+                    // Parse function arguments
+                    var (arguments, tokenAfterArgs) = ParseFunctionArguments(token);
+                    token = tokenAfterArgs;
+
+                    // Create .NET member access expression for static method call
+                    NetMemberAccessExpression methodCallExpr = new(currentExpr, memberName, arguments);
+                    return methodCallExpr;
+                }
+                else
+                {
+                    // Static property access: #Type.Property
+                    NetMemberAccessExpression propertyAccessExpr = new(currentExpr, memberName);
+                    return propertyAccessExpr;
+                }
+            }
+
+            // Check for arrow operator (instance method on variable): #var -> Method()
+            if (token is ArrowToken)
+            {
+                token = token.Next; // Move past ->
+
+                // Get the member name
+                if (token is not IdentifierToken memberToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
+                token = memberToken.Next; // Move past member name
+
+                // Check if it's a method call (has parentheses)
+                if (token is ParenthesisOpen)
+                {
+                    // Parse function arguments
+                    var (arguments, tokenAfterArgs) = ParseFunctionArguments(token);
+                    token = tokenAfterArgs;
+
+                    // Create .NET member access expression for method call
+                    NetMemberAccessExpression methodCallExpr = new(currentExpr, memberName, arguments);
+                    return methodCallExpr;
+                }
+                else
+                {
+                    // Property access: #var -> Property
+                    NetMemberAccessExpression propertyAccessExpr = new(currentExpr, memberName);
+                    return propertyAccessExpr;
+                }
+            }
+
+            // Just #Type without dot or arrow (unlikely but handle it)
+            return currentExpr;
         }
 
         throw new NotImplementedException(
@@ -446,46 +634,35 @@ public class FlexVariableProcessor : ITokenProcessor
             throw new InvalidOperationException("Cannot build expression from empty token list");
         }
 
-        if (tokens.Count == 1)
+        // Ensure tokens are properly linked (they should already be from the original token stream)
+        // But if we collected them into a list, we need to verify the .Next pointers
+        for (int i = 0; i < tokens.Count - 1; i++)
         {
-            Token token = tokens[0];
-            return token switch
+            if (tokens[i].Next != tokens[i + 1])
             {
-                ValueToken valueToken => new LiteralExpression(valueToken),
-                IdentifierToken identifierToken => new IdentifierExpression(identifierToken),
-                _ => throw new InvalidOperationException($"Unexpected single token type: {token.GetType().Name}")
-            };
-        }
-
-        // For multi-token expressions, create a binary expression
-        // Simple left-to-right evaluation (no operator precedence for now)
-        Expression left = tokens[0] switch
-        {
-            ValueToken vt => new LiteralExpression(vt),
-            IdentifierToken it => new IdentifierExpression(it),
-            _ => throw new InvalidOperationException($"Unexpected token type: {tokens[0].GetType().Name}")
-        };
-
-        for (int i = 1; i < tokens.Count; i += 2)
-        {
-            if (i + 1 >= tokens.Count)
-            {
-                throw new InvalidOperationException("Expected value after operator");
+                tokens[i].Next = tokens[i + 1];
             }
-
-            Token operatorToken = tokens[i];
-            Token rightToken = tokens[i + 1];
-
-            Expression right = rightToken switch
-            {
-                ValueToken vt => new LiteralExpression(vt),
-                IdentifierToken it => new IdentifierExpression(it),
-                _ => throw new InvalidOperationException($"Unexpected token type: {rightToken.GetType().Name}")
-            };
-
-            left = new BinaryExpression(left, operatorToken, right);
         }
 
-        return left;
+        // Use the new ExpressionParser to handle nested function calls properly
+        var parser = new ExpressionParser();
+        Token currentToken = tokens[0];
+        var expression = parser.Parse(ref currentToken);
+
+        return expression;
+    }
+
+    private static FunctionCallExpression ParseFunctionCallInExpression(IdentifierToken functionNameToken)
+    {
+        Token openParen = functionNameToken.Next;
+        var (arguments, _) = ParseFunctionArguments(openParen);
+
+        FunctionCallExpression funcCall = new FunctionCallExpression
+        {
+            FunctionName = functionNameToken
+        };
+        funcCall.Arguments.AddRange(arguments);
+
+        return funcCall;
     }
 }

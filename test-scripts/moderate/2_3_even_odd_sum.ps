@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX evenSum = 0
 FLEX oddSum = 0
 CYCLE 10 AS i {
@@ -5,10 +8,10 @@ CYCLE 10 AS i {
     FLEX remainder = num / 2
     FLEX doubled = remainder * 2
     IF doubled == num {
-        FLEX evenSum = evenSum + num
+        evenSum = evenSum + num
     } ELSE {
-        FLEX oddSum = oddSum + num
+        oddSum = oddSum + num
     }
 }
-PRINT evenSum
-PRINT oddSum
+PRINT(evenSum)
+PRINT(oddSum)

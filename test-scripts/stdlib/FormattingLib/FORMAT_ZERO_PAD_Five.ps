@@ -1,0 +1,8 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: FORMAT_ZERO_PAD - Format with zeros
+INT num = 42
+INT width = 5
+STRING result = FORMAT_ZERO_PAD(num, width)
+PRINT result
+// Expected: 00042

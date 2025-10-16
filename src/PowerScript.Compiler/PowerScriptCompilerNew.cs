@@ -47,6 +47,9 @@ public class PowerScriptCompilerNew : IPowerScriptCompilerNew
         {
             LoggerService.Logger.Debug("[COMPILER] Starting compilation");
 
+            // Preprocess to inline LINK statements
+            sourceCode = PreprocessLinkStatements(sourceCode, sourceFile);
+
             // Create prompt and build token tree
             var prompt = new UserPrompt(sourceCode);
             var tokenTree = new TokenTree(_registry, _dotNetLinker, _scopeBuilder).Create(prompt);
@@ -92,6 +95,110 @@ public class PowerScriptCompilerNew : IPowerScriptCompilerNew
 
             return CompilationResult.Failed(new[] { ex.Message }, metadata);
         }
+    }
+
+    /// <summary>
+    /// Preprocesses source code to inline LINK statements.
+    /// </summary>
+    private string PreprocessLinkStatements(string sourceCode, string? sourceFile)
+    {
+        // Keep preprocessing until no more LINK directives are found (recursive linking)
+        string current = sourceCode;
+        string previous;
+        int maxIterations = 10; // Prevent infinite loops
+        int iteration = 0;
+
+        do
+        {
+            previous = current;
+            current = ProcessLinkStatementsOnce(current, sourceFile);
+            iteration++;
+            LoggerService.Logger.Debug($"[COMPILER] Preprocessing iteration {iteration}: {previous.Length} -> {current.Length} chars");
+        }
+        while (current != previous && iteration < maxIterations);
+
+        if (iteration >= maxIterations)
+        {
+            LoggerService.Logger.Warning($"[COMPILER] Maximum LINK preprocessing iterations ({maxIterations}) reached - possible circular dependencies");
+        }
+
+        LoggerService.Logger.Debug($"[COMPILER] Final preprocessed output:\n{current}");
+
+        return current;
+    }
+
+    /// <summary>
+    /// Single pass of LINK statement preprocessing.
+    /// </summary>
+    private string ProcessLinkStatementsOnce(string sourceCode, string? sourceFile)
+    {
+        var lines = sourceCode.Split('\n');
+        var result = new List<string>();
+        var linkPattern = new System.Text.RegularExpressions.Regex(@"^\s*LINK\s+""([^""]+)""\s*$");
+
+        foreach (var line in lines)
+        {
+            var match = linkPattern.Match(line);
+            if (match.Success)
+            {
+                var linkedFile = match.Groups[1].Value;
+
+                // Try multiple resolution strategies
+                string? resolvedPath = null;
+
+                // Strategy 1: Relative to current working directory (workspace root)
+                var cwd = Directory.GetCurrentDirectory();
+                var cwdPath = Path.Combine(cwd, linkedFile);
+                if (File.Exists(cwdPath))
+                {
+                    resolvedPath = cwdPath;
+                }
+
+                // Strategy 2: Relative to source file directory
+                if (resolvedPath == null && sourceFile != null)
+                {
+                    var basePath = Path.GetDirectoryName(sourceFile);
+                    var relPath = Path.Combine(basePath ?? "", linkedFile);
+                    if (File.Exists(relPath))
+                    {
+                        resolvedPath = relPath;
+                    }
+                }
+
+                // Strategy 3: Absolute path
+                if (resolvedPath == null && Path.IsPathRooted(linkedFile) && File.Exists(linkedFile))
+                {
+                    resolvedPath = linkedFile;
+                }
+
+                if (resolvedPath != null)
+                {
+                    LoggerService.Logger.Debug($"[COMPILER] Inlining linked file: {resolvedPath}");
+                    var linkedContent = File.ReadAllText(resolvedPath);
+
+                    // Recursively process LINK statements in the linked file,
+                    // using the linked file's path as the new source file for relative resolution
+                    var processedLinkedContent = ProcessLinkStatementsOnce(linkedContent, resolvedPath);
+
+                    result.Add($"// LINK {linkedFile} - START");
+                    result.Add(processedLinkedContent);
+                    result.Add($"// LINK {linkedFile} - END");
+                }
+                else
+                {
+                    LoggerService.Logger.Warning($"[COMPILER] Linked file not found, keeping LINK statement: {linkedFile}");
+                    result.Add(line); // Keep original LINK statement if file not found
+                }
+            }
+            else
+            {
+                result.Add(line);
+            }
+        }
+
+        var preprocessed = string.Join('\n', result);
+        LoggerService.Logger.Debug($"[COMPILER] Preprocessed {lines.Length} lines -> {result.Count} segments, {preprocessed.Split('\n').Length} final lines");
+        return preprocessed;
     }
 
     /// <summary>

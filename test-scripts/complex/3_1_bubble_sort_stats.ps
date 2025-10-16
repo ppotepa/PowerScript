@@ -1,12 +1,14 @@
-PRINT "=== Complex Test 1: Bubble Sort with Statistics ==="
-PRINT "A comprehensive bubble sort implementation"
-PRINT "with array operations and statistical analysis"
-PRINT ""
+LINK "../../stdlib/IO.ps"
+LINK System
+PRINT("=== Complex Test 1: Bubble Sort with Statistics ===")
+PRINT("A comprehensive bubble sort implementation")
+PRINT("with array operations and statistical analysis")
+PRINT("")
 
-PRINT "Initializing array of 15 elements"
+PRINT("Initializing array of 15 elements")
 FLEX arr = CHAIN 15
 
-PRINT "Filling array with unsorted values"
+PRINT("Filling array with unsorted values")
 FLEX arr[0] = 64
 FLEX arr[1] = 34
 FLEX arr[2] = 25
@@ -23,16 +25,16 @@ FLEX arr[12] = 99
 FLEX arr[13] = 18
 FLEX arr[14] = 55
 
-PRINT ""
-PRINT "Original array (15 elements):"
+PRINT("")
+PRINT("Original array (15 elements):")
 CYCLE 15 AS i {
     PRINT arr[i]
 }
 
-PRINT ""
-PRINT "Starting bubble sort algorithm..."
-PRINT "Using nested loops for comparison"
-PRINT ""
+PRINT("")
+PRINT("Starting bubble sort algorithm...")
+PRINT("Using nested loops for comparison")
+PRINT("")
 
 FLEX swapCount = 0
 FLEX passCount = 0
@@ -41,7 +43,7 @@ CYCLE 15 AS outer {
     FLEX currentPass = outer + 1
     FLEX passCount = passCount + 1
     
-    PRINT "Pass:"
+    PRINT("Pass:")
     PRINT currentPass
     
     FLEX swapsThisPass = 0
@@ -59,25 +61,25 @@ CYCLE 15 AS outer {
         }
     }
     
-    PRINT "Swaps in this pass:"
+    PRINT("Swaps in this pass:")
     PRINT swapsThisPass
 }
 
-PRINT ""
-PRINT "Sorting complete!"
-PRINT "Total passes:"
+PRINT("")
+PRINT("Sorting complete!")
+PRINT("Total passes:")
 PRINT passCount
-PRINT "Total swaps:"
+PRINT("Total swaps:")
 PRINT swapCount
 
-PRINT ""
-PRINT "Sorted array:"
+PRINT("")
+PRINT("Sorted array:")
 CYCLE 15 AS i {
     PRINT arr[i]
 }
 
-PRINT ""
-PRINT "Computing statistics..."
+PRINT("")
+PRINT("Computing statistics...")
 
 FLEX sum = 0
 CYCLE 15 AS i {
@@ -85,15 +87,15 @@ CYCLE 15 AS i {
     FLEX sum = sum + currentVal
 }
 
-PRINT "Sum of all elements:"
+PRINT("Sum of all elements:")
 PRINT sum
 
 FLEX avg = sum / 15
-PRINT "Average value:"
+PRINT("Average value:")
 PRINT avg
 
-PRINT ""
-PRINT "Finding minimum and maximum values"
+PRINT("")
+PRINT("Finding minimum and maximum values")
 
 FLEX min = arr[0]
 FLEX max = arr[0]
@@ -110,18 +112,18 @@ CYCLE 15 AS i {
     }
 }
 
-PRINT "Minimum value:"
+PRINT("Minimum value:")
 PRINT min
-PRINT "Maximum value:"
+PRINT("Maximum value:")
 PRINT max
 
 FLEX range = max - min
-PRINT "Range (max - min):"
+PRINT("Range (max - min):")
 PRINT range
 
-PRINT ""
-PRINT "Verifying sort correctness..."
-PRINT "Checking if array is in ascending order"
+PRINT("")
+PRINT("Verifying sort correctness...")
+PRINT("Checking if array is in ascending order")
 
 FLEX isorted = 0
 CYCLE 14 AS i {
@@ -132,13 +134,13 @@ CYCLE 14 AS i {
 }
 
 IF isorted == 0 {
-    PRINT "SUCCESS: Array is properly sorted"
+    PRINT("SUCCESS: Array is properly sorted")
 }
 
 IF isorted == 1 {
-    PRINT "ERROR: Array is not sorted"
+    PRINT("ERROR: Array is not sorted")
 }
 
-PRINT ""
-PRINT "=== Test Complete ==="
-PRINT "Lines of code: 140+"
+PRINT("")
+PRINT("=== Test Complete ===")
+PRINT("Lines of code: 140+")

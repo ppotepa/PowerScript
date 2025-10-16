@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FUNCTION factorial(INT n)[INT] {
     IF n <= 1 {
         RETURN 1
@@ -5,4 +7,4 @@ FUNCTION factorial(INT n)[INT] {
     RETURN n * factorial(n - 1)
 }
 
-PRINT factorial(5)
+PRINT(factorial(5))

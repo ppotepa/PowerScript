@@ -1,0 +1,20 @@
+// BUG #6: Negative Literals in Function Calls
+// Problem: Cannot pass negative number literals directly as function arguments
+
+FUNCTION ABS(INT value)[INT] {
+    IF value < 0 {
+        RETURN 0 - value
+    }
+    RETURN value
+}
+
+FUNCTION TEST_NEGATIVE_LITERAL()[INT] {
+    // THIS MAY CAUSE ISSUES
+    INT result = ABS(-5)
+    
+    // WORKAROUND: Use variable
+    // INT negFive = 0 - 5
+    // INT result = ABS(negFive)
+    
+    RETURN result
+}

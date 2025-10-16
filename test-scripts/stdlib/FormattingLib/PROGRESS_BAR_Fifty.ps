@@ -1,0 +1,9 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: PROGRESS_BAR - Create progress bar
+INT current = 50
+INT total = 100
+INT width = 20
+STRING result = PROGRESS_BAR(current, total, width)
+PRINT result
+// Expected: "[==========          ]"

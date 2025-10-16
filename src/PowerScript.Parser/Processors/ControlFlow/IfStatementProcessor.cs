@@ -62,47 +62,7 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
         thenContext.Depth = context.Depth + 1;
         _scopeBuilder.BuildScope(currentToken, thenScope, thenContext);
 
-        Scope? elseScope = null;
-
-        // Check for optional ELSE keyword
-        if (currentToken is ElseKeywordToken)
-        {
-            currentToken = currentToken.Next;
-
-            // Expect opening brace for ELSE block
-            if (currentToken is not ScopeStartToken)
-            {
-                throw new InvalidOperationException(
-                    $"Expected {{ after ELSE keyword, got {currentToken?.GetType().Name}");
-            }
-
-            // Create ELSE scope
-            string elseScopeName = $"IF_ELSE_{context.CurrentScope.Statements.Count}";
-            elseScope = new Scope(elseScopeName)
-            {
-                Type = ScopeType.Block,
-                OuterScope = context.CurrentScope
-            };
-
-            LoggerService.Logger.Debug($"IfStatementProcessor: Created ELSE scope: {elseScopeName}");
-
-            // Build the ELSE scope body - use context.Clone() to preserve function context
-            ProcessingContext elseContext = context.Clone();
-            elseContext.CurrentScope = elseScope;
-            elseContext.Depth = context.Depth + 1;
-            _scopeBuilder.BuildScope(currentToken, elseScope, elseContext);
-        }
-
-        // Create the IF statement
-        IfStatement ifStatement = new(condition, thenScope, elseScope)
-        {
-            StartToken = token
-        };
-        context.CurrentScope.Statements.Add(ifStatement);
-
-        LoggerService.Logger.Success("IfStatementProcessor: IF statement created successfully");
-
-        // Find the closing brace and continue from there
+        // Find the closing brace of THEN scope
         Token? nextToken = currentToken;
         int braceDepth = 0;
 
@@ -127,10 +87,37 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             nextToken = nextToken.Next;
         }
 
-        // If there's an ELSE, skip past that scope too
-        if (nextToken is ElseKeywordToken && elseScope != null)
+        Scope? elseScope = null;
+
+        // Check for optional ELSE keyword AFTER finding end of THEN block
+        if (nextToken is ElseKeywordToken)
         {
-            nextToken = nextToken.Next; // Skip ELSE
+            nextToken = nextToken.Next; // Skip ELSE keyword
+
+            // Expect opening brace for ELSE block
+            if (nextToken is not ScopeStartToken)
+            {
+                throw new InvalidOperationException(
+                    $"Expected {{ after ELSE keyword, got {nextToken?.GetType().Name}");
+            }
+
+            // Create ELSE scope
+            string elseScopeName = $"IF_ELSE_{context.CurrentScope.Statements.Count}";
+            elseScope = new Scope(elseScopeName)
+            {
+                Type = ScopeType.Block,
+                OuterScope = context.CurrentScope
+            };
+
+            LoggerService.Logger.Debug($"IfStatementProcessor: Created ELSE scope: {elseScopeName}");
+
+            // Build the ELSE scope body - use context.Clone() to preserve function context
+            ProcessingContext elseContext = context.Clone();
+            elseContext.CurrentScope = elseScope;
+            elseContext.Depth = context.Depth + 1;
+            _scopeBuilder.BuildScope(nextToken, elseScope, elseContext);
+
+            // Skip past the ELSE scope
             braceDepth = 0;
             while (nextToken != null)
             {
@@ -152,6 +139,15 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
                 nextToken = nextToken.Next;
             }
         }
+
+        // Create the IF statement
+        IfStatement ifStatement = new(condition, thenScope, elseScope)
+        {
+            StartToken = token
+        };
+        context.CurrentScope.Statements.Add(ifStatement);
+
+        LoggerService.Logger.Success("IfStatementProcessor: IF statement created successfully");
 
         return TokenProcessingResult.Continue(nextToken!);
     }
@@ -182,17 +178,18 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
     ///     Parse a comparison expression: leftValue operator rightValue
     ///     Operators: >, <, >=, <=, ==, !=
     ///     Handles == as two consecutive = tokens if needed
+    ///     If no comparison operator is found, returns the left expression as-is
     /// </summary>
-    private static BinaryExpression ParseComparisonExpression(ref Token currentToken)
+    private static Expression ParseComparisonExpression(ref Token currentToken)
     {
         // Parse left operand as a full arithmetic expression
         Expression left = ParseArithmeticExpression(ref currentToken);
 
-        // Expect a comparison operator
+        // Check if there's a comparison operator
         if (!IsComparisonOperator(currentToken))
         {
-            throw new InvalidOperationException(
-                $"Expected comparison operator (>, <, >=, <=, ==, !=), got {currentToken?.GetType().Name}");
+            // No comparison operator - just return the left expression
+            return left;
         }
 
         Token comparisonOp = currentToken;
@@ -369,7 +366,8 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
         {
             currentToken = currentToken.Next; // Skip '('
 
-            Expression innerExpr = ParseArithmeticExpression(ref currentToken);
+            // Parse full condition expression to support comparisons in parentheses
+            Expression innerExpr = ParseConditionExpression(ref currentToken);
 
             if (currentToken is not ParenthesisClosed)
             {
@@ -502,6 +500,7 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
         Expression left = tokens[0] switch
         {
             ValueToken vt => new LiteralExpression(vt),
+            IdentifierToken it when it.Next is ParenthesisOpen => ParseFunctionCallInExpression(it),
             IdentifierToken it => new IdentifierExpression(it),
             _ => throw new InvalidOperationException($"Unexpected token type: {tokens[0].GetType().Name}")
         };
@@ -519,6 +518,7 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             Expression right = rightToken switch
             {
                 ValueToken vt => new LiteralExpression(vt),
+                IdentifierToken it when it.Next is ParenthesisOpen => ParseFunctionCallInExpression(it),
                 IdentifierToken it => new IdentifierExpression(it),
                 _ => throw new InvalidOperationException($"Unexpected token type: {rightToken.GetType().Name}")
             };
@@ -527,5 +527,19 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
         }
 
         return left;
+    }
+
+    private static FunctionCallExpression ParseFunctionCallInExpression(IdentifierToken functionNameToken)
+    {
+        Token openParen = functionNameToken.Next;
+        var (arguments, _) = ParseFunctionArguments(openParen);
+
+        FunctionCallExpression funcCall = new FunctionCallExpression
+        {
+            FunctionName = functionNameToken
+        };
+        funcCall.Arguments.AddRange(arguments);
+
+        return funcCall;
     }
 }

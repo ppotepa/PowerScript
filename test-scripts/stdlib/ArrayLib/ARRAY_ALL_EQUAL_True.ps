@@ -1,0 +1,21 @@
+// LINK "scripts/stdlib/ArrayLib.ps"
+
+FUNCTION ARRAY_ALL_EQUAL(INT CHAIN arr, INT size)[INT] {
+    IF size < 2 {
+        RETURN 1
+    }
+    FLEX first = arr[0]
+    CYCLE size AS i {
+        FLEX elem = arr[i]
+        IF elem != first {
+            RETURN 0
+        }
+    }
+    RETURN 1
+}
+
+// Test: ARRAY_ALL_EQUAL - All same values
+FLEX arr = CHAIN OF [7, 7, 7, 7]
+FLEX result = ARRAY_ALL_EQUAL(arr, 4)
+PRINT result
+// Expected: 1

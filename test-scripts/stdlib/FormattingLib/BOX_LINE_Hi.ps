@@ -1,0 +1,8 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: BOX_LINE - Create boxed text
+STRING text = "Hi"
+INT width = 10
+STRING result = BOX_LINE(text, width)
+PRINT result
+// Expected: "|   Hi   |"

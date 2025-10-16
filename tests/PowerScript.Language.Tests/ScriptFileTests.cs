@@ -24,8 +24,7 @@ public class ScriptFileTests : LanguageTestBase
         var path = GetScriptPath(category, filename);
         Assert.That(File.Exists(path), Is.True, $"Script file not found: {path}");
 
-        var script = File.ReadAllText(path);
-        Interpreter.ExecuteCode(script);
+        Interpreter.ExecuteFile(path);
     }
 
     #region Language Feature Tests (language/*.ps)

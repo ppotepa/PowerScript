@@ -68,7 +68,15 @@ public class ConsoleLogger : ILogger
             LogLevel.Success => "[OK] ",
             _ => ""
         };
-        Console.WriteLine(prefix + message);
+        // Write debug logs to stderr to avoid polluting program output
+        if (level == LogLevel.Debug)
+        {
+            Console.Error.WriteLine(prefix + message);
+        }
+        else
+        {
+            Console.WriteLine(prefix + message);
+        }
 #else
                 Console.WriteLine(message);
 #endif

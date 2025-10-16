@@ -1,0 +1,18 @@
+// LINK "scripts/stdlib/ArrayLib.ps"
+
+FUNCTION ARRAY_INDEX_OF(INT CHAIN arr, INT size, INT value)[INT] {
+    CYCLE size AS i {
+        FLEX elem = arr[i]
+        IF elem == value {
+            RETURN i
+        }
+    }
+    FLEX notFound = 0 - 1
+    RETURN notFound
+}
+
+// Test: ARRAY_INDEX_OF - Find first occurrence of 5
+INT arr = CHAIN 5 WITH 3, 5, 8, 5, 9
+FLEX result = ARRAY_INDEX_OF(arr, 5, 5)
+PRINT result
+// Expected: 1

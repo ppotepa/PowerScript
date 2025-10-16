@@ -1,0 +1,8 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: FORMAT_LEFT - Left align
+STRING text = "Hello"
+INT width = 10
+STRING result = FORMAT_LEFT(text, width)
+PRINT result
+// Expected: "Hello     "

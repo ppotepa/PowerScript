@@ -1,0 +1,8 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: FORMAT_RIGHT - Right align
+STRING text = "Hello"
+INT width = 10
+STRING result = FORMAT_RIGHT(text, width)
+PRINT result
+// Expected: "     Hello"

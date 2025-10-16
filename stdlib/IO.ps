@@ -1,0 +1,101 @@
+// IO.ps - Input/Output operations for PowerScript
+// Provides console output wrapper functions
+
+LINK System
+
+// ============================================================================
+// BASIC OUTPUT FUNCTIONS
+// ============================================================================
+
+FUNCTION OUT(INT value)[INT] {
+    FLEX str = value -> ToString()
+    FLEX dummy = Console -> Write(str)
+    RETURN 0
+}
+
+FUNCTION OUTLN(INT value)[INT] {
+    FLEX str = value -> ToString()
+    FLEX dummy = Console -> WriteLine(str)
+    RETURN 0
+}
+
+FUNCTION OUT_NUM(INT value)[INT] {
+    FLEX str = value -> ToString()
+    FLEX dummy = Console -> Write(str)
+    RETURN 0
+}
+
+FUNCTION OUT_STR(STRING value)[INT] {
+    FLEX dummy = Console -> Write(value)
+    RETURN 0
+}
+
+FUNCTION NEWLINE()[INT] {
+    FLEX dummy = Console -> WriteLine()
+    RETURN 0
+}
+
+FUNCTION SPACE()[INT] {
+    FLEX dummy = Console -> Write(" ")
+    RETURN 0
+}
+
+// ============================================================================
+// MULTI-VALUE OUTPUT
+// ============================================================================
+
+FUNCTION OUT_MULTI(INT a, INT b)[INT] {
+    FLEX dummy1 = OUT(a)
+    FLEX dummy2 = OUT(b)
+    RETURN 0
+}
+
+FUNCTION OUT_THREE(INT a, INT b, INT c)[INT] {
+    FLEX dummy1 = OUT(a)
+    FLEX dummy2 = OUT(b)
+    FLEX dummy3 = OUT(c)
+    RETURN 0
+}
+
+// ============================================================================
+// LABELED OUTPUT
+// ============================================================================
+
+FUNCTION PRINT_LABELED(STRING label, INT value)[INT] {
+    FLEX dummy1 = Console -> Write(label)
+    FLEX dummy2 = Console -> Write(": ")
+    FLEX str = value -> ToString()
+    FLEX dummy3 = Console -> WriteLine(str)
+    RETURN 0
+}
+
+// ============================================================================
+// LEGACY PRINT WRAPPER
+// ============================================================================
+
+FUNCTION PRINT(INT value)[INT] {
+    FLEX str = value -> ToString()
+    FLEX dummy = Console -> WriteLine(str)
+    RETURN 0
+}
+
+FUNCTION PRINT_STRING(STRING value)[INT] {
+    FLEX dummy = Console -> WriteLine(value)
+    RETURN 0
+}
+
+FUNCTION PRINT_INLINE(STRING value)[INT] {
+    FLEX dummy = Console -> Write(value)
+    RETURN 0
+}
+
+FUNCTION PRINT_INT(INT value)[INT] {
+    FLEX str = value -> ToString()
+    FLEX dummy = Console -> WriteLine(str)
+    RETURN 0
+}
+
+FUNCTION PRINT_LINE()[INT] {
+    FLEX dummy = Console -> WriteLine()
+    RETURN 0
+}

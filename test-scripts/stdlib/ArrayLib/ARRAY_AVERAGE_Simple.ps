@@ -1,0 +1,21 @@
+// LINK "scripts/stdlib/ArrayLib.ps"
+
+// Inlined function
+FUNCTION ARRAY_AVERAGE(INT CHAIN arr, INT size)[INT] {
+    IF size <= 0 {
+        RETURN 0
+    }
+    FLEX sum = 0
+    CYCLE size AS i {
+        FLEX elem = arr[i]
+        sum = sum + elem
+    }
+    FLEX avg = sum / size
+    RETURN avg
+}
+
+// Test: ARRAY_AVERAGE - Calculate average
+FLEX arr = CHAIN OF [10, 20, 30, 40]
+FLEX result = ARRAY_AVERAGE(arr, 4)
+PRINT result
+// Expected: 25

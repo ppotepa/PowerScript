@@ -1,3 +1,6 @@
+LINK "../../stdlib/IO.ps"
+LINK System
+
 FLEX max = 0
 FLEX numbers = 10
 CYCLE 10 AS i {
@@ -6,4 +9,4 @@ CYCLE 10 AS i {
         FLEX max = num
     }
 }
-PRINT max
+PRINT(max)

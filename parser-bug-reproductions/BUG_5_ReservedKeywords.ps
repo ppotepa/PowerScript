@@ -1,0 +1,22 @@
+// BUG #5: Reserved Keywords in Parameter Names
+// Problem: Parameter names get tokenized incorrectly if they contain reserved words
+
+FUNCTION VALIDATE_LENGTH(STRING s, INT expectedLen)[INT] {
+    // THIS CAUSES ISSUE: 'expectedLen' gets tokenized as 'EXPECTED' + 'LEN'
+    // Both might be reserved keywords
+    
+    INT len = s -> Length()
+    IF len == expectedLen {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+// WORKAROUND: Use different parameter names
+FUNCTION VALIDATE_LENGTH_FIXED(STRING s, INT target)[INT] {
+    INT len = s -> Length()
+    IF len == target {
+        RETURN 1
+    }
+    RETURN 0
+}

@@ -1,0 +1,22 @@
+// LINK "scripts/stdlib/ArrayLib.ps"
+
+// Inlined function
+FUNCTION ARRAY_MAX(INT CHAIN arr, INT size)[INT] {
+    IF size <= 0 {
+        RETURN 0
+    }
+    FLEX max_val = arr[0]
+    CYCLE size AS i {
+        FLEX elem = arr[i]
+        IF elem > max_val {
+            max_val = elem
+        }
+    }
+    RETURN max_val
+}
+
+// Test: ARRAY_MAX - Find maximum element
+FLEX arr = CHAIN OF [5, 2, 8, 1, 9]
+FLEX result = ARRAY_MAX(arr, 5)
+PRINT result
+// Expected: 9

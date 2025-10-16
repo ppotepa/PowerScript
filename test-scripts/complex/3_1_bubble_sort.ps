@@ -1,18 +1,20 @@
-PRINT "=== Bubble Sort Algorithm Demo ==="
-PRINT ""
+LINK "../../stdlib/IO.ps"
+LINK System
+PRINT("=== Bubble Sort Algorithm Demo ===")
+PRINT("")
 
-PRINT "Creating array with unsorted values using array literal syntax"
+PRINT("Creating array with unsorted values using array literal syntax")
 FLEX arr = [64, 34, 25, 12, 22, 11, 90, 88, 45, 50]
-PRINT ""
+PRINT("")
 
-PRINT "Original array:"
+PRINT("Original array:")
 CYCLE 10 AS i {
-    PRINT arr[i]
+    PRINT(arr[i])
 }
-PRINT ""
+PRINT("")
 
-PRINT "Starting bubble sort algorithm..."
-PRINT ""
+PRINT("Starting bubble sort algorithm...")
+PRINT("")
 
 CYCLE 10 AS outerIdx {
     CYCLE 9 AS j {
@@ -26,13 +28,13 @@ CYCLE 10 AS outerIdx {
     }
 }
 
-PRINT "Bubble sort complete!"
-PRINT ""
+PRINT("Bubble sort complete!")
+PRINT("")
 
-PRINT "Sorted array:"
+PRINT("Sorted array:")
 CYCLE 10 AS i {
-    PRINT arr[i]
+    PRINT(arr[i])
 }
-PRINT ""
+PRINT("")
 
-PRINT "=== BUBBLE SORT COMPLETE ==="
+PRINT("=== BUBBLE SORT COMPLETE ===")

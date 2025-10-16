@@ -6,6 +6,8 @@ namespace PowerScript.Core.AST.Statements;
 ///     Represents a CYCLE loop statement.
 ///     Count-based: CYCLE 5 AS i { ... }
 ///     Collection-based: CYCLE IN collection AS item { ... }
+///     Range-based: CYCLE -5 TO 5 AS i { ... }
+///     While-based: CYCLE WHILE condition AS i { ... }
 ///     Supports automatic index variables (a, b, c based on nesting).
 /// </summary>
 public class CycleLoopStatement(
@@ -28,10 +30,23 @@ public class CycleLoopStatement(
     /// <summary>True if this is a count-based loop (CYCLE 5), false if collection-based (CYCLE IN items)</summary>
     public bool IsCountBased { get; set; } = false; // Default to collection-based
 
+    /// <summary>True if this is a while loop (CYCLE WHILE condition)</summary>
+    public bool IsWhileLoop { get; set; } = false;
+
+    /// <summary>True if this is a range loop (CYCLE start TO end)</summary>
+    public bool IsRangeLoop { get; set; } = false;
+
+    /// <summary>For range loops: the end expression</summary>
+    public Expression? RangeEndExpression { get; set; }
+
     public override string StatementType => "CYCLE_LOOP";
 
     public override string ToString()
     {
+        if (IsWhileLoop)
+            return $"CYCLE WHILE {CollectionExpression} AS {LoopVariableName}";
+        if (IsRangeLoop)
+            return $"CYCLE {CollectionExpression} TO {RangeEndExpression} AS {LoopVariableName}";
         return IsCountBased
             ? $"CYCLE {CollectionExpression} AS {LoopVariableName}"
             : $"CYCLE IN {CollectionExpression} AS {LoopVariableName}";

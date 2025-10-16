@@ -1,0 +1,20 @@
+// BUG #3: Nested Function Calls Not Supported
+// Error: "Expected ',' or ')' but found 'ParenthesisOpen'"
+// Problem: Cannot pass function call result directly as argument to another function
+
+FUNCTION ABS(INT value)[INT] {
+    IF value < 0 {
+        RETURN 0 - value
+    }
+    RETURN value
+}
+
+FUNCTION MAKE_NEGATIVE(INT value)[INT] {
+    RETURN 0 - value
+}
+
+FUNCTION TEST_NESTED_CALLS(INT value)[INT] {
+    // THIS LINE CAUSES: Expected ',' or ')' but found 'ParenthesisOpen'
+    INT result = ABS(MAKE_NEGATIVE(value))
+    RETURN result
+}

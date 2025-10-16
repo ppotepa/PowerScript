@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FUNCTION gcd(INT a, INT b)[INT] {
     IF b == 0 {
         RETURN a
@@ -5,4 +7,4 @@ FUNCTION gcd(INT a, INT b)[INT] {
     RETURN gcd(b, a % b)
 }
 
-PRINT gcd(48, 18)
+PRINT(gcd(48, 18))

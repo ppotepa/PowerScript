@@ -56,6 +56,38 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
         string functionName = functionNameToken.RawToken!.Text;
         BuilderLogger.LogFunctionName(functionName, context.Depth);
 
+        // Check if function already exists (e.g., from linked libraries being inlined multiple times)
+        if (context.CurrentScope.Decarations.ContainsKey(functionName))
+        {
+            LoggerService.Logger.Debug($"Function '{functionName}' already declared in scope '{context.CurrentScope.ScopeName}', skipping duplicate");
+            
+            // Skip to the end of this duplicate function definition
+            Token? skipToken = functionNameToken;
+            int braceDepth = 0;
+            bool foundOpenBrace = false;
+            
+            while (skipToken != null)
+            {
+                if (skipToken is ScopeStartToken)
+                {
+                    braceDepth++;
+                    foundOpenBrace = true;
+                }
+                else if (skipToken is ScopeEndToken)
+                {
+                    braceDepth--;
+                    if (foundOpenBrace && braceDepth == 0)
+                    {
+                        // Found the matching closing brace, continue after it
+                        return TokenProcessingResult.Continue(skipToken.Next!);
+                    }
+                }
+                skipToken = skipToken.Next;
+            }
+            
+            throw new InvalidOperationException($"Duplicate function '{functionName}' has no matching closing brace");
+        }
+
         // Register function in parent scope's declaration table
         FunctionDeclaration declaration = new(functionNameToken);
         context.CurrentScope.Decarations.Add(functionName, declaration);

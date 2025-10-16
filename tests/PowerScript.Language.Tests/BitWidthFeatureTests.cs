@@ -84,7 +84,7 @@ INT[8] sum = a + b
 PRINT sum
 ";
         Assert.DoesNotThrow(() => ExecuteScript(script));
-        Assert.That(GetOutput(), Does.Contain("100")); // Note: a + b evaluation issue
+        Assert.That(GetOutput(), Does.Contain("150")); // Fixed: arithmetic now works correctly
     }
 
     [Test]

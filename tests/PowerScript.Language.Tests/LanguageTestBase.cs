@@ -8,6 +8,7 @@ using PowerScript.Parser.Processors.Expressions;
 using PowerScript.Parser.Processors.Scoping;
 using PowerScript.Parser.Processors.Statements;
 using PowerScript.Runtime;
+using PowerScript.Common.Logging;
 
 namespace PowerScript.Language.Tests;
 
@@ -22,6 +23,9 @@ public abstract class LanguageTestBase
     [SetUp]
     public void BaseSetup()
     {
+        // Disable logging during tests to avoid polluting output
+        LoggerService.UseNullLogger();
+
         // Initialize the compiler and executor
         var registry = new TokenProcessorRegistry();
         var dotNetLinker = new DotNetLinker();
@@ -53,12 +57,16 @@ public abstract class LanguageTestBase
         // Order matters: most specific processors first
         registry.Register(new StaticTypeVariableProcessor());
         registry.Register(new FunctionProcessor(parameterProcessor));
-        registry.Register(new FunctionCallProcessor());
+        registry.Register(new NetMemberAccessStatementProcessor());
+        registry.Register(new LinkStatementProcessor());
         registry.Register(new FlexVariableProcessor());
+        registry.Register(new VariableAssignmentProcessor());
         registry.Register(new CycleLoopProcessor(scopeBuilder));
         registry.Register(new IfStatementProcessor(scopeBuilder));
         registry.Register(new ReturnStatementProcessor());
         registry.Register(new PrintStatementProcessor());
+        registry.Register(new FunctionCallStatementProcessor());
+        registry.Register(new FunctionCallProcessor());
         registry.Register(new ExecuteCommandProcessor());
         registry.Register(new NetMethodCallProcessor());
         registry.Register(new VariableDeclarationProcessor());

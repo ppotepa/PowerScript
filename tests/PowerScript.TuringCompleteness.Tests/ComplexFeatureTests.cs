@@ -8,6 +8,7 @@ using PowerScript.Parser.Processors.Expressions;
 using PowerScript.Parser.Processors.Scoping;
 using PowerScript.Parser.Processors.Statements;
 using PowerScript.Runtime;
+using PowerScript.Common.Logging;
 
 namespace PowerScript.Integration.Tests;
 
@@ -19,25 +20,20 @@ public class ComplexFeatureTests
     [SetUp]
     public void Setup()
     {
+        // Suppress logging during tests
+        LoggerService.UseNullLogger();
+
         // Initialize the new separated domains architecture
-        var registry = new TokenProcessorRegistry();
-        var dotNetLinker = new DotNetLinker();
-        var scopeBuilder = new ScopeBuilder(registry);
+        TokenProcessorRegistry registry = new();
+        DotNetLinker dotNetLinker = new();
+        ScopeBuilder scopeBuilder = new(registry);
 
         // Register all the processors (like CLI does)
         RegisterProcessors(registry, scopeBuilder);
 
-        var compiler = new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
-        var executor = new PowerScriptExecutor();
+        PowerScriptCompilerNew compiler = new(registry, dotNetLinker, scopeBuilder);
+        PowerScriptExecutor executor = new();
         _interpreter = new PowerScriptInterpreter(compiler, executor);
-
-        // Link the standard library
-        string stdLibPath = Path.Combine("..", "..", "scripts", "stdlib", "StdLib.ps");
-        if (File.Exists(stdLibPath))
-        {
-            // TODO: Update this to use the new executor's LinkLibrary method
-            // _interpreter.LinkLibrary(stdLibPath);
-        }
 
         _output = new StringWriter();
         Console.SetOut(_output);
@@ -46,22 +42,24 @@ public class ComplexFeatureTests
     private void RegisterProcessors(TokenProcessorRegistry registry, ScopeBuilder scopeBuilder)
     {
         // Create parameter processor (helper, not a token processor)
-        var parameterProcessor = new ParameterProcessor();
+        ParameterProcessor parameterProcessor = new();
 
-        // Register all token processors (same as CLI)
+        // Register all token processors (matching LanguageTestBase)
+        registry.Register(new StaticTypeVariableProcessor());
         registry.Register(new FunctionProcessor(parameterProcessor));
-        registry.Register(new FunctionCallProcessor());
+        registry.Register(new NetMemberAccessStatementProcessor());
+        registry.Register(new LinkStatementProcessor());
         registry.Register(new FlexVariableProcessor());
+        registry.Register(new VariableAssignmentProcessor());
         registry.Register(new CycleLoopProcessor(scopeBuilder));
         registry.Register(new IfStatementProcessor(scopeBuilder));
         registry.Register(new ReturnStatementProcessor());
-        registry.Register(new PrintStatementProcessor());
+        // NOTE: PrintStatementProcessor removed - PRINT is now a function in stdlib/IO.ps
+        registry.Register(new FunctionCallStatementProcessor());
+        registry.Register(new FunctionCallProcessor());
         registry.Register(new ExecuteCommandProcessor());
         registry.Register(new NetMethodCallProcessor());
         registry.Register(new VariableDeclarationProcessor());
-        // NOTE: ScopeProcessor should NOT be registered here as it creates circular reference
-        // The ScopeBuilder already handles scope processing internally
-        // registry.Register(new ScopeProcessor(registry, scopeBuilder));
     }
 
     [TearDown]
@@ -84,8 +82,8 @@ public class ComplexFeatureTests
     [Description("Test 3.1: Bubble sort algorithm with array literals")]
     public void Test_3_1_BubbleSort()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_1_bubble_sort.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_1_bubble_sort.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // Verify sorted output contains numbers in ascending order
@@ -98,8 +96,8 @@ public class ComplexFeatureTests
     [Description("Test 3.2: Multi-dimensional array simulation (matrix operations)")]
     public void Test_3_2_MatrixOperations()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_2_matrix_operations.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_2_matrix_operations.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Is.Not.Empty, "Should produce output");
@@ -110,8 +108,8 @@ public class ComplexFeatureTests
     [Description("Test 3.3: Maze solver using 1D array as 2D grid")]
     public void Test_3_3_MazeSolver()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_3_maze_solver.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_3_maze_solver.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("GOAL REACHED"), "Should find a path through the maze");
@@ -123,8 +121,8 @@ public class ComplexFeatureTests
     [Description("Test 3.4: Auto-generated loop variables (A, B, C)")]
     public void Test_3_4_AutoGeneratedVariables()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_4_auto_generated_variables.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_4_auto_generated_variables.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // Should print A values (0, 1) and B values (0, 1, 2) for each A
@@ -138,8 +136,8 @@ public class ComplexFeatureTests
     [Description("Test 3.5: Triple-nested auto-generated loop variables (A, B, C)")]
     public void Test_3_5_TripleNestedLoops()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_5_triple_nested_loops.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_5_triple_nested_loops.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("8"), "2*2*2 iterations should give count=8");
@@ -150,8 +148,8 @@ public class ComplexFeatureTests
     [Description("Test 3.6: Mixed explicit and auto-generated loop variables")]
     public void Test_3_6_MixedLoopVariables()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_6_mixed_loop_variables.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_6_mixed_loop_variables.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // outer is explicitly named, inner loop gets 'A'
@@ -164,8 +162,8 @@ public class ComplexFeatureTests
     [Description("Test 3.7: Factorial using recursion")]
     public void Test_3_7_Factorial()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_7_factorial.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_7_factorial.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("120"), "5! should be 120");
@@ -176,8 +174,8 @@ public class ComplexFeatureTests
     [Description("Test 3.8: Fibonacci sequence using recursion")]
     public void Test_3_8_Fibonacci()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_8_fibonacci.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_8_fibonacci.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("13"), "7th Fibonacci number should be 13");
@@ -188,8 +186,8 @@ public class ComplexFeatureTests
     [Description("Test 3.9: Prime number detection")]
     public void Test_3_9_PrimeDetection()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_9_prime_detection.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_9_prime_detection.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("1"), "17 is prime");
@@ -201,8 +199,8 @@ public class ComplexFeatureTests
     [Description("Test 3.10: Greatest Common Divisor (GCD) using Euclidean algorithm")]
     public void Test_3_10_GCD()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_10_gcd.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_10_gcd.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("6"), "GCD of 48 and 18 should be 6");
@@ -213,8 +211,8 @@ public class ComplexFeatureTests
     [Description("Test 3.11: Nested IF statements with complex conditions")]
     public void Test_3_11_NestedConditions()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_11_nested_conditions.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_11_nested_conditions.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("z is between x and y"), "Should execute nested IF");
@@ -225,8 +223,8 @@ public class ComplexFeatureTests
     [Description("Test 3.12: Complex loop breaking logic")]
     public void Test_3_12_LoopBreaking()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_12_loop_breaking.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_12_loop_breaking.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("Found target"), "Should find target");
@@ -238,8 +236,8 @@ public class ComplexFeatureTests
     [Description("Test 3.13: Stack simulation using array")]
     public void Test_3_13_StackSimulation()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_13_stack_simulation.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_13_stack_simulation.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("30"), "Should pop value 30");
@@ -250,8 +248,8 @@ public class ComplexFeatureTests
     [Description("Test 3.14: Queue simulation using array")]
     public void Test_3_14_QueueSimulation()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_14_queue_simulation.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_14_queue_simulation.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("5"), "Should dequeue value 5 (FIFO)");
@@ -262,8 +260,8 @@ public class ComplexFeatureTests
     [Description("Test 3.15: Power function (exponentiation)")]
     public void Test_3_15_PowerFunction()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_15_power_function.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_15_power_function.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("256"), "2^8 should be 256");
@@ -274,8 +272,8 @@ public class ComplexFeatureTests
     [Description("Test 3.16: Square root approximation using Newton's method")]
     public void Test_3_16_SquareRoot()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_16_square_root.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_16_square_root.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("4"), "Square root of 16 should be approximately 4");
@@ -286,8 +284,8 @@ public class ComplexFeatureTests
     [Description("Test 3.17: Array reversal")]
     public void Test_3_17_ArrayReversal()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_17_array_reversal.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_17_array_reversal.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("5"), "First element should be 5");
@@ -299,8 +297,8 @@ public class ComplexFeatureTests
     [Description("Test 3.18: Linear search in array")]
     public void Test_3_18_LinearSearch()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_18_linear_search.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_18_linear_search.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("4"), "Target 9 should be found at index 4");
@@ -311,8 +309,8 @@ public class ComplexFeatureTests
     [Description("Test 3.19: Deep nesting stress test")]
     public void Test_3_19_DeepNesting()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_19_deep_nesting.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_19_deep_nesting.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("100"), "5*5*4 iterations should give sum=100");
@@ -323,8 +321,8 @@ public class ComplexFeatureTests
     [Description("Test 3.20: Large array operations")]
     public void Test_3_20_LargeArray()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_20_large_array.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_20_large_array.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("210"), "Sum of 1 to 20 should be 210");
@@ -335,8 +333,8 @@ public class ComplexFeatureTests
     [Description("Test 3.21: Zero iterations loop")]
     public void Test_3_21_ZeroIterations()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_21_zero_iterations.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_21_zero_iterations.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("0"), "Count should remain 0");
@@ -347,8 +345,8 @@ public class ComplexFeatureTests
     [Description("Test 3.22: Division and modulo operations")]
     public void Test_3_22_DivisionModulo()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_22_division_modulo.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_22_division_modulo.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("3"), "17 / 5 should be 3");
@@ -360,8 +358,8 @@ public class ComplexFeatureTests
     [Description("Test 3.23: Operator precedence")]
     public void Test_3_23_OperatorPrecedence()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_23_operator_precedence.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_23_operator_precedence.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // Depending on implementation, should respect precedence
@@ -373,8 +371,8 @@ public class ComplexFeatureTests
     [Description("Test 3.24: Complete program combining multiple features")]
     public void Test_3_24_IntegrationTest()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_24_integration_test.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_24_integration_test.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // 2^2 + 4^2 + 6^2 + 8^2 + 10^2 = 4 + 16 + 36 + 64 + 100 = 220
@@ -386,8 +384,8 @@ public class ComplexFeatureTests
     [Description("Test 3.25: Collatz conjecture sequence")]
     public void Test_3_25_CollatzSequence()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/complex/3_25_collatz_sequence.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/complex/3_25_collatz_sequence.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("6"), "Collatz sequence from 10 takes 6 steps");

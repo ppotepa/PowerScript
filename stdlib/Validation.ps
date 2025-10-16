@@ -1,0 +1,204 @@
+// Validation.ps - Type checking and validation operations for PowerScript
+// Provides number and character validation functions
+
+LINK System
+LINK "Core.ps"
+
+// ============================================================================
+// NUMERIC VALIDATION
+// ============================================================================
+
+FUNCTION IS_POSITIVE(INT n)[INT] {
+    FLEX result = 0
+    IF (n > 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_NEGATIVE(INT n)[INT] {
+    FLEX result = 0
+    IF (n < 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_ZERO(INT n)[INT] {
+    FLEX result = 0
+    IF (n == 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_NON_NEGATIVE(INT n)[INT] {
+    FLEX result = 0
+    IF (n >= 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_NON_POSITIVE(INT n)[INT] {
+    FLEX result = 0
+    IF (n <= 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+// ============================================================================
+// RANGE VALIDATION
+// ============================================================================
+
+FUNCTION IN_RANGE(INT value, INT min, INT max)[INT] {
+    FLEX result = 0
+    IF (value >= min) {
+        IF (value <= max) {
+            result = 1
+        }
+    }
+    RETURN result
+}
+
+FUNCTION BETWEEN(INT value, INT min, INT max)[INT] {
+    FLEX result = 0
+    IF (value > min) {
+        IF (value < max) {
+            result = 1
+        }
+    }
+    RETURN result
+}
+
+FUNCTION BETWEEN_INCLUSIVE(INT value, INT min, INT max)[INT] {
+    FLEX result = 0
+    IF (value >= min) {
+        IF (value <= max) {
+            result = 1
+        }
+    }
+    RETURN result
+}
+
+// ============================================================================
+// DIVISIBILITY CHECKS
+// ============================================================================
+
+FUNCTION IS_DIVISIBLE(INT n, INT divisor)[INT] {
+    FLEX remainder = MOD(n, divisor)
+    FLEX result = 0
+    IF (remainder == 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION IS_MULTIPLE(INT n, INT base)[INT] {
+    RETURN IS_DIVISIBLE(n, base)
+}
+
+// ============================================================================
+// CHARACTER VALIDATION
+// ============================================================================
+
+FUNCTION IS_ALPHA(STRING c)[INT] {
+    FLEX isLetter = #Char.IsLetter(c, 0)
+    FLEX result = #Convert.ToInt32(isLetter)
+    RETURN result
+}
+
+FUNCTION IS_DIGIT(STRING c)[INT] {
+    FLEX isDigit = #Char.IsDigit(c, 0)
+    FLEX result = #Convert.ToInt32(isDigit)
+    RETURN result
+}
+
+FUNCTION IS_ALPHANUMERIC(STRING c)[INT] {
+    FLEX isLetterOrDigit = #Char.IsLetterOrDigit(c, 0)
+    FLEX result = #Convert.ToInt32(isLetterOrDigit)
+    RETURN result
+}
+
+FUNCTION IS_UPPER(STRING c)[INT] {
+    FLEX isUpper = #Char.IsUpper(c, 0)
+    FLEX result = #Convert.ToInt32(isUpper)
+    RETURN result
+}
+
+FUNCTION IS_LOWER(STRING c)[INT] {
+    FLEX isLower = #Char.IsLower(c, 0)
+    FLEX result = #Convert.ToInt32(isLower)
+    RETURN result
+}
+
+FUNCTION IS_WHITESPACE(STRING c)[INT] {
+    FLEX isWhiteSpace = #Char.IsWhiteSpace(c, 0)
+    FLEX result = #Convert.ToInt32(isWhiteSpace)
+    RETURN result
+}
+
+// ============================================================================
+// STRING VALIDATION
+// ============================================================================
+
+FUNCTION VALIDATE_NOT_EMPTY(STRING str)[INT] {
+    FLEX len = str -> Length
+    FLEX result = 0
+    IF (len > 0) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen)[INT] {
+    FLEX len = str -> Length
+    FLEX result = 0
+    IF (len == expectedLen) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen)[INT] {
+    FLEX len = str -> Length
+    FLEX result = 0
+    IF (len >= minLen) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION VALIDATE_MAX_LENGTH(STRING str, INT maxLen)[INT] {
+    FLEX len = str -> Length
+    FLEX result = 0
+    IF (len <= maxLen) {
+        result = 1
+    }
+    RETURN result
+}
+
+// ============================================================================
+// NUMERIC RANGE VALIDATION
+// ============================================================================
+
+FUNCTION VALIDATE_RANGE(INT value, INT min, INT max)[INT] {
+    RETURN IN_RANGE(value, min, max)
+}
+
+FUNCTION VALIDATE_MIN(INT value, INT min)[INT] {
+    FLEX result = 0
+    IF (value >= min) {
+        result = 1
+    }
+    RETURN result
+}
+
+FUNCTION VALIDATE_MAX(INT value, INT max)[INT] {
+    FLEX result = 0
+    IF (value <= max) {
+        result = 1
+    }
+    RETURN result
+}

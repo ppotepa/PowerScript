@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FUNCTION sqrt(INT n)[INT] {
     IF n == 0 {
         RETURN 0
@@ -13,4 +15,4 @@ FUNCTION sqrt(INT n)[INT] {
 }
 
 FLEX result = sqrt(16)
-PRINT result
+PRINT(result)

@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FLEX stack = [0, 0, 0, 0, 0]
 FLEX top = 0
 
@@ -11,4 +13,4 @@ FLEX top = top + 1
 
 // Pop one value
 FLEX top = top - 1
-PRINT stack[top]
+PRINT(stack[top])

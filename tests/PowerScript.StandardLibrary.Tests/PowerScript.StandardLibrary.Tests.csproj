@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PowerScript.StandardLibrary.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit.Analyzers" Version="4.3.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PowerScript.Core\PowerScript.Core.csproj" />
+    <ProjectReference Include="..\..\src\PowerScript.Parser\PowerScript.Parser.csproj" />
+    <ProjectReference Include="..\..\src\PowerScript.Compiler\PowerScript.Compiler.csproj" />
+    <ProjectReference Include="..\..\src\PowerScript.Runtime\PowerScript.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\PowerScript.Interpreter\PowerScript.Interpreter.csproj" />
+    <ProjectReference Include="..\..\src\PowerScript.Common\PowerScript.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\stdlib\*.ps" CopyToOutputDirectory="PreserveNewest" Link="stdlib\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

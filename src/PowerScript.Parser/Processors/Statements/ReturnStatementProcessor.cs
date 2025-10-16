@@ -158,9 +158,43 @@ public class ReturnStatementProcessor : ITokenProcessor
             return innerExpr;
         }
 
-        // Handle identifiers (including function calls)
+        // Handle identifiers (including function calls and member access)
         if (token is IdentifierToken identToken)
         {
+            // Check for arrow operator: identifier->Member or identifier->Method()
+            if (identToken.Next is ArrowToken)
+            {
+                Expression baseExpr = new IdentifierExpression(identToken);
+                token = identToken.Next; // Move to ->
+                token = token.Next; // Move past ->
+
+                // Get the member name
+                if (token is not IdentifierToken memberToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
+                token = memberToken.Next; // Move past member name
+
+                // Check if it's a method call (has parentheses)
+                if (token is ParenthesisOpen)
+                {
+                    token = token.Next; // Move past '('
+
+                    // Parse method arguments
+                    var (arguments, nextToken) = ParseFunctionArguments(token);
+                    token = nextToken; // Move past ')'
+
+                    return new NetMemberAccessExpression(baseExpr, memberName, arguments);
+                }
+                else
+                {
+                    // Property access
+                    return new NetMemberAccessExpression(baseExpr, memberName);
+                }
+            }
+
             // Check for function call: identifier(...)
             if (identToken.Next is ParenthesisOpen)
             {
@@ -191,8 +225,15 @@ public class ReturnStatementProcessor : ITokenProcessor
             return new LiteralExpression(valueToken);
         }
 
+        // Handle string literals
+        if (token is StringLiteralToken stringToken)
+        {
+            token = token.Next;
+            return new StringLiteralExpression(stringToken);
+        }
+
         throw new UnexpectedTokenException(token!, typeof(IdentifierToken), typeof(ValueToken),
-            typeof(ParenthesisOpen));
+            typeof(StringLiteralToken), typeof(ParenthesisOpen));
     }
 
     /// <summary>

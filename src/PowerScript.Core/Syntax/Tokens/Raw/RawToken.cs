@@ -35,7 +35,7 @@ public class RawToken
             .Replace("]", " ]") // Space before ]
             .Trim();
 
-    /// <summary>Factory method to create a RawToken from source text</summary>
+    /// <summary>Factory method to create a RawToken from    source text</summary>
     public static RawToken Create(string @string)
     {
         return new RawToken(@string);

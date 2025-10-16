@@ -1,0 +1,8 @@
+LINK "scripts/stdlib/FormattingLib.ps"
+
+// Test: TABLE_CELL_RIGHT - Right-aligned cell
+STRING content = "Data"
+INT width = 10
+STRING result = TABLE_CELL_RIGHT(content, width)
+PRINT result
+// Expected: "      Data"

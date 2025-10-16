@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 FUNCTION isPrime(INT n)[INT] {
     IF n <= 1 {
         RETURN 0
@@ -15,5 +17,5 @@ FUNCTION isPrime(INT n)[INT] {
     RETURN 1
 }
 
-PRINT isPrime(17)
-PRINT isPrime(18)
+PRINT(isPrime(17))
+PRINT(isPrime(18))

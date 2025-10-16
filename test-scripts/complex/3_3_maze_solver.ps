@@ -1,3 +1,5 @@
+LINK "../../stdlib/IO.ps"
+LINK System
 // Maze Pathfinding Algorithm - Finding path through a 5x5 grid
 // Uses a simple greedy algorithm (right-first, then down)
 
@@ -13,17 +15,17 @@ FLEX maze = [
     [0, 0, 1, 1, 0]
 ]
 
-PRINT "=== MAZE SOLVER ==="
-PRINT "Maze Layout:"
+PRINT("=== MAZE SOLVER ===")
+PRINT("Maze Layout:")
 
 // Print maze dynamically from 2D array
 CYCLE 5 AS row {
     CYCLE 5 AS col {
         FLEX cellValue = maze[row][col]
         IF cellValue == 0 {
-            PRINT "."
+            PRINT(".")
         } ELSE {
-            PRINT "#"
+            PRINT("#")
         }
     }
 }
@@ -37,14 +39,14 @@ FLEX currentY = 0
 FLEX pathLength = 0
 FLEX foundPath = 0
 
-PRINT `Starting from (@{startX},@{startY}) to (@{endX},@{endY})`
+PRINT("Starting pathfinding...")
 
 CYCLE 50 AS step {
     IF foundPath == 0 {
         // Check if we reached the goal
         IF currentX == endX AND currentY == endY {
             FLEX foundPath = 1
-            PRINT "Goal reached!"
+            PRINT("GOAL REACHED!")
         } ELSE {
             FLEX moved = 0
             FLEX nextX = currentX + 1
@@ -75,12 +77,12 @@ CYCLE 50 AS step {
             // No valid moves - stuck
             IF moved == 0 {
                 FLEX foundPath = 1
-                PRINT "No path found"
+                PRINT("No path found")
             }
         }
     }
 }
 
-PRINT "=== RESULTS ==="
-PRINT pathLength
+PRINT("=== RESULTS ===")
+PRINT(pathLength)
 

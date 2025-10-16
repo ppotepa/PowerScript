@@ -1,5 +1,6 @@
 using System.Reflection;
 using PowerScript.Common.Logging;
+using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.DotNet;
 
 namespace PowerScript.Interpreter.DotNet;
@@ -230,5 +231,15 @@ public class DotNetLinker : IDotNetLinker
             "BOOL" or "Boolean" => typeof(bool),
             _ => null
         };
+    }
+
+    /// <summary>
+    ///     Registers a .NET member access expression for delayed resolution
+    /// </summary>
+    public void RegisterMemberAccess(NetMemberAccessExpression expression)
+    {
+        // This is a placeholder for future functionality
+        // Currently, member access is resolved at runtime in the executor
+        LoggerService.Logger.Debug($"Registered member access: {expression.MemberName}");
     }
 }

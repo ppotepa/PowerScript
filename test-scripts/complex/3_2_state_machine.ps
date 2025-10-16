@@ -1,6 +1,8 @@
-PRINT "=== Complex State Machine Simulator ==="
-PRINT "Simulating a vending machine with multiple states"
-PRINT ""
+LINK "../../stdlib/IO.ps"
+LINK System
+PRINT("=== Complex State Machine Simulator ===")
+PRINT("Simulating a vending machine with multiple states")
+PRINT("")
 
 FLEX state = 0
 FLEX balance = 0
@@ -10,20 +12,20 @@ FLEX changeAmount = 0
 FLEX itemDispensed = 0
 FLEX maxCycles = 20
 
-PRINT "Vending Machine Initialized"
-PRINT "Item Price: 150 cents"
-PRINT ""
+PRINT("Vending Machine Initialized")
+PRINT("Item Price: 150 cents")
+PRINT("")
 
 CYCLE 20 AS cycle {
     FLEX cycleNum = cycle + 1
     
-    PRINT "--- Cycle"
+    PRINT("--- Cycle")
     PRINT cycleNum
-    PRINT "---"
+    PRINT("---")
     
     IF state == 0 {
-        PRINT "State: IDLE"
-        PRINT "Waiting for coins..."
+        PRINT("State: IDLE")
+        PRINT("Waiting for coins...")
         
         FLEX coinValue = 0
         FLEX coinType = cycleNum / 4
@@ -35,46 +37,46 @@ CYCLE 20 AS cycle {
             FLEX coinValue = 25
         }
         
-        PRINT "Inserting coin:"
+        PRINT("Inserting coin:")
         PRINT coinValue
         
         FLEX balance = balance + coinValue
         FLEX coinsInserted = coinsInserted + 1
         
-        PRINT "Balance:"
+        PRINT("Balance:")
         PRINT balance
         
         IF balance > itemPrice OR balance == itemPrice {
             FLEX state = 1
-            PRINT "Transitioning to VENDING state"
+            PRINT("Transitioning to VENDING state")
         }
     }
     
     IF state == 1 {
-        PRINT "State: VENDING"
-        PRINT "Dispensing item..."
+        PRINT("State: VENDING")
+        PRINT("Dispensing item...")
         
         FLEX itemDispensed = itemDispensed + 1
-        PRINT "Item dispensed! Total items:"
+        PRINT("Item dispensed! Total items:")
         PRINT itemDispensed
         
         FLEX changeAmount = balance - itemPrice
-        PRINT "Change due:"
+        PRINT("Change due:")
         PRINT changeAmount
         
         IF changeAmount > 0 {
             FLEX state = 2
-            PRINT "Transitioning to CHANGE state"
+            PRINT("Transitioning to CHANGE state")
         } ELSE {
             FLEX state = 0
             FLEX balance = 0
-            PRINT "Transitioning to IDLE state"
+            PRINT("Transitioning to IDLE state")
         }
     }
     
     IF state == 2 {
-        PRINT "State: CHANGE"
-        PRINT "Dispensing change..."
+        PRINT("State: CHANGE")
+        PRINT("Dispensing change...")
         
         FLEX quarters = 0
         FLEX dimes = 0
@@ -102,28 +104,28 @@ CYCLE 20 AS cycle {
             }
         }
         
-        PRINT "Change breakdown:"
-        PRINT "Quarters:"
+        PRINT("Change breakdown:")
+        PRINT("Quarters:")
         PRINT quarters
-        PRINT "Dimes:"
+        PRINT("Dimes:")
         PRINT dimes
-        PRINT "Nickels:"
+        PRINT("Nickels:")
         PRINT nickels
         
         FLEX state = 0
         FLEX balance = 0
-        PRINT "Transitioning to IDLE state"
+        PRINT("Transitioning to IDLE state")
     }
     
-    PRINT ""
+    PRINT("")
 }
 
-PRINT "=== Simulation Complete ==="
-PRINT ""
-PRINT "Final Statistics:"
-PRINT "Total coins inserted:"
+PRINT("=== Simulation Complete ===")
+PRINT("")
+PRINT("Final Statistics:")
+PRINT("Total coins inserted:")
 PRINT coinsInserted
-PRINT "Total items dispensed:"
+PRINT("Total items dispensed:")
 PRINT itemDispensed
-PRINT "Final state:"
-PRINT state
+PRINT("Final state:")
+PRINT(state)

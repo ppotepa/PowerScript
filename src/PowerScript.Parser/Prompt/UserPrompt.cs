@@ -97,33 +97,45 @@ public class UserPrompt(string prompt)
                 }
                 else
                 {
-                    // Add spaces around delimiters and operators
-                    // Handle multi-character operators FIRST before single-character ones
-                    string processed = token
-                        .Replace("::", " :: ") // Namespace operator
-                        .Replace("==", " == ") // Equality comparison
-                        .Replace("!=", " != ") // Not equal comparison
-                        .Replace(">=", " >= ") // Greater than or equal
-                        .Replace("<=", " <= ") // Less than or equal
-                        .Replace(".", " . ") // Dot operator
-                        .Replace("#", " # ") // C# .NET shorthand
-                        .Replace("{", " { ")
-                        .Replace("}", " } ")
-                        .Replace(")", " ) ")
-                        .Replace("(", " ( ")
-                        .Replace("[", " [ ")
-                        .Replace("]", " ] ")
-                        .Replace(",", " , ")
-                        .Replace("+", " + ")
-                        .Replace("-", " - ")
-                        .Replace("*", " * ")
-                        .Replace("/", " / ")
-                        .Replace("%", " % "); // Modulo operator
+                    // Check if this token is a decimal number (e.g., 3.14)
+                    if (System.Text.RegularExpressions.Regex.IsMatch(token, @"^\d+\.\d+$"))
+                    {
+                        // Keep decimal numbers as-is
+                        processedTokens.Add(token);
+                    }
+                    else
+                    {
+                        // Add spaces around delimiters and operators
+                        // Handle multi-character operators FIRST before single-character ones
+                        // Use placeholder for -> to protect it from - replacement
+                        string processed = token
+                            .Replace("::", " :: ") // Namespace operator
+                            .Replace("==", " == ") // Equality comparison
+                            .Replace("!=", " != ") // Not equal comparison
+                            .Replace(">=", " >= ") // Greater than or equal
+                            .Replace("<=", " <= ") // Less than or equal
+                            .Replace("->", " ⇒ARROW⇐ ") // Arrow operator (placeholder to protect from - replacement)
+                            .Replace(".", " . ") // Dot operator
+                            .Replace("#", " # ") // C# .NET shorthand
+                            .Replace("{", " { ")
+                            .Replace("}", " } ")
+                            .Replace(")", " ) ")
+                            .Replace("(", " ( ")
+                            .Replace("[", " [ ")
+                            .Replace("]", " ] ")
+                            .Replace(",", " , ")
+                            .Replace("+", " + ")
+                            .Replace("-", " - ")
+                            .Replace("*", " * ")
+                            .Replace("/", " / ")
+                            .Replace("%", " % ") // Modulo operator
+                            .Replace("⇒ARROW⇐", "->"); // Restore arrow operator
 
-                    // NOTE: Single "=" and "<", ">" are NOT replaced here
-                    // because they would break multi-character operators like "==", "<=", ">="
-                    // The tokenizer will handle them correctly without extra spaces
-                    processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));
+                        // NOTE: Single "=" and "<", ">" are NOT replaced here
+                        // because they would break multi-character operators like "==", "<=", ">="
+                        // The tokenizer will handle them correctly without extra spaces
+                        processedTokens.AddRange(processed.Split([' '], StringSplitOptions.RemoveEmptyEntries));
+                    }
                 }
             }
 

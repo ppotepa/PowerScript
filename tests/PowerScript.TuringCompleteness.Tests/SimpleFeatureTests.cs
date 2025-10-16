@@ -8,6 +8,7 @@ using PowerScript.Parser.Processors.Expressions;
 using PowerScript.Parser.Processors.Scoping;
 using PowerScript.Parser.Processors.Statements;
 using PowerScript.Runtime;
+using PowerScript.Common.Logging;
 
 namespace PowerScript.Integration.Tests;
 
@@ -19,6 +20,9 @@ public class SimpleFeatureTests
     [SetUp]
     public void Setup()
     {
+        // Suppress logging during tests
+        LoggerService.UseNullLogger();
+
         // Initialize the new separated domains architecture
         var registry = new TokenProcessorRegistry();
         var dotNetLinker = new DotNetLinker();
@@ -31,14 +35,6 @@ public class SimpleFeatureTests
         var executor = new PowerScriptExecutor();
         _interpreter = new PowerScriptInterpreter(compiler, executor);
 
-        // Link the standard library
-        string stdLibPath = Path.Combine("..", "..", "scripts", "stdlib", "StdLib.ps");
-        if (File.Exists(stdLibPath))
-        {
-            // TODO: Update this to use the new executor's LinkLibrary method
-            // _interpreter.LinkLibrary(stdLibPath);
-        }
-
         _output = new StringWriter();
         Console.SetOut(_output);
     }
@@ -48,20 +44,22 @@ public class SimpleFeatureTests
         // Create parameter processor (helper, not a token processor)
         var parameterProcessor = new ParameterProcessor();
 
-        // Register all token processors (same as CLI)
+        // Register all token processors (matching LanguageTestBase)
+        registry.Register(new StaticTypeVariableProcessor());
         registry.Register(new FunctionProcessor(parameterProcessor));
-        registry.Register(new FunctionCallProcessor());
+        registry.Register(new NetMemberAccessStatementProcessor());
+        registry.Register(new LinkStatementProcessor());
         registry.Register(new FlexVariableProcessor());
+        registry.Register(new VariableAssignmentProcessor());
         registry.Register(new CycleLoopProcessor(scopeBuilder));
         registry.Register(new IfStatementProcessor(scopeBuilder));
         registry.Register(new ReturnStatementProcessor());
-        registry.Register(new PrintStatementProcessor());
+        // NOTE: PrintStatementProcessor removed - PRINT is now a function in stdlib/IO.ps
+        registry.Register(new FunctionCallStatementProcessor());
+        registry.Register(new FunctionCallProcessor());
         registry.Register(new ExecuteCommandProcessor());
         registry.Register(new NetMethodCallProcessor());
         registry.Register(new VariableDeclarationProcessor());
-        // NOTE: ScopeProcessor should NOT be registered here as it creates circular reference
-        // The ScopeBuilder already handles scope processing internally
-        // registry.Register(new ScopeProcessor(registry, scopeBuilder));
     }
 
     [TearDown]
@@ -84,8 +82,8 @@ public class SimpleFeatureTests
     [Description("Test 1.1: Basic variable declaration and assignment")]
     public void Test_1_1_Variables()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_1_variables.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_1_variables.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("5"), "Should print x = 5");
@@ -98,8 +96,8 @@ public class SimpleFeatureTests
     [Description("Test 1.2: Arithmetic operations (+, -, *, /)")]
     public void Test_1_2_Arithmetic()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_2_arithmetic.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_2_arithmetic.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("13"), "Should print sum = 13");
@@ -113,12 +111,12 @@ public class SimpleFeatureTests
     [Description("Test 1.3: Simple IF/ELSE conditional statements")]
     public void Test_1_3_ConditionalSimple()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_3_conditional_simple.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_3_conditional_simple.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
-        Assert.That(output, Does.Contain("x is greater than 5"), "Should execute true branch for x");
-        Assert.That(output, Does.Contain("y is not greater than 5"), "Should execute else branch for y");
+        Assert.That(output, Does.Contain("x is GREATER THAN 5"), "Should execute true branch for x");
+        Assert.That(output, Does.Contain("y is NOT GREATER THAN 5"), "Should execute else branch for y");
     }
 
     [Test]
@@ -126,8 +124,8 @@ public class SimpleFeatureTests
     [Description("Test 1.4: Simple CYCLE loop with accumulation")]
     public void Test_1_4_LoopSimple()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_4_loop_simple.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_4_loop_simple.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("5"), "Should print sum = 5 after 5 iterations");
@@ -138,8 +136,8 @@ public class SimpleFeatureTests
     [Description("Test 1.5: CYCLE loop with counter variable")]
     public void Test_1_5_LoopCounter()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_5_loop_counter.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_5_loop_counter.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("1"), "Should print 1");
@@ -152,8 +150,8 @@ public class SimpleFeatureTests
     [Description("Test 1.6: Factorial calculation (5! = 120)")]
     public void Test_1_6_Factorial()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_6_factorial.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_6_factorial.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("120"), "Should calculate 5! = 120");
@@ -164,8 +162,8 @@ public class SimpleFeatureTests
     [Description("Test 1.7: Expression evaluation with parentheses")]
     public void Test_1_7_Parentheses()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_7_parentheses.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_7_parentheses.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("20"), "Should calculate (2 + 3) * 4 = 20");
@@ -177,8 +175,8 @@ public class SimpleFeatureTests
     [Description("Test 1.8: AND boolean logic")]
     public void Test_1_8_BooleanAnd()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_8_boolean_and.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_8_boolean_and.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("Both conditions true"), "Should evaluate AND correctly");
@@ -189,8 +187,8 @@ public class SimpleFeatureTests
     [Description("Test 1.9: OR boolean logic")]
     public void Test_1_9_BooleanOr()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_9_boolean_or.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_9_boolean_or.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("At least one condition true"), "Should evaluate OR correctly");
@@ -201,8 +199,8 @@ public class SimpleFeatureTests
     [Description("Test 1.10: Nested IF/ELSE statements")]
     public void Test_1_10_NestedConditionals()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_10_nested_conditionals.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_10_nested_conditionals.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("Medium").Or.Contain("MEDIUM"), "Should execute nested conditional correctly");
@@ -213,8 +211,8 @@ public class SimpleFeatureTests
     [Description("Test 1.11: Nested CYCLE loops")]
     public void Test_1_11_NestedLoops()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_11_nested_loops.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_11_nested_loops.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         // 3x3 grid should produce products: 1,2,3,2,4,6,3,6,9
@@ -228,8 +226,8 @@ public class SimpleFeatureTests
     [Description("Test 1.12: CYCLE loop combined with IF conditional")]
     public void Test_1_12_LoopWithConditional()
     {
-        string script = File.ReadAllText("../../../../../test-scripts/simple/1_12_loop_with_conditional.ps");
-        Assert.DoesNotThrow(() => _interpreter.ExecuteCode(script));
+        string path = "../../../../../test-scripts/simple/1_12_loop_with_conditional.ps";
+        Assert.DoesNotThrow(() => _interpreter.ExecuteFile(path));
 
         string output = GetOutput();
         Assert.That(output, Does.Contain("5"), "Should count 5 numbers greater than 5");

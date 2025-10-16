@@ -1,0 +1,17 @@
+// LINK "scripts/stdlib/ArrayLib.ps"
+
+// Inlined function for testing
+FUNCTION ARRAY_INDEX_VALID(INT index, INT size)[INT] {
+    IF index < 0 {
+        RETURN 0
+    }
+    IF index >= size {
+        RETURN 0
+    }
+    RETURN 1
+}
+
+// Test: ARRAY_INDEX_VALID - Valid index
+INT result = ARRAY_INDEX_VALID(3, 5)
+PRINT result
+// Expected: 1

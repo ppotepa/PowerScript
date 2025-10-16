@@ -5,6 +5,9 @@ using PowerScript.Compiler.Models;
 using PowerScript.Core.AST;
 using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.AST.Statements;
+using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Values;
+using PowerScript.Parser.Processors.Statements; // For ExpressionStatement
 using PowerScript.Runtime.Interfaces;
 using PowerScript.Runtime.Models;
 using PowerScript.Runtime.Core;
@@ -111,7 +114,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     private object? ExecuteCompiledArtifacts(CompilationResult compilationResult)
     {
         LoggerService.Logger.Debug($"[EXECUTOR] Executing compiled artifacts with {compilationResult.Functions.Count} functions");
-        Console.WriteLine($"[DEBUG] Starting execution of {compilationResult.RootScope.Statements.Count} statements");
+        LoggerService.Logger.Debug($"[DEBUG] Starting execution of {compilationResult.RootScope.Statements.Count} statements");
 
         // Execute statements in the root scope
         return ExecuteScope(compilationResult.RootScope);
@@ -123,13 +126,13 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     private object? ExecuteScope(Scope scope)
     {
         LoggerService.Logger.Debug($"[EXECUTOR] Executing scope with {scope.Statements.Count} statements");
-        Console.WriteLine($"[DEBUG] Executing scope with {scope.Statements.Count} statements");
+        LoggerService.Logger.Debug($"[DEBUG] Executing scope with {scope.Statements.Count} statements");
 
         object? lastResult = null;
 
         foreach (var statement in scope.Statements)
         {
-            Console.WriteLine($"[DEBUG] Executing statement: {statement.GetType().Name} - {statement.StatementType}");
+            LoggerService.Logger.Debug($"[DEBUG] Executing statement: {statement.GetType().Name} - {statement.StatementType}");
             lastResult = ExecuteStatement(statement);
 
             // If this is a return statement, stop execution and return the value
@@ -164,22 +167,68 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             IfStatement ifStmt => ExecuteIfStatement(ifStmt),
             CycleLoopStatement cycleStmt => ExecuteCycleLoopStatement(cycleStmt),
             ArrayAssignmentStatement arrayAssignStmt => ExecuteArrayAssignment(arrayAssignStmt),
+            NetMethodCallStatement netMethodStmt => ExecuteNetMethodCall(netMethodStmt),
+            LinkStatement linkStmt => ExecuteLinkStatement(linkStmt),
+            FunctionCallStatement funcStmt => ExecuteFunctionCallStatement(funcStmt),
+            ExpressionStatement exprStmt => ExecuteExpressionStatement(exprStmt),
             _ => throw new NotSupportedException($"Statement type {statement.StatementType} is not yet supported")
         };
     }
 
     /// <summary>
+    /// Executes a LINK statement (imports .NET namespace or PowerScript file).
+    /// </summary>
+    private object? ExecuteLinkStatement(LinkStatement statement)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Executing LINK statement: {statement.Target} (IsFile={statement.IsFilePath})");
+
+        if (statement.IsFilePath)
+        {
+            // File linking must be handled at the interpreter level, not executor level
+            // The executor will receive an already-linked AST from the interpreter
+            LoggerService.Logger.Debug($"[EXECUTOR] File path link: {statement.Target}");
+        }
+        else
+        {
+            // .NET namespace linking - currently a no-op since we use Console -> WriteLine directly
+            LoggerService.Logger.Debug($"[EXECUTOR] .NET namespace link registered: {statement.Target}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Executes a PRINT statement.
+    /// PowerScript convention: String values are printed in uppercase.
     /// </summary>
     private object? ExecutePrintStatement(PrintStatement statement)
     {
         var value = EvaluateExpression(statement.Expression);
+        LoggerService.Logger.Debug($"[EXECUTOR] Print value: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
         var output = value?.ToString() ?? "";
+        
+        // PowerScript convention: uppercase string output
+        if (value is string)
+        {
+            output = output.ToUpperInvariant();
+        }
 
         Console.WriteLine(output);
         LoggerService.Logger.Debug($"[EXECUTOR] Printed: {output}");
 
         return null;
+    }
+
+    /// <summary>
+    /// Executes an expression statement (typically a function call).
+    /// The return value is evaluated but discarded.
+    /// </summary>
+    private object? ExecuteExpressionStatement(ExpressionStatement statement)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Executing expression statement");
+        var value = EvaluateExpression(statement.Expression);
+        LoggerService.Logger.Debug($"[EXECUTOR] Expression evaluated to: {value}");
+        return value;
     }
 
     /// <summary>
@@ -191,11 +240,97 @@ public class PowerScriptExecutor : IPowerScriptExecutor
                           throw new InvalidOperationException("Variable declaration missing identifier");
 
         var value = EvaluateExpression(statement.InitialValue);
+        LoggerService.Logger.Debug($"[EXECUTOR] Variable value before set: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
 
         _context.SetVariable(variableName, value);
         LoggerService.Logger.Debug($"[EXECUTOR] Set variable {variableName} = {value}");
 
         return value;
+    }
+
+    /// <summary>
+    /// Executes a .NET method call statement.
+    /// Example: Console -> WriteLine(42) or NET::System.Console.WriteLine("Hello")
+    /// </summary>
+    private object? ExecuteNetMethodCall(NetMethodCallStatement statement)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Executing .NET method call: {statement.FullMethodPath}");
+
+        // Parse the fully qualified method path (e.g., "Console.WriteLine" or "System.Console.WriteLine")
+        string[] pathParts = statement.FullMethodPath.Split('.');
+        if (pathParts.Length < 2)
+        {
+            throw new InvalidOperationException($"Invalid .NET method path: {statement.FullMethodPath}. Expected format: ClassName.MethodName or Namespace.ClassName.MethodName");
+        }
+
+        // Extract method name (last part)
+        string methodName = pathParts[^1];
+
+        // Extract type name (everything before method name)
+        string typePath = string.Join(".", pathParts[..^1]);
+
+        // Try to find the type
+        Type? type = null;
+
+        // First, try with System namespace prefix if not already present
+        if (!typePath.Contains("System"))
+        {
+            type = Type.GetType($"System.{typePath}");
+        }
+
+        // If not found, try the path as-is
+        if (type == null)
+        {
+            type = Type.GetType(typePath);
+        }
+
+        // Try common assemblies
+        if (type == null)
+        {
+            var assemblies = new[] { typeof(Console).Assembly, typeof(object).Assembly };
+            foreach (var assembly in assemblies)
+            {
+                type = assembly.GetType(typePath) ?? assembly.GetType($"System.{typePath}");
+                if (type != null) break;
+            }
+        }
+
+        if (type == null)
+        {
+            throw new TypeLoadException($"Could not load type '{typePath}'. Make sure to use fully qualified type names or use LINK System.");
+        }
+
+        LoggerService.Logger.Debug($"[EXECUTOR] Found type: {type.FullName}, looking for method: {methodName}");
+
+        // Evaluate argument expressions to get actual values
+        var argValues = statement.Arguments.Select(EvaluateExpression).ToArray();
+        var argTypes = argValues.Select(v => v?.GetType() ?? typeof(object)).ToArray();
+
+        LoggerService.Logger.Debug($"[EXECUTOR] Calling {type.Name}.{methodName} with {argValues.Length} argument(s)");
+
+        // Try to find the method
+        var method = type.GetMethod(methodName, argTypes);
+
+        // If exact match not found, try without parameter types (will get first overload)
+        if (method == null)
+        {
+            var methods = type.GetMethods().Where(m => m.Name == methodName && m.IsStatic && m.GetParameters().Length == argValues.Length).ToArray();
+            if (methods.Length > 0)
+            {
+                method = methods[0]; // Use first matching overload
+            }
+        }
+
+        if (method == null)
+        {
+            throw new MissingMethodException($"Static method '{methodName}' with {argValues.Length} parameter(s) not found on type '{type.Name}'");
+        }
+
+        // Invoke the static method (null target for static methods)
+        var result = method.Invoke(null, argValues);
+        LoggerService.Logger.Debug($"[EXECUTOR] Method call completed. Result: {result}");
+
+        return result;
     }
 
     /// <summary>
@@ -242,6 +377,75 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     }
 
     /// <summary>
+    /// Executes a function call statement (e.g., PRINT(value)).
+    /// </summary>
+    private object? ExecuteFunctionCallStatement(FunctionCallStatement statement)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Executing function call statement: {statement.FunctionName}");
+
+        // Get the function from registered functions
+        var function = _context.GetFunction(statement.FunctionName) as FunctionDeclaration;
+        if (function == null)
+        {
+            throw new InvalidOperationException($"Function '{statement.FunctionName}' is not defined");
+        }
+
+        // Evaluate argument tokens to values
+        var arguments = new List<object?>();
+        foreach (var argToken in statement.Arguments)
+        {
+            object? argValue = argToken switch
+            {
+                ValueToken valToken => int.Parse(valToken.RawToken?.Text ?? "0"),
+                StringLiteralToken strToken => strToken.RawToken?.Text?.Trim('"') ?? "",
+                IdentifierToken idToken => _context.GetVariable(idToken.RawToken?.Text ?? ""),
+                _ => throw new InvalidOperationException($"Unsupported argument token type: {argToken.GetType().Name}")
+            };
+            arguments.Add(argValue);
+            LoggerService.Logger.Debug($"[EXECUTOR] Argument value: {argValue}");
+        }
+
+        // Save current variables (simple scope isolation)
+        var savedVariables = new Dictionary<string, object?>(_context.Variables);
+        bool savedHasReturned = _hasReturned;
+        object? returnValue = null;
+
+        try
+        {
+            // Reset return flag for this function call
+            _hasReturned = false;
+
+            // Bind parameters to arguments
+            for (int i = 0; i < function.Parameters.Count; i++)
+            {
+                var param = function.Parameters[i];
+                var paramName = param.Identifier.RawToken?.Text ?? throw new InvalidOperationException("Parameter missing name");
+                var argValue = i < arguments.Count ? arguments[i] : null;
+
+                _context.SetVariable(paramName, argValue);
+                LoggerService.Logger.Debug($"[EXECUTOR] Bound parameter '{paramName}' = {argValue}");
+            }
+
+            // Execute the function body
+            returnValue = ExecuteScope(function.Scope);
+
+            LoggerService.Logger.Debug($"[EXECUTOR] Function '{statement.FunctionName}' returned: {returnValue}");
+        }
+        finally
+        {
+            // Restore previous variables (simple scope cleanup)
+            foreach (var kvp in savedVariables)
+            {
+                _context.SetVariable(kvp.Key, kvp.Value);
+            }
+            // Restore return flag from calling scope
+            _hasReturned = savedHasReturned;
+        }
+
+        return returnValue;
+    }
+
+    /// <summary>
     /// Evaluates an expression and returns its value.
     /// </summary>
     private object? EvaluateExpression(Expression expression)
@@ -260,6 +464,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             IndexExpression indexExpr => EvaluateIndexExpression(indexExpr),
             TemplateStringExpression templateExpr => EvaluateTemplateString(templateExpr),
             FunctionCallExpression functionCallExpr => EvaluateFunctionCall(functionCallExpr),
+            NetMemberAccessExpression netMemberExpr => EvaluateNetMemberAccess(netMemberExpr),
             _ => throw new NotSupportedException($"Expression type {expression.ExpressionType} ({expression.GetType().Name}) is not yet supported")
         };
     }
@@ -270,10 +475,12 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     private string EvaluateStringLiteral(StringLiteralExpression expression)
     {
         // Remove quotes from string literal
-        var text = expression.Value.RawToken?.Text ?? "";
+        var text = expression.Value.RawToken?.OriginalText ?? "";
+        LoggerService.Logger.Debug($"[EXECUTOR] StringLiteral OriginalText: '{text}' (length={text.Length})");
         if (text.StartsWith('"') && text.EndsWith('"'))
         {
             text = text[1..^1];
+            LoggerService.Logger.Debug($"[EXECUTOR] After removing quotes: '{text}' (length={text.Length})");
         }
         return text;
     }
@@ -318,6 +525,12 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? EvaluateLiteral(LiteralExpression expression)
     {
+        // Handle DecimalToken directly (already parsed)
+        if (expression.Value is DecimalToken decimalToken)
+        {
+            return decimalToken.Value;
+        }
+
         var text = expression.Value.RawToken?.Text ?? "";
 
         // Try to parse as integer first
@@ -346,12 +559,121 @@ public class PowerScriptExecutor : IPowerScriptExecutor
 
         LoggerService.Logger.Debug($"[EXECUTOR] Looking for variable: '{variableName}'");
 
+        // Special case: Check for .NET types for static member access
+        // This supports #Char, #Console, #String, etc.
+        Type? netType = ResolveCommonNetType(variableName);
+        if (netType != null)
+        {
+            LoggerService.Logger.Debug($"[EXECUTOR] Returning .NET type '{netType.Name}' for static member access");
+            return netType;
+        }
+
         if (!_context.HasVariable(variableName))
         {
             throw new InvalidOperationException($"Variable '{variableName}' is not defined");
         }
 
         return _context.GetVariable(variableName);
+    }
+
+    /// <summary>
+    /// Resolves common .NET type names to their Type objects using reflection.
+    /// This enables static method calls like #Char.IsLetter() or #Console.WriteLine()
+    /// Searches in System namespace and other commonly used namespaces.
+    /// Handles case-insensitive matching by trying proper .NET type casing.
+    /// </summary>
+    private Type? ResolveCommonNetType(string typeName)
+    {
+        // Normalize the type name - PowerScript uses uppercase (CHAR, INT, STRING)
+        // but .NET types use PascalCase (Char, Int32, String)
+        string normalizedTypeName = NormalizeTypeName(typeName);
+
+        // Common namespaces to search in order of priority
+        string[] searchNamespaces =
+        {
+            "System",
+            "System.Collections.Generic",
+            "System.IO",
+            "System.Text",
+            "System.Linq",
+            "System.Threading",
+            "System.Diagnostics",
+            "System.Net",
+            "System.Data",
+            "System.Xml"
+        };
+
+        // Try each namespace with normalized type name
+        foreach (var ns in searchNamespaces)
+        {
+            string fullTypeName = $"{ns}.{normalizedTypeName}";
+
+            // Try to get the type from all loaded assemblies
+            Type? type = Type.GetType(fullTypeName);
+            if (type != null)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] Resolved type '{typeName}' to '{type.FullName}'");
+                return type;
+            }
+
+            // If Type.GetType fails, search in all loaded assemblies
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = assembly.GetType(fullTypeName);
+                if (type != null)
+                {
+                    LoggerService.Logger.Debug($"[EXECUTOR] Resolved type '{typeName}' to '{type.FullName}' from assembly '{assembly.GetName().Name}'");
+                    return type;
+                }
+            }
+        }
+
+        // Also try without namespace (for types in mscorlib)
+        try
+        {
+            Type? directType = Type.GetType(normalizedTypeName);
+            if (directType != null)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] Resolved type '{typeName}' directly to '{directType.FullName}'");
+                return directType;
+            }
+        }
+        catch
+        {
+            // Ignore errors
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Normalizes PowerScript type names to .NET type names.
+    /// PowerScript uses uppercase (CHAR, INT, STRING) but .NET uses PascalCase.
+    /// </summary>
+    private string NormalizeTypeName(string typeName)
+    {
+        // Map common PowerScript type names to .NET type names
+        return typeName.ToUpperInvariant() switch
+        {
+            "CHAR" => "Char",
+            "STRING" => "String",
+            "INT" => "Int32",
+            "LONG" => "Int64",
+            "DOUBLE" => "Double",
+            "DECIMAL" => "Decimal",
+            "BOOL" => "Boolean",
+            "BOOLEAN" => "Boolean",
+            "DATETIME" => "DateTime",
+            "CONSOLE" => "Console",
+            "MATH" => "Math",
+            "CONVERT" => "Convert",
+            "ARRAY" => "Array",
+            "ENVIRONMENT" => "Environment",
+            "PATH" => "Path",
+            "FILE" => "File",
+            "DIRECTORY" => "Directory",
+            _ => typeName // Return as-is if no mapping found (assume proper casing)
+        };
     }
 
     /// <summary>
@@ -422,6 +744,127 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     }
 
     /// <summary>
+    /// Evaluates a .NET member access expression using reflection.
+    /// Supports both property access (item -> Length) and method calls (item -> ToString()).
+    /// </summary>
+    private object? EvaluateNetMemberAccess(NetMemberAccessExpression expression)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Evaluating .NET member access: {expression.MemberName}");
+
+        // Evaluate the target expression (left side of arrow)
+        var targetValue = EvaluateExpression(expression.Target);
+        if (targetValue == null)
+        {
+            throw new NullReferenceException($"Cannot access member '{expression.MemberName}' on null object");
+        }
+
+        // Special case: If target is a Type object, we're calling a static method/property
+        if (targetValue is Type staticType)
+        {
+            LoggerService.Logger.Debug($"[EXECUTOR] Static member access on type: {staticType.Name}, Member: {expression.MemberName}");
+
+            if (expression.IsMethodCall)
+            {
+                // Static method call: Console -> WriteLine("Hello")
+                var argValues = expression.Arguments.Select(EvaluateExpression).ToArray();
+                var argTypes = argValues.Select(v => v?.GetType() ?? typeof(object)).ToArray();
+
+                LoggerService.Logger.Debug($"[EXECUTOR] Looking for static method '{expression.MemberName}' with {argValues.Length} arguments");
+
+                // Try to find the method
+                var method = staticType.GetMethod(expression.MemberName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, argTypes, null);
+
+                // If exact match not found, try without parameter types
+                if (method == null)
+                {
+                    var methods = staticType.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                        .Where(m => m.Name == expression.MemberName && m.GetParameters().Length == argValues.Length)
+                        .ToArray();
+                    if (methods.Length > 0)
+                    {
+                        method = methods[0];
+                    }
+                }
+
+                if (method == null)
+                {
+                    throw new MissingMethodException($"Static method '{expression.MemberName}' with {argValues.Length} parameter(s) not found on type '{staticType.Name}'");
+                }
+
+                LoggerService.Logger.Debug($"[EXECUTOR] Invoking static method '{expression.MemberName}'");
+
+                var result = method.Invoke(null, argValues); // null target for static methods
+                LoggerService.Logger.Debug($"[EXECUTOR] Method result: {result}");
+                return result;
+            }
+            else
+            {
+                // Static property access
+                var property = staticType.GetProperty(expression.MemberName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (property == null)
+                {
+                    throw new MissingMemberException($"Static property '{expression.MemberName}' not found on type '{staticType.Name}'");
+                }
+
+                var result = property.GetValue(null); // null target for static properties
+                LoggerService.Logger.Debug($"[EXECUTOR] Static property value: {result}");
+                return result;
+            }
+        }
+
+        // Instance member access (original code)
+        var targetType = targetValue.GetType();
+        LoggerService.Logger.Debug($"[EXECUTOR] Target type: {targetType.Name}, Member: {expression.MemberName}, IsMethod: {expression.IsMethodCall}");
+
+        if (expression.IsMethodCall)
+        {
+            // Method call: person -> Speak("Hello")
+            // Evaluate arguments first
+            var argValues = expression.Arguments.Select(EvaluateExpression).ToArray();
+            var argTypes = argValues.Select(v => v?.GetType() ?? typeof(object)).ToArray();
+
+            LoggerService.Logger.Debug($"[EXECUTOR] Looking for method '{expression.MemberName}' with {argValues.Length} arguments");
+
+            // Try to find the best matching method
+            var method = targetType.GetMethod(expression.MemberName, argTypes);
+
+            // If exact match not found, try without parameter types (will get first overload)
+            if (method == null)
+            {
+                var methods = targetType.GetMethods().Where(m => m.Name == expression.MemberName && m.GetParameters().Length == argValues.Length).ToArray();
+                if (methods.Length > 0)
+                {
+                    method = methods[0]; // Use first matching overload
+                }
+            }
+
+            if (method == null)
+            {
+                throw new MissingMethodException($"Method '{expression.MemberName}' with {argValues.Length} parameter(s) not found on type '{targetType.Name}'");
+            }
+
+            LoggerService.Logger.Debug($"[EXECUTOR] Invoking method '{expression.MemberName}'");
+
+            var result = method.Invoke(targetValue, argValues);
+            LoggerService.Logger.Debug($"[EXECUTOR] Method result: {result}");
+            return result;
+        }
+        else
+        {
+            // Property access: str -> Length
+            var property = targetType.GetProperty(expression.MemberName);
+            if (property == null)
+            {
+                throw new MissingMemberException($"Property '{expression.MemberName}' not found on type '{targetType.Name}'");
+            }
+
+            var result = property.GetValue(targetValue);
+            LoggerService.Logger.Debug($"[EXECUTOR] Property value: {result}");
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Evaluates an array literal expression.
     /// </summary>
     private object? EvaluateArrayLiteral(ArrayLiteralExpression expression)
@@ -445,11 +888,12 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? EvaluateArrayCreation(ArrayCreationExpression expression)
     {
-        // Get the size from the token
-        var sizeText = expression.SizeToken.RawToken?.Text ?? "0";
-        if (!int.TryParse(sizeText, out int size))
+        // Evaluate the size expression (can be literal or variable)
+        object? sizeValue = EvaluateExpression(expression.SizeExpression);
+
+        if (sizeValue is not int size)
         {
-            throw new InvalidOperationException($"Array size must be an integer, got: {sizeText}");
+            throw new InvalidOperationException($"Array size must be an integer, got: {sizeValue?.GetType().Name ?? "null"}");
         }
 
         if (size < 0)
@@ -650,6 +1094,18 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? ExecuteCycleLoopStatement(CycleLoopStatement statement)
     {
+        // Handle WHILE loops (CYCLE WHILE condition)
+        if (statement.IsWhileLoop)
+        {
+            return ExecuteWhileLoop(statement);
+        }
+
+        // Handle range loops (CYCLE start TO end)
+        if (statement.IsRangeLoop)
+        {
+            return ExecuteRangeLoop(statement);
+        }
+
         var collectionValue = EvaluateExpression(statement.CollectionExpression);
         LoggerService.Logger.Debug($"[EXECUTOR] CYCLE collection evaluated to: {collectionValue}");
 
@@ -659,8 +1115,109 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             return ExecuteCountBasedLoop(statement, count);
         }
 
-        // TODO: Handle collection-based loops (CYCLE IN collection)
-        throw new NotSupportedException("Collection-based CYCLE loops are not yet implemented");
+        // Handle collection-based loops (CYCLE collection, CYCLE ELEMENTS OF collection)
+        if (collectionValue is System.Collections.IEnumerable enumerable)
+        {
+            return ExecuteCollectionLoop(statement, enumerable);
+        }
+
+        throw new NotSupportedException($"CYCLE loops with type {collectionValue?.GetType().Name ?? "null"} are not yet supported");
+    }
+
+    /// <summary>
+    /// Executes a while loop (CYCLE WHILE condition).
+    /// </summary>
+    private object? ExecuteWhileLoop(CycleLoopStatement statement)
+    {
+        object? lastResult = null;
+        int iteration = 0;
+
+        while (true)
+        {
+            // Evaluate the condition
+            var conditionValue = EvaluateExpression(statement.CollectionExpression);
+            LoggerService.Logger.Debug($"[EXECUTOR] CYCLE WHILE condition evaluated to: {conditionValue}");
+
+            // Check if condition is true
+            if (!IsConditionTrue(conditionValue))
+            {
+                break;
+            }
+
+            // Set the loop variable value
+            _context.SetVariable(statement.LoopVariableName, iteration);
+            LoggerService.Logger.Debug($"[EXECUTOR] CYCLE WHILE iteration {iteration}, {statement.LoopVariableName} = {iteration}");
+
+            // Execute the loop body
+            if (statement.LoopBody != null)
+            {
+                lastResult = ExecuteScope(statement.LoopBody);
+            }
+
+            // Break out of loop if a RETURN statement was executed
+            if (_hasReturned)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] CYCLE WHILE loop interrupted by RETURN statement");
+                break;
+            }
+
+            iteration++;
+
+            // Safety check to prevent infinite loops
+            if (iteration > 1000000)
+            {
+                throw new InvalidOperationException("CYCLE WHILE loop exceeded maximum iteration count (1000000)");
+            }
+        }
+
+        return lastResult;
+    }
+
+    /// <summary>
+    /// Executes a range loop (CYCLE start TO end).
+    /// </summary>
+    private object? ExecuteRangeLoop(CycleLoopStatement statement)
+    {
+        // Evaluate start and end values
+        var startValue = EvaluateExpression(statement.CollectionExpression);
+        var endValue = EvaluateExpression(statement.RangeEndExpression!);
+
+        LoggerService.Logger.Debug($"[EXECUTOR] CYCLE range: {startValue} TO {endValue}");
+
+        if (startValue is not int start)
+        {
+            throw new InvalidOperationException($"Range start must be an integer, got {startValue?.GetType().Name ?? "null"}");
+        }
+
+        if (endValue is not int end)
+        {
+            throw new InvalidOperationException($"Range end must be an integer, got {endValue?.GetType().Name ?? "null"}");
+        }
+
+        object? lastResult = null;
+
+        // Iterate from start to end (inclusive)
+        for (int i = start; i <= end; i++)
+        {
+            // Set the loop variable value
+            _context.SetVariable(statement.LoopVariableName, i);
+            LoggerService.Logger.Debug($"[EXECUTOR] CYCLE range iteration {i}, {statement.LoopVariableName} = {i}");
+
+            // Execute the loop body
+            if (statement.LoopBody != null)
+            {
+                lastResult = ExecuteScope(statement.LoopBody);
+            }
+
+            // Break out of loop if a RETURN statement was executed
+            if (_hasReturned)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] CYCLE range loop interrupted by RETURN statement");
+                break;
+            }
+        }
+
+        return lastResult;
     }
 
     /// <summary>
@@ -681,6 +1238,46 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             {
                 lastResult = ExecuteScope(statement.LoopBody);
             }
+
+            // Break out of loop if a RETURN statement was executed
+            if (_hasReturned)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] CYCLE loop interrupted by RETURN statement");
+                break;
+            }
+        }
+
+        return lastResult;
+    }
+
+    /// <summary>
+    /// Executes a collection-based CYCLE loop (CYCLE collection, CYCLE ELEMENTS OF collection).
+    /// </summary>
+    private object? ExecuteCollectionLoop(CycleLoopStatement statement, System.Collections.IEnumerable collection)
+    {
+        object? lastResult = null;
+        int index = 0;
+
+        foreach (var item in collection)
+        {
+            // Set the loop variable value to the current item
+            _context.SetVariable(statement.LoopVariableName, item);
+            LoggerService.Logger.Debug($"[EXECUTOR] CYCLE collection iteration {index}, {statement.LoopVariableName} = {item}");
+
+            // Execute the loop body
+            if (statement.LoopBody != null)
+            {
+                lastResult = ExecuteScope(statement.LoopBody);
+            }
+
+            // Break out of loop if a RETURN statement was executed
+            if (_hasReturned)
+            {
+                LoggerService.Logger.Debug($"[EXECUTOR] CYCLE collection loop interrupted by RETURN statement");
+                break;
+            }
+
+            index++;
         }
 
         return lastResult;
