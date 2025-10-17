@@ -1,0 +1,82 @@
+// example_custom_syntax.ps
+// This demonstrates what custom syntax extensions would look like in PowerScript
+// Note: This is a preview/design file - implementation in progress
+
+// Load syntax extensions
+LINK "examples/arrays.psx"
+LINK "examples/strings.psx"
+LINK "examples/objects.psx"
+
+// === ARRAY EXTENSIONS ===
+PRINT "=== Array Extensions ==="
+FLEX numbers = [5, 2, 8, 1, 9, 3]
+PRINT "Original array:"
+PRINT numbers
+
+// Using :: operator syntax
+FLEX sorted = numbers::Sort()
+PRINT "Sorted:"
+PRINT sorted
+
+FLEX first = numbers::First()
+PRINT "First element:"
+PRINT first
+
+FLEX max = numbers::Max()
+PRINT "Maximum value:"
+PRINT max
+
+// Using pattern-based syntax
+PRINT "Take 3 from numbers:"
+FLEX firstThree = TAKE 3 FROM numbers
+PRINT firstThree
+
+// === STRING EXTENSIONS ===
+PRINT ""
+PRINT "=== String Extensions ==="
+FLEX text = "hello world"
+PRINT "Original text:"
+PRINT text
+
+FLEX upper = text::ToUpper()
+PRINT "Uppercase:"
+PRINT upper
+
+FLEX words = text::Split(" ")
+PRINT "Split into words:"
+PRINT words
+
+FLEX repeated = REPEAT "abc" TIMES 3
+PRINT "Repeated:"
+PRINT repeated
+
+// === OBJECT EXTENSIONS ===
+PRINT ""
+PRINT "=== Object Extensions ==="
+FLEX person = {name = "Alice", age = 30, city = "NYC", role = "Developer"}
+PRINT "Original person:"
+PRINT person
+
+FLEX keys = person::Keys()
+PRINT "Keys:"
+PRINT keys
+
+// Pattern-based property filtering
+FLEX basic = FILTER Properties {name, age} OF person
+PRINT "Filtered properties (name, age):"
+PRINT basic
+
+FLEX cloned = person::Clone()
+PRINT "Cloned object:"
+PRINT cloned
+
+// === CHAINING ===
+PRINT ""
+PRINT "=== Chaining Operations ==="
+FLEX data = [10, 20, 30, 40, 50]
+FLEX result = data::Reverse()::First()
+PRINT "Reversed then first:"
+PRINT result
+
+PRINT ""
+PRINT "Custom syntax extensions demo complete!"

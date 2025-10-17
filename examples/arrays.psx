@@ -1,0 +1,24 @@
+// arrays.psx - Array manipulation syntax extensions
+// This file demonstrates custom syntax extensions for PowerScript
+
+// Operator-based extensions using ::
+// Syntax: $target::Method($args) => FUNCTION_NAME($target, $args)
+
+SYNTAX $array::Sort() => ARRAY_SORT($array)
+SYNTAX $array::Reverse() => ARRAY_REVERSE($array)
+SYNTAX $array::First() => ARRAY_FIRST($array)
+SYNTAX $array::Last() => ARRAY_LAST($array)
+SYNTAX $array::Length() => ARRAY_LENGTH($array)
+SYNTAX $array::Contains($item) => ARRAY_CONTAINS($array, $item)
+SYNTAX $array::Sum() => ARRAY_SUM($array)
+SYNTAX $array::Max() => ARRAY_MAX($array)
+SYNTAX $array::Min() => ARRAY_MIN($array)
+
+// Pattern-based extensions
+// Syntax: PATTERN $var KEYWORD $var => FUNCTION_NAME($vars)
+
+SYNTAX FILTER $array WHERE $condition => ARRAY_FILTER($array, $condition)
+SYNTAX MAP $array WITH $function => ARRAY_MAP($array, $function)
+SYNTAX TAKE $count FROM $array => ARRAY_TAKE($array, $count)
+SYNTAX SKIP $count IN $array => ARRAY_SKIP($array, $count)
+SYNTAX REDUCE $array WITH $function FROM $initial => ARRAY_REDUCE($array, $function, $initial)

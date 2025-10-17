@@ -182,6 +182,42 @@ IF (age < 18 OR hasPermission == 1) {
 }
 ```
 
+### custom syntax extensions
+
+powerscript supports extending the language with custom syntax via `.psx` files:
+
+**operator-based extensions** - add method-like syntax with `::`
+```powerscript
+// Define in .psx file:
+SYNTAX $array::Sort() => ARRAY_SORT($array)
+SYNTAX $str::ToUpper() => STR_UPPER($str)
+
+// Use in .ps file:
+LINK "arrays.psx"
+FLEX numbers = [5, 2, 8, 1]
+FLEX sorted = numbers::Sort()  // transforms to ARRAY_SORT(numbers)
+```
+
+**pattern-based extensions** - add natural language patterns
+```powerscript
+// Define in .psx file:
+SYNTAX FILTER $array WHERE $condition => ARRAY_FILTER($array, $condition)
+SYNTAX TAKE $count FROM $array => ARRAY_TAKE($array, $count)
+
+// Use in .ps file:
+LINK "arrays.psx"
+FLEX firstThree = TAKE 3 FROM myArray
+FILTER results WHERE IsValid
+```
+
+**chaining operations** - custom syntax methods can be chained
+```powerscript
+FLEX result = data::Reverse()::First()
+FLEX text = name::ToLower()::Trim()
+```
+
+see `examples/` folder for more `.psx` extension examples and `docs/custom-syntax-design.md` for the full specification.
+
 ### conditionals
 
 IF statements work as expected:
@@ -298,10 +334,11 @@ FUNCTION IS_VALID(INT x)[INT] {
 
 ### .NET interop (this is the cool part)
 
-you can call .NET methods directly using the # prefix and -> operator:
+you can call .NET methods directly using the `NET.` syntax or `#` shorthand with `->` operator:
 
 **calling static methods:**
 ```powerscript
+NET.System.Console.WriteLine("Hello from .NET!")
 #Console -> WriteLine("Hello from .NET!")
 #String -> Concat("Hello", " World")
 ```
@@ -321,6 +358,9 @@ PRINT upper        // prints: HELLO WORLD
 VAR now = #DateTime -> Now
 VAR formatted = #now -> ToString()
 PRINT formatted
+
+// or with full syntax
+NET.System.DateTime.Now
 ```
 
 **linking .NET namespaces:**
