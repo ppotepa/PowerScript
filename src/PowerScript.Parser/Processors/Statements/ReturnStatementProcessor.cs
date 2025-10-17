@@ -158,10 +158,58 @@ public class ReturnStatementProcessor : ITokenProcessor
             return innerExpr;
         }
 
+        // Handle .NET interop: #identifier -> method()
+        if (token is NetKeywordToken)
+        {
+            token = token.Next; // Move past #
+            
+            if (token is not IdentifierToken netIdentToken)
+            {
+                throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+            }
+            
+            // Check for arrow operator: #identifier->Member or #identifier->Method()
+            if (netIdentToken.Next is ArrowToken)
+            {
+                Expression baseExpr = new IdentifierExpression(netIdentToken);
+                token = netIdentToken.Next; // Move to ->
+                token = token.Next; // Move past ->
+
+                // Get the member name
+                if (token is not IdentifierToken memberToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
+                token = memberToken.Next; // Move past member name
+
+                // Check if it's a method call (has parentheses)
+                if (token is ParenthesisOpen)
+                {
+                    token = token.Next; // Move past '('
+
+                    // Parse method arguments
+                    var (arguments, nextToken) = ParseFunctionArguments(token);
+                    token = nextToken; // Move past ')'
+
+                    return new NetMemberAccessExpression(baseExpr, memberName, arguments);
+                }
+                else
+                {
+                    // Property access
+                    return new NetMemberAccessExpression(baseExpr, memberName);
+                }
+            }
+            
+            // If no arrow, just treat as identifier
+            return new IdentifierExpression(netIdentToken);
+        }
+
         // Handle identifiers (including function calls and member access)
         if (token is IdentifierToken identToken)
         {
-            // Check for arrow operator: identifier->Member or identifier->Method()
+            // Check for arrow operator WITHOUT #: keep for backwards compatibility or error
             if (identToken.Next is ArrowToken)
             {
                 Expression baseExpr = new IdentifierExpression(identToken);

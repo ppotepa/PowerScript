@@ -4,6 +4,7 @@ using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
@@ -12,33 +13,44 @@ namespace PowerScript.Parser.Processors.Statements;
 
 /// <summary>
 ///     Processes .NET member access statements using arrow operator.
-///     Handles syntax like: Console -> WriteLine(42) or myObject -> SomeMethod()
+///     Handles syntax like: #Console -> WriteLine(42) or #myObject -> SomeMethod()
+///     Requires # prefix before the identifier to indicate .NET interop.
 /// </summary>
 public class NetMemberAccessStatementProcessor : ITokenProcessor
 {
     public bool CanProcess(Token token)
     {
-        // Check if this is an identifier followed by an arrow operator
-        if (token is not IdentifierToken)
+        // Check if this is a # followed by identifier followed by arrow operator
+        if (token is not NetKeywordToken)
         {
             return false;
         }
 
-        // Look ahead to see if next token is arrow operator
+        // Look ahead to see if next token is identifier
         Token nextToken = token.Next;
-        return nextToken is ArrowToken;
+        if (nextToken is not IdentifierToken)
+        {
+            return false;
+        }
+
+        // And then arrow operator
+        Token arrowToken = nextToken.Next;
+        return arrowToken is ArrowToken;
     }
 
     public TokenProcessingResult Process(Token token, ProcessingContext context)
     {
         LoggerService.Logger.Debug(
-            $"NetMemberAccessStatementProcessor: Processing '{token.RawToken?.Text} -> ...' in scope '{context.CurrentScope.ScopeName}'");
+            $"NetMemberAccessStatementProcessor: Processing '#... -> ...' in scope '{context.CurrentScope.ScopeName}'");
 
-        IdentifierToken objectToken = (IdentifierToken)token;
+        // Skip the # token
+        Token currentToken = token.Next;
+        
+        IdentifierToken objectToken = (IdentifierToken)currentToken;
         string objectName = objectToken.RawToken.OriginalText; // Preserve casing for .NET types
 
-        // Skip the arrow operator
-        Token currentToken = token.Next.Next;
+        // Skip the identifier and arrow operator
+        currentToken = currentToken.Next.Next;
 
         // Expect member name (method or property)
         if (currentToken is not IdentifierToken memberToken)

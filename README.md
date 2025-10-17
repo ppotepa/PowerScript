@@ -1,348 +1,496 @@
-# PowerScript - Test Suite Documentation
+# PowerScript
 
-**Current Coverage**: 194/328 tests (59.1%)  
-**Status**: ⏸️ Paused - Waiting for parser fixes  
-**Last Updated**: October 16, 2025
+so this is powerscript, basically a wrapper around .NET that lets you write scripts without all the ceremony. its got a nice interactive shell (repl) and can also run script files. think of it like if powershell and python had a baby but simpler.
 
----
+## whats inside
 
-## 🚀 Quick Start
+this thing compiles to .NET 8.0 and has a bunch of cool stuff:
+- interactive shell where you can just type stuff and see what happens
+- script execution from files
+- direct access to .NET framework (super useful)
+- functions that compile to actual lambda expressions
+- a standard library with common stuff you need
+- proper type system with both static and dynamic types
 
-### View Current Status
-```powershell
-# Visual dashboard with progress bars
-See: VISUAL_DASHBOARD.md
+## getting started
 
-# Detailed metrics and analysis
-See: TEST_STATUS_REPORT.md
-
-# Complete documentation index
-See: INDEX.md
-```
-
-### Run Tests
-```powershell
-# Build solution
+build it:
+```bash
 dotnet build
-
-# Run all tests
-dotnet test --no-build
-
-# Run specific test suite
-dotnet test tests\PowerScript.Language.Tests --no-build
-dotnet test tests\PowerScript.TuringCompleteness.Tests --no-build
-dotnet test tests\PowerScript.StandardLibrary.Tests --no-build
 ```
 
----
-
-## 📊 Current Status
-
-### ✅ What's Working (100%)
-- **Language Tests**: 105/105 ✅
-  - Variables, functions, control flow, operators
-  - All core language features functional
-  
-- **TuringCompleteness Tests**: 47/47 ✅
-  - Recursion, loops, complex algorithms
-  - Language is fully Turing complete
-
-### ⚠️ What's Blocked (24%)
-- **StandardLibrary Tests**: 42/176 (24%)
-  - ValidationLib: 23/30 (77%) - maximum achievable
-  - StringLib: 16/28 (57%) - maximum achievable
-  - MathLib: 0/37 (0%) - BLOCKED
-  - ConversionLib: 0/22 (0%) - BLOCKED
-  - Other categories: 3/59 (5%)
-
----
-
-## 🔴 Critical Blockers
-
-**3 parser bugs** block 107 tests (33% of total suite):
-
-1. **Bug #1**: Variable Assignment in Nested Scopes → Blocks 48 tests
-2. **Bug #2**: CYCLE Scope Variable Access → Blocks 37 tests
-3. **Bug #8**: String Literals in RETURN → Blocks 22 tests
-
-**Fix Impact**: Fixing these 3 bugs → **92% coverage immediately**
-
-See: [`PARSER_FIXES_PRIORITY.md`](PARSER_FIXES_PRIORITY.md)
-
----
-
-## 📚 Documentation
-
-### 🎯 Start Here
-
-| Role | Document | Description |
-|------|----------|-------------|
-| **New Developer** | [NEXT_STEPS.md](NEXT_STEPS.md) | Complete guide for continuing work |
-| **Quick Overview** | [VISUAL_DASHBOARD.md](VISUAL_DASHBOARD.md) | Progress bars and visual status |
-| **Parser Developer** | [PARSER_FIXES_PRIORITY.md](PARSER_FIXES_PRIORITY.md) | Bug fix guide with priorities |
-| **Project Manager** | [TEST_STATUS_REPORT.md](TEST_STATUS_REPORT.md) | Detailed metrics and analysis |
-| **Navigation Hub** | [INDEX.md](INDEX.md) | Complete documentation index |
-
-### 📖 Detailed Documentation
-
-**Bug Documentation**:
-- [PARSER_BUGS.md](PARSER_BUGS.md) - Technical details for all 8 bugs
-- [parser-bug-reproductions/](parser-bug-reproductions/) - Minimal test cases
-- [parser-bug-reproductions/README.md](parser-bug-reproductions/README.md) - Testing guide
-
-**Implementation Details**:
-- [VALIDATION_LIB_STATUS.md](VALIDATION_LIB_STATUS.md) - ValidationLib documentation
-- [FINAL_SESSION_SUMMARY.md](FINAL_SESSION_SUMMARY.md) - Latest session summary
-- [SESSION_SUMMARY.md](SESSION_SUMMARY.md) - Historical progress
-
----
-
-## 🛠️ Development Workflow
-
-### Before Making Changes
-```powershell
-# 1. Check current status
-dotnet test --no-build
-
-# 2. Verify parser bugs are fixed (if working on parser)
-dotnet run --project src\PowerScript.CLI -- "parser-bug-reproductions\BUG_1_NestedScopeAssignment.ps"
-# Should compile successfully after fix (currently fails)
+run the shell:
+```bash
+.\src\PowerScript.CLI\bin\Debug\net8.0\PowerScript.CLI.exe
 ```
 
-### Implementing New Functions
-```powershell
-# 1. Add function to stdlib file
-# Example: scripts/stdlib/StringLib.ps
-
-# 2. Create test script (if missing)
-# Example: test-scripts/stdlib/StringLib/STR_COUNT_Two.ps
-
-# 3. Build
-dotnet build
-
-# 4. Test directly
-dotnet run --project src\PowerScript.CLI -- "test-scripts/stdlib/StringLib/STR_COUNT_Two.ps"
-
-# 5. Run test suite
-dotnet test tests\PowerScript.StandardLibrary.Tests --filter "StringLib" --no-build
+or run a script file:
+```bash
+.\src\PowerScript.CLI\bin\Debug\net8.0\PowerScript.CLI.exe yourscript.ps
 ```
 
-### Verifying Bug Fixes
-```powershell
-# Test reproduction case (should succeed after fix)
-dotnet run --project src\PowerScript.CLI -- "parser-bug-reproductions\BUG_X_Name.ps"
+## language features
 
-# Run affected tests
-dotnet test tests\PowerScript.StandardLibrary.Tests --no-build
+### variables and types
 
-# Check coverage improvement
-# Bug #1 fix → expect ~242/328 (74%)
-# Bug #2 fix → expect ~279/328 (85%)
-# Bug #8 fix → expect ~301/328 (92%)
+powerscript has a bunch of different types depending on what you need:
+
+**FLEX** - for when you want full dynamic typing, can change types on the fly
+```powerscript
+FLEX x = 10
+PRINT x          // prints: 10
+
+FLEX x = "hello" 
+PRINT x          // prints: HELLO
 ```
 
----
-
-## 🎯 Success Metrics
-
-### Coverage Goals
-```
-Current:  ████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 59%
-
-Target 1: ██████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░ 74% (Bug #1)
-
-Target 2: ███████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░░ 85% (Bug #2)
-
-Target 3: ███████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░ 92% (Bug #8)
-
-Goal:     ███████████████████████████████████████████████████████████████████████████████████████████████░░ 99%
+**VAR** - figures out the type from the initial value, then sticks with it
+```powerscript
+VAR count = 5
+VAR message = "test"
+count = 10       // ok
+count = "oops"   // nope, cant do that
 ```
 
-### Timeline Estimate
-```
-Fix Parser Bugs   →   1 week       →   92% coverage
-Complete Missing  →   2-3 weeks    →   99% coverage
-Polish & Edge     →   1 week       →   100% coverage
-───────────────────────────────────────────────────────
-TOTAL                 4-5 weeks        SUCCESS! 🎉
+**INT** - classic integers
+```powerscript
+INT age = 25
+INT score = 100
 ```
 
----
-
-## 💡 Key Insights
-
-### What We Learned
-
-1. **PowerScript is Fully Functional**
-   - 100% language features working
-   - 100% Turing completeness achieved
-   - Core infrastructure is solid
-
-2. **Specific Patterns Are Blocked**
-   - Variable assignments in nested scopes (multi-function files)
-   - CYCLE scope variable access (multi-function files)
-   - String literals in RETURN (nested scopes)
-   - All related to scope resolution in specific contexts
-
-3. **The Path Is Clear**
-   - 8 bugs documented with minimal reproductions
-   - Impact of each bug quantified
-   - Fix order prioritized for maximum impact
-   - Expected outcomes calculated
-
-### What Works Well
-
-✅ Direct .NET method calls  
-✅ Simple logic without nesting  
-✅ Single-function files  
-✅ Integer/numeric operations  
-✅ Basic string manipulation  
-
-### What Needs Fixes
-
-❌ Variable assignments in IF/CYCLE (multi-function files)  
-❌ CYCLE scope variable access (multi-function files)  
-❌ String literals in RETURN (nested scopes)  
-❌ Nested function calls  
-❌ String indexing syntax  
-
----
-
-## 📞 Getting Help
-
-### Common Questions
-
-**Q: Why are tests failing?**  
-A: Check [PARSER_BUGS.md](PARSER_BUGS.md) - likely a known bug.
-
-**Q: How do I test a bug fix?**  
-A: See [parser-bug-reproductions/README.md](parser-bug-reproductions/README.md)
-
-**Q: What should I work on next?**  
-A: See [NEXT_STEPS.md](NEXT_STEPS.md) for priority-ordered tasks.
-
-**Q: What's the current status?**  
-A: See [VISUAL_DASHBOARD.md](VISUAL_DASHBOARD.md) for visual progress.
-
-**Q: Where do I start?**  
-A: See [INDEX.md](INDEX.md) for role-based navigation.
-
----
-
-## 🏆 Achievements
-
-### Session Accomplishments
-
-✅ **Language Tests**: 105/105 (100%) - COMPLETE  
-✅ **Turing Tests**: 47/47 (100%) - COMPLETE  
-✅ **ValidationLib**: 23 functions implemented (77%)  
-✅ **StringLib**: 16 functions implemented (57%)  
-✅ **Bug Documentation**: 8 bugs documented  
-✅ **Reproduction Cases**: 8 minimal test cases created  
-✅ **Documentation**: 6 comprehensive guides written  
-
-### Overall Progress
-
-```
-Session Start:  ████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 52%
-
-Session End:    ████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 59%
-
-Potential:      ███████████████████████████████████████████████████████████████████████████████████████████░░ 99%
+**STRING** - text stuff
+```powerscript
+STRING name = "Alice"
+STRING greeting = "Hello World"
 ```
 
-**Improvement**: +7% coverage, +23 tests  
-**Potential**: +40% coverage (when bugs fixed)
+**NUMBER** - flexible numeric type (can be int or decimal)
+```powerscript
+NUMBER value = 42
+NUMBER price = 99.99
+```
 
----
+**PREC** - when you specifically need floating point
+```powerscript
+PREC pi = 3.14159
+PREC temperature = 98.6
+```
 
-## 🎯 Next Actions
+### bit-width types (yeah we got those!)
 
-### For Parser Team 🔧
-1. Fix Bug #1 (Variable Assignment) - See [PARSER_FIXES_PRIORITY.md](PARSER_FIXES_PRIORITY.md)
-2. Fix Bug #2 (CYCLE Scope) - See [PARSER_FIXES_PRIORITY.md](PARSER_FIXES_PRIORITY.md)
-3. Fix Bug #8 (String RETURN) - See [PARSER_FIXES_PRIORITY.md](PARSER_FIXES_PRIORITY.md)
+sometimes you need to be specific about memory size:
+```powerscript
+INT[8] smallNumber = 255      // 8-bit int
+INT[16] mediumNumber = 30000  // 16-bit int
+INT[32] bigNumber = 2000000   // 32-bit int
+NUMBER[64] hugeValue = 9999   // 64-bit number
+```
 
-### For StandardLibrary Team 📚
-1. ⏸️ **WAIT** for parser fixes
-2. After fixes: Complete MathLib (37 tests)
-3. After fixes: Complete ConversionLib (22 tests)
-4. See [NEXT_STEPS.md](NEXT_STEPS.md) for detailed plan
+### arrays
 
-### For Project Management 📊
-1. Review [TEST_STATUS_REPORT.md](TEST_STATUS_REPORT.md) for metrics
-2. Review [VISUAL_DASHBOARD.md](VISUAL_DASHBOARD.md) for progress
-3. Prioritize parser bug fixes (3 bugs → 92% coverage)
+arrays work pretty much like youd expect:
+```powerscript
+VAR numbers = [1, 2, 3, 4, 5]
+PRINT numbers
 
----
+VAR first = numbers[0]
+PRINT first              // prints: 1
 
-## 📁 Project Structure
+VAR names = ["Alice", "Bob", "Charlie"]
+PRINT names[1]          // prints: BOB
+```
+
+### printing stuff
+
+just use PRINT, it works:
+```powerscript
+PRINT "Hello, World!"
+PRINT 42
+PRINT myVariable
+```
+
+### arithmetic
+
+all the usual suspects work:
+```powerscript
+VAR sum = 5 + 3          // 8
+VAR diff = 10 - 4        // 6
+VAR product = 6 * 7      // 42
+VAR quotient = 20 / 4    // 5
+
+// use parantheses for precedence
+VAR result = (2 + 3) * 4  // 20
+```
+
+### comparison operators
+
+```powerscript
+x > 5
+y < 10
+age >= 18
+count <= 100
+value == 42
+name != "test"
+```
+
+### logical operators
+
+```powerscript
+IF (x > 5 AND y < 10) {
+    PRINT "both conditions true"
+}
+
+IF (age < 18 OR hasPermission == 1) {
+    PRINT "at least one is true"
+}
+```
+
+### conditionals
+
+IF statements work as expected:
+```powerscript
+IF (age >= 18) {
+    PRINT "Adult"
+} ELSE {
+    PRINT "Minor"
+}
+
+// nested ifs work too
+IF (score >= 90) {
+    PRINT "A grade"
+} ELSE {
+    IF (score >= 80) {
+        PRINT "B grade"
+    } ELSE {
+        PRINT "Keep trying"
+    }
+}
+```
+
+### loops (we call them CYCLE)
+
+powerscript uses CYCLE for loops, and its got a bunch of different flavours:
+
+**basic counting loop:**
+```powerscript
+CYCLE 5 {
+    PRINT "hello"
+}
+```
+
+**loop with counter variable:**
+```powerscript
+CYCLE 5 AS i {
+    PRINT i      // prints: 0, 1, 2, 3, 4
+}
+```
+
+**conditional loop:**
+```powerscript
+VAR x = 0
+CYCLE WHILE (x < 5) {
+    PRINT x
+    x = x + 1
+}
+```
+
+**loop over arrays:**
+```powerscript
+VAR numbers = [10, 20, 30]
+CYCLE numbers AS num {
+    PRINT num
+}
+```
+
+**explicit collection iteration:**
+```powerscript
+VAR items = ["apple", "banana", "orange"]
+CYCLE ELEMENTS OF items AS item {
+    PRINT item
+}
+```
+
+**range loops:**
+```powerscript
+// using array literal syntax
+CYCLE [1, 10] AS i {
+    PRINT i      // 1 to 10
+}
+
+// or explicit range syntax
+CYCLE RANGE FROM 1 TO 10 AS i {
+    PRINT i
+}
+```
+
+**you can even nest them:**
+```powerscript
+CYCLE 3 AS i {
+    CYCLE 3 AS j {
+        PRINT i
+        PRINT j
+    }
+}
+```
+
+### functions
+
+define functions with the FUNCTION keyword:
+```powerscript
+FUNCTION ADD(INT a, INT b)[INT] {
+    RETURN a + b
+}
+
+VAR result = ADD(5, 3)
+PRINT result        // prints: 8
+```
+
+**functions can have different return types:**
+```powerscript
+FUNCTION GET_NAME()[STRING] {
+    RETURN "Alice"
+}
+
+FUNCTION IS_VALID(INT x)[INT] {
+    IF (x > 0) {
+        RETURN 1
+    }
+    RETURN 0
+}
+```
+
+### .NET interop (this is the cool part)
+
+you can call .NET methods directly using the # prefix and -> operator:
+
+**calling static methods:**
+```powerscript
+#Console -> WriteLine("Hello from .NET!")
+#String -> Concat("Hello", " World")
+```
+
+**accessing properties and methods on variables:**
+```powerscript
+STRING text = "hello world"
+VAR length = #text -> Length
+PRINT length        // prints: 11
+
+VAR upper = #text -> ToUpper()
+PRINT upper        // prints: HELLO WORLD
+```
+
+**using .NET types:**
+```powerscript
+VAR now = #DateTime -> Now
+VAR formatted = #now -> ToString()
+PRINT formatted
+```
+
+**linking .NET namespaces:**
+```powerscript
+LINK System
+LINK System.IO
+
+// now you can use types from those namespaces
+```
+
+### importing other powerscript files
+
+use LINK to import other powerscript files:
+```powerscript
+LINK "Core.ps"
+LINK "String.ps"
+LINK "Math.ps"
+
+// now you can use functions from those files
+VAR sum = ADD(5, 3)
+VAR text = STR_UPPER("hello")
+```
+
+### standard library
+
+the stdlib has a bunch of useful functions already:
+
+**Math operations:**
+```powerscript
+VAR sum = ADD(5, 3)
+VAR diff = SUB(10, 4)
+VAR product = MUL(6, 7)
+VAR quotient = DIV(20, 4)
+VAR remainder = MOD(10, 3)
+VAR power = POW(2, 8)
+```
+
+**String operations:**
+```powerscript
+VAR len = STR_LENGTH("hello")
+VAR upper = STR_UPPER("hello")
+VAR lower = STR_LOWER("HELLO")
+VAR reversed = STR_REVERSE("hello")
+VAR trimmed = STR_TRIM("  hello  ")
+VAR contains = STR_CONTAINS("hello world", "world")
+VAR concat = STR_CONCAT("hello", " ", "world")
+```
+
+**I/O functions:**
+```powerscript
+OUT("text")              // output without newline
+NEWLINE()                // print newline
+OUT_MULTI(val1, val2)    // output multiple values
+```
+
+### comments
+
+just use // for comments:
+```powerscript
+// this is a comment
+VAR x = 10  // comments can go at the end of lines too
+```
+
+## examples
+
+### fibonacci sequence
+```powerscript
+FUNCTION FIB(INT n)[INT] {
+    IF (n <= 1) {
+        RETURN n
+    }
+    VAR prev = FIB(SUB(n, 1))
+    VAR prevprev = FIB(SUB(n, 2))
+    RETURN ADD(prev, prevprev)
+}
+
+PRINT FIB(10)  // prints: 55
+```
+
+### bubble sort
+```powerscript
+FUNCTION BUBBLE_SORT(VAR arr)[VAR] {
+    VAR len = #arr -> Length
+    CYCLE RANGE FROM 0 TO SUB(len, 1) AS i {
+        CYCLE RANGE FROM 0 TO SUB(SUB(len, i), 2) AS j {
+            VAR current = arr[j]
+            VAR next = arr[ADD(j, 1)]
+            IF (current > next) {
+                arr[j] = next
+                arr[ADD(j, 1)] = current
+            }
+        }
+    }
+    RETURN arr
+}
+
+VAR numbers = [64, 34, 25, 12, 22, 11, 90]
+numbers = BUBBLE_SORT(numbers)
+```
+
+### prime number checker
+```powerscript
+FUNCTION IS_PRIME(INT n)[INT] {
+    IF (n <= 1) {
+        RETURN 0
+    }
+    IF (n == 2) {
+        RETURN 1
+    }
+    
+    VAR i = 2
+    CYCLE WHILE (i * i <= n) {
+        IF (MOD(n, i) == 0) {
+            RETURN 0
+        }
+        i = ADD(i, 1)
+    }
+    RETURN 1
+}
+
+PRINT IS_PRIME(17)  // prints: 1 (true)
+PRINT IS_PRIME(20)  // prints: 0 (false)
+```
+
+## test results
+
+as of now, heres where we stand:
+- **211 out of 213 tests passing (99.1%)**
+- StandardLibrary: 61/61 (100%)
+- TuringCompleteness: 47/47 (100%)
+- Language: 103/105 (98.1%)
+
+the 2 failing tests are just feature gaps (FOR loops not implemented, and decimal parsing needs work).
+
+## project structure
 
 ```
 tokenez/
-├── README.md (this file)
-├── INDEX.md (documentation hub)
-├── VISUAL_DASHBOARD.md (progress visualization)
-├── NEXT_STEPS.md (continuation guide)
-├── TEST_STATUS_REPORT.md (detailed metrics)
-├── PARSER_BUGS.md (bug documentation)
-├── PARSER_FIXES_PRIORITY.md (fix guide)
-├── VALIDATION_LIB_STATUS.md (ValidationLib docs)
-├── FINAL_SESSION_SUMMARY.md (session summary)
-├── SESSION_SUMMARY.md (historical progress)
-│
-├── parser-bug-reproductions/
-│   ├── README.md (testing guide)
-│   └── BUG_*.ps (8 minimal test cases)
-│
-├── scripts/stdlib/
-│   ├── ValidationLib.ps (23 functions)
-│   ├── StringLib.ps (16 functions)
-│   ├── MathLib_Working.ps (blocked)
-│   └── ConversionLib.ps (blocked)
-│
-└── test-scripts/stdlib/
-    ├── ValidationLib/ (test scripts)
-    ├── StringLib/ (test scripts)
-    └── ... (other categories)
+├── src/
+│   ├── PowerScript.CLI/          # command line interface
+│   ├── PowerScript.Common/       # shared stuff
+│   ├── PowerScript.Compiler/     # compiles tokens to AST
+│   ├── PowerScript.Core/         # core types and tokens
+│   ├── PowerScript.Interpreter/  # runs the code
+│   ├── PowerScript.Parser/       # parses tokens
+│   └── PowerScript.Runtime/      # executes the AST
+├── stdlib/                       # standard library functions
+├── test-scripts/                 # example scripts
+│   ├── simple/                   # basic examples
+│   ├── moderate/                 # medium complexity
+│   ├── complex/                  # advanced algorithms
+│   └── language/                 # language feature tests
+└── tests/                        # unit tests
 ```
 
----
+## shell commands
 
-## 🚀 Quick Reference
+when you run the interactive shell, you get some built-in commands:
 
-| Task | Command |
-|------|---------|
-| Run all tests | `dotnet test --no-build` |
-| Run Language tests | `dotnet test tests\PowerScript.Language.Tests --no-build` |
-| Run Turing tests | `dotnet test tests\PowerScript.TuringCompleteness.Tests --no-build` |
-| Run StandardLib tests | `dotnet test tests\PowerScript.StandardLibrary.Tests --no-build` |
-| Test a script | `dotnet run --project src\PowerScript.CLI -- "path/to/script.ps"` |
-| Test Bug #1 | `dotnet run --project src\PowerScript.CLI -- "parser-bug-reproductions\BUG_1_NestedScopeAssignment.ps"` |
-| Build solution | `dotnet build` |
+```
+HELP      - shows help message
+EXIT      - quits the shell (QUIT works too)
+CLEAR     - clears the screen (CLS works too)
+HISTORY   - shows command history
+VERSION   - shows version info
+ABOUT     - about powerscript
+```
 
----
+## architecture notes
 
-## 📝 Summary
+the interpreter works like this:
+1. lexical analysis turns source code into tokens
+2. tokens get organized into a tree structure
+3. processors walk the token tree and build an AST
+4. the runtime executes the AST
+5. functions get compiled to actual .NET lambda expressions for speed
 
-**PowerScript Status**: ✅ Fully functional language (100% Language + 100% Turing tests)
+its all built on reflection so you can call pretty much any .NET method you want.
 
-**StandardLibrary Status**: ⚠️ 24% coverage, blocked by 3 critical parser bugs
+## quirks and gotchas
 
-**Blocker**: 3 bugs block 107 tests (33% of suite)
+- all string output gets converted to uppercase (its a feature not a bug)
+- variable names are case-insensitive 
+- you need the # prefix before identifiers when calling .NET methods
+- CYCLE is our loop keyword, not FOR or WHILE (though CYCLE WHILE exists)
+- arrays are 0-indexed like civilized people expect
 
-**Path Forward**: Fix 3 bugs → 92% coverage → Complete functions → 99% coverage
+## contributing
 
-**Timeline**: 4-5 weeks after parser fixes
+if you want to add stuff:
+1. add your feature to the appropriate processor
+2. write tests in the tests/ folder
+3. update this readme with examples
+4. make sure all tests still pass
 
-**Confidence**: 🟢 HIGH - Everything is documented, tested, and clear
+## license
 
----
+do whatever you want with it, im not your boss.
 
-**See [INDEX.md](INDEX.md) for complete navigation** 📚
+## known issues
 
----
+- FOR loops arent implemented (use CYCLE instead)
+- decimal number parsing needs some work (3.14 gets split weirdly)
+- some nullable warnings in the code (they dont affect functionality)
 
-**Last Updated**: October 16, 2025  
-**Next Review**: After parser bugs are fixed  
-**Status**: ⏸️ Development paused - waiting for parser team
+## final thoughts
+
+this started as a learning project and turned into something actually useable. its not meant to replace C# or anything, but for quick scripts and .NET automation its pretty handy. the REPL is nice for experimenting and the .NET interop means you get the entire framework at your fingertips.
+
+enjoy!

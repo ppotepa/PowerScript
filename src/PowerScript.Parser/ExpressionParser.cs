@@ -2,6 +2,7 @@ using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Raw;
@@ -59,10 +60,82 @@ namespace PowerScript.Parser
             if (currentToken == null)
                 throw new InvalidOperationException("Unexpected end of tokens in expression");
 
+            // Handle .NET interop: #identifier -> method() or #Type -> StaticMethod()
+            if (currentToken is NetKeywordToken)
+            {
+                currentToken = currentToken.Next; // Move past #
+                
+                if (currentToken is not IdentifierToken netIdentToken)
+                {
+                    throw new InvalidOperationException($"Expected identifier after '#', but found {currentToken?.GetType().Name}");
+                }
+                
+                // Check for arrow operator: #identifier->Member or #identifier->Method()
+                if (netIdentToken.Next is ArrowToken)
+                {
+                    Expression baseExpr = new IdentifierExpression(netIdentToken);
+                    currentToken = netIdentToken.Next; // Move to ->
+                    currentToken = currentToken.Next; // Move past ->
+
+                    // Get the member name
+                    if (currentToken is not IdentifierToken memberToken)
+                    {
+                        throw new InvalidOperationException($"Expected identifier after arrow operator, but found {currentToken?.GetType().Name}");
+                    }
+
+                    string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
+                    currentToken = memberToken.Next; // Move past member name
+
+                    // Check if it's a method call (has parentheses)
+                    if (currentToken is ParenthesisOpen)
+                    {
+                        currentToken = currentToken.Next; // Move past '('
+
+                        // Parse method arguments
+                        List<Expression> arguments = new();
+                        if (currentToken is not ParenthesisClosed)
+                        {
+                            while (true)
+                            {
+                                arguments.Add(ParseBinaryExpression(ref currentToken, 0));
+
+                                if (currentToken is CommaToken)
+                                {
+                                    currentToken = currentToken.Next; // Skip comma
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (currentToken is not ParenthesisClosed)
+                        {
+                            throw new InvalidOperationException($"Expected ')' but found {currentToken?.GetType().Name}");
+                        }
+
+                        currentToken = currentToken.Next; // Move past ')'
+
+                        return new NetMemberAccessExpression(baseExpr, memberName, arguments);
+                    }
+                    else
+                    {
+                        // Property access
+                        return new NetMemberAccessExpression(baseExpr, memberName);
+                    }
+                }
+                
+                // If no arrow, just treat as identifier (shouldn't happen, but fallback)
+                currentToken = netIdentToken.Next;
+                return new IdentifierExpression(netIdentToken);
+            }
+
             // Handle identifiers (check for function calls or member access first)
             if (currentToken is IdentifierToken identToken)
             {
-                // Check for arrow operator: identifier->Member or identifier->Method()
+                // Check for arrow operator WITHOUT #: this should NOT be allowed for .NET calls
+                // But we keep it for backwards compatibility or non-.NET member access if any
                 if (identToken.Next is ArrowToken)
                 {
                     Expression baseExpr = new IdentifierExpression(identToken);
