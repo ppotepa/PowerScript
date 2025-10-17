@@ -76,7 +76,7 @@ public partial class TokenTree
         { "<=", typeof(LessThanOrEqualToken) }, // Less than or equal
         { "==", typeof(EqualsEqualsToken) }, // Equality comparison
         { "!=", typeof(NotEqualsToken) }, // Not equal comparison
-        { "::", typeof(NamespaceOperatorToken) }, // Namespace operator
+        { "::", typeof(CustomSyntaxOperatorToken) }, // Custom syntax operator for extensions
         { ".", typeof(DotToken) } // Dot operator for member access
     };
 

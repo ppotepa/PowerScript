@@ -250,7 +250,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
 
     /// <summary>
     /// Executes a .NET method call statement.
-    /// Example: Console -> WriteLine(42) or NET::System.Console.WriteLine("Hello")
+    /// Example: Console -> WriteLine(42) or NET.System.Console.WriteLine("Hello")
     /// </summary>
     private object? ExecuteNetMethodCall(NetMethodCallStatement statement)
     {

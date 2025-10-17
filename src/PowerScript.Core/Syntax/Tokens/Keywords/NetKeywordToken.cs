@@ -9,7 +9,7 @@ namespace PowerScript.Core.Syntax.Tokens.Keywords;
 /// <summary>
 ///     Token representing the NET keyword or # shorthand.
 ///     Used to access .NET framework functionality directly.
-///     Example: "NET::System.Console.WriteLine(...)" or "#Console.WriteLine(...)"
+///     Example: "NET.System.Console.WriteLine(...)" or "#Console.WriteLine(...)"
 /// </summary>
 public class NetKeywordToken : Token, IKeyWordToken
 {
@@ -21,8 +21,8 @@ public class NetKeywordToken : Token, IKeyWordToken
     {
     }
 
-    /// <summary>After NET, expect namespace operator :: OR after #, expect identifier (class name)</summary>
-    public override Type[] Expectations => [typeof(NamespaceOperatorToken), typeof(IdentifierToken)];
+    /// <summary>After NET or #, expect a dot (for NET.System...) or identifier (class name)</summary>
+    public override Type[] Expectations => [typeof(DotToken), typeof(IdentifierToken)];
 
     public override string KeyWord => "NET";
 }

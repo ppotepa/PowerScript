@@ -214,7 +214,7 @@ Command History:</value>
   • Math: ADD, SUBTRACT, MULTIPLY, DIVIDE, MOD, POW
   • String: CONCAT, LENGTH, SUBSTRING, TOUPPER, TOLOWER, TRIM
   • I/O: PRINT, PRINTLN, READ
-  • .NET Access: NET::Namespace.Class.Method(args)
+  • .NET Access: NET.Namespace.Class.Method(args)
 </value>
   </data>
   
@@ -241,7 +241,7 @@ PowerScript Syntax:
   PRINT "text"                    Print output
   VAR name = value                 Declare variable
   VAR INT name = value             Declare typed variable
-  NET::System.Console.WriteLine()  Call .NET methods
+  NET.System.Console.WriteLine()  Call .NET methods
   EXECUTE "file.ps"                Execute script file
   FUNCTION name(params) { ... }    Define function
   RETURN expression                Return from function
@@ -253,7 +253,7 @@ Examples:
   PS&gt; PRINT "Hello, World!"
   PS&gt; VAR x = 10
   PS&gt; VAR INT count = 5
-  PS&gt; NET::System.Console.WriteLine("From .NET!")
+  PS&gt; NET.System.Console.WriteLine("From .NET!")
   PS&gt; EXECUTE "myscript.ps"
   PS&gt; FUNCTION ADD(INT a, INT b) { RETURN a + b }
 </value>
@@ -270,7 +270,7 @@ interpreter shell. It provides direct access to the .NET
 Framework through a simple, PowerShell-like syntax.
 
 Key Features:
-  • Direct .NET method invocation via NET:: syntax
+  • Direct .NET method invocation via NET. syntax
   • Function compilation to Lambda expressions
   • Script file execution and imports
   • Interactive REPL for rapid development
