@@ -28,7 +28,7 @@ public class PrintStatementProcessor : ITokenProcessor
             // Don't process if followed by opening parenthesis (that's a function call)
             return keywordToken.Next is not ParenthesisOpen;
         }
-            
+
         // Also handle PRINT as identifier for statement syntax (PRINT value)
         if (token is IdentifierToken identToken)
         {
@@ -39,7 +39,7 @@ public class PrintStatementProcessor : ITokenProcessor
                 return identToken.Next is not ParenthesisOpen;
             }
         }
-        
+
         return false;
     }
 
@@ -96,7 +96,7 @@ public class PrintStatementProcessor : ITokenProcessor
                 while (currentToken is DotToken)
                 {
                     currentToken = currentToken.Next; // Move past '.'
-                    
+
                     if (currentToken is not IdentifierToken propertyToken)
                     {
                         throw new InvalidOperationException(

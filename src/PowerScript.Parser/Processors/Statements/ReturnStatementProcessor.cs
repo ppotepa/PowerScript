@@ -162,12 +162,12 @@ public class ReturnStatementProcessor : ITokenProcessor
         if (token is NetKeywordToken)
         {
             token = token.Next; // Move past #
-            
+
             if (token is not IdentifierToken netIdentToken)
             {
                 throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
             }
-            
+
             // Check for arrow operator: #identifier->Member or #identifier->Method()
             if (netIdentToken.Next is ArrowToken)
             {
@@ -201,7 +201,7 @@ public class ReturnStatementProcessor : ITokenProcessor
                     return new NetMemberAccessExpression(baseExpr, memberName);
                 }
             }
-            
+
             // If no arrow, just treat as identifier
             return new IdentifierExpression(netIdentToken);
         }

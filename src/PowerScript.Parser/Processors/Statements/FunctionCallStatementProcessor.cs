@@ -198,7 +198,7 @@ public class FunctionCallStatementProcessor : ITokenProcessor
         // Use ExpressionParser to handle all expression types including binary operations
         var parser = new ExpressionParser();
         var expression = parser.Parse(ref token);
-        
+
         return expression;
     }
 }

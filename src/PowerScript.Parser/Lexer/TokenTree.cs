@@ -238,7 +238,7 @@ public partial class TokenTree
 
         // Create instance of the appropriate token type
         Token token;
-        
+
         // Special handling for DecimalToken - parse the value at creation time
         if (targetType == typeof(DecimalToken))
         {

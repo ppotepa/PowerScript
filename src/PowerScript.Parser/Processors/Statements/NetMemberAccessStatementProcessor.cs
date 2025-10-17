@@ -45,7 +45,7 @@ public class NetMemberAccessStatementProcessor : ITokenProcessor
 
         // Skip the # token
         Token currentToken = token.Next;
-        
+
         IdentifierToken objectToken = (IdentifierToken)currentToken;
         string objectName = objectToken.RawToken.OriginalText; // Preserve casing for .NET types
 

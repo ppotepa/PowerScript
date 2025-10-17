@@ -65,12 +65,12 @@ namespace PowerScript.Parser
             if (currentToken is NetKeywordToken)
             {
                 currentToken = currentToken.Next; // Move past #
-                
+
                 if (currentToken is not IdentifierToken netIdentToken)
                 {
                     throw new InvalidOperationException($"Expected identifier after '#', but found {currentToken?.GetType().Name}");
                 }
-                
+
                 // Check for arrow operator: #identifier->Member or #identifier->Method()
                 if (netIdentToken.Next is ArrowToken)
                 {
@@ -126,7 +126,7 @@ namespace PowerScript.Parser
                         return new NetMemberAccessExpression(baseExpr, memberName);
                     }
                 }
-                
+
                 // If no arrow, just treat as identifier (shouldn't happen, but fallback)
                 currentToken = netIdentToken.Next;
                 return new IdentifierExpression(netIdentToken);

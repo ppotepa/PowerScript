@@ -1,0 +1,7 @@
+LINK System
+LINK "stdlib/Core.ps"
+LINK "stdlib/String.ps"
+
+FLEX result = STR_LENGTH("hello")
+FLEX str = result -> ToString()
+FLEX dummy = Console -> WriteLine(str)

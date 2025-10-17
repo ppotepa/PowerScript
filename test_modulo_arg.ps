@@ -1,0 +1,10 @@
+LINK "stdlib/IO.ps"
+LINK System
+
+FUNCTION test(INT x)[INT] {
+    RETURN x
+}
+
+INT a = 10
+INT b = 3
+PRINT(test(a % b))

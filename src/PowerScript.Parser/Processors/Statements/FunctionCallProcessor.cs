@@ -68,12 +68,12 @@ public class FunctionCallProcessor : ITokenProcessor
 
         // Parse arguments using ExpressionParser to support nested function calls
         var parser = new ExpressionParser();
-        
+
         while (currentToken != null && currentToken is not ParenthesisClosed)
         {
             // Parse the argument as an expression (supports nested function calls, operators, etc.)
             var expression = parser.Parse(ref currentToken);
-            
+
             // Convert expression to token(s) for backwards compatibility
             if (expression is LiteralExpression literalExpr)
             {

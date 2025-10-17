@@ -9,7 +9,7 @@ namespace PowerScript.Compiler;
 public class CustomSyntaxRegistry
 {
     private static readonly Lazy<CustomSyntaxRegistry> _instance = new(() => new CustomSyntaxRegistry());
-    
+
     /// <summary>
     /// Gets the singleton instance of the registry.
     /// </summary>

@@ -206,7 +206,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         var value = EvaluateExpression(statement.Expression);
         LoggerService.Logger.Debug($"[EXECUTOR] Print value: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
         var output = value?.ToString() ?? "";
-        
+
         // PowerScript convention: uppercase string output
         if (value is string)
         {
@@ -1088,7 +1088,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         }
 
         var obj = new Models.PowerScriptObject(properties, expression.TypeName, expression.IsStrict);
-        
+
         if (expression.TypeName != null)
         {
             LoggerService.Logger.Debug($"[EXECUTOR] Created object of type '{expression.TypeName}'{(expression.IsStrict ? " (strict)" : "")}");
@@ -1105,7 +1105,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     private object? EvaluatePropertyAccess(PropertyAccessExpression expression)
     {
         var target = EvaluateExpression(expression.Target);
-        
+
         LoggerService.Logger.Debug($"[EXECUTOR] Accessing property '{expression.PropertyName}' on target type {target?.GetType().Name}");
 
         if (target is Models.PowerScriptObject obj)

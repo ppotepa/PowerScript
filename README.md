@@ -216,7 +216,7 @@ FLEX result = data::Reverse()::First()
 FLEX text = name::ToLower()::Trim()
 ```
 
-see `examples/` folder for more `.psx` extension examples and `docs/custom-syntax-design.md` for the full specification.
+see `stdlib/syntax/` folder for `.psx` extension files (arrays.psx, strings.psx, objects.psx) and `docs/custom-syntax-design.md` for the full specification.
 
 ### conditionals
 
