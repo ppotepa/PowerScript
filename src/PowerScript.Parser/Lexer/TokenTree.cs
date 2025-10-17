@@ -57,10 +57,11 @@ public partial class TokenTree
         { "STRING", typeof(StringToken) }, // String type keyword (CHAR CHAIN)
         { "NUMBER", typeof(NumberToken) }, // Number type keyword
         { "CHAIN", typeof(ChainToken) }, // Collection/array type modifier
-        { "{", typeof(ScopeStartToken) }, // Scope/block start
-        { "}", typeof(ScopeEndToken) }, // Scope/block end
+        { "{", typeof(ScopeStartToken) }, // Scope/block start (also object literal start)
+        { "}", typeof(ScopeEndToken) }, // Scope/block end (also object literal end)
         { "[", typeof(BracketOpen) }, // Return type bracket open
         { "]", typeof(BracketClosed) }, // Return type bracket close
+        { "!", typeof(ExclamationToken) }, // Exclamation mark for strict types
         { ",", typeof(CommaToken) }, // Comma delimiter
         { "+", typeof(PlusToken) }, // Addition operator
         { "->", typeof(ArrowToken) }, // Arrow operator for .NET member access

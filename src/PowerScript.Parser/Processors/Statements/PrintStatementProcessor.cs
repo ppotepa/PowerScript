@@ -86,6 +86,31 @@ public class PrintStatementProcessor : ITokenProcessor
 
                 nextToken = tokenAfterArgs;
             }
+            // Check if it's property access (supports chaining: obj.prop1.prop2)
+            else if (identifierToken.Next is DotToken)
+            {
+                Expression currentExpr = new IdentifierExpression(identifierToken);
+                Token currentToken = identifierToken.Next; // Move to '.'
+
+                // Support chained property access
+                while (currentToken is DotToken)
+                {
+                    currentToken = currentToken.Next; // Move past '.'
+                    
+                    if (currentToken is not IdentifierToken propertyToken)
+                    {
+                        throw new InvalidOperationException(
+                            $"Expected property name after '.' but found {currentToken?.GetType().Name}");
+                    }
+
+                    string propertyName = propertyToken.Value;
+                    currentExpr = new PropertyAccessExpression(currentExpr, propertyName);
+                    currentToken = propertyToken.Next; // Move past property name
+                }
+
+                expression = currentExpr;
+                nextToken = currentToken;
+            }
             // Check if it's an array index access (supports chaining: arr[0][1])
             else if (identifierToken.Next is BracketOpen)
             {

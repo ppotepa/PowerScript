@@ -6,6 +6,7 @@ using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Raw;
+using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
 using System;
 using System.Collections.Generic;
@@ -214,6 +215,30 @@ namespace PowerScript.Parser
                     };
                 }
 
+                // Check for property access: identifier.property
+                if (identToken.Next is DotToken)
+                {
+                    Expression target = new IdentifierExpression(identToken);
+                    currentToken = identToken.Next; // Move to .
+
+                    // Chain property accesses: obj.prop1.prop2.prop3
+                    while (currentToken is DotToken)
+                    {
+                        currentToken = currentToken.Next; // Move past .
+
+                        if (currentToken is not IdentifierToken propertyToken)
+                        {
+                            throw new InvalidOperationException($"Expected property name after '.' but found {currentToken?.GetType().Name}");
+                        }
+
+                        string propertyName = propertyToken.Value;
+                        target = new PropertyAccessExpression(target, propertyName);
+                        currentToken = currentToken.Next; // Move past property name
+                    }
+
+                    return target;
+                }
+
                 // Plain identifier
                 currentToken = currentToken.Next;
                 return new IdentifierExpression(identToken);
@@ -244,6 +269,12 @@ namespace PowerScript.Parser
             {
                 currentToken = currentToken.Next;
                 return new StringLiteralExpression(stringLiteralToken);
+            }
+
+            // Handle object literals: {prop = val, ...}
+            if (currentToken is ScopeStartToken)
+            {
+                return ParseObjectLiteral(ref currentToken);
             }
 
             // Handle parenthesized expressions
@@ -379,6 +410,87 @@ namespace PowerScript.Parser
                 ModuloToken _ => 6,
                 _ => 0
             };
+        }
+
+        /// <summary>
+        /// Parses object literal expressions: {prop = val, ...}
+        /// Supports type annotation: {name = "John"} as Person
+        /// Supports strict typing: {x = 1} as Point!
+        /// </summary>
+        private Expression ParseObjectLiteral(ref Token currentToken)
+        {
+            if (currentToken is not ScopeStartToken)
+                throw new InvalidOperationException($"Expected '{{' to start object literal but found {currentToken?.GetType().Name}");
+
+            currentToken = currentToken.Next; // Move past {
+
+            var properties = new Dictionary<string, Expression>();
+
+            // Parse properties until we hit the closing brace
+            while (currentToken != null && currentToken is not ScopeEndToken)
+            {
+                // Parse property name
+                if (currentToken is not IdentifierToken propNameToken)
+                {
+                    throw new InvalidOperationException($"Expected property name in object literal but found {currentToken?.GetType().Name}");
+                }
+
+                string propName = propNameToken.Value;
+                currentToken = currentToken.Next;
+
+                // Parse = sign
+                if (currentToken is not EqualsToken)
+                {
+                    throw new InvalidOperationException($"Expected '=' after property name '{propName}' but found {currentToken?.GetType().Name}");
+                }
+
+                currentToken = currentToken.Next;
+
+                // Parse property value
+                Expression valueExpression = ParseBinaryExpression(ref currentToken, 0);
+                properties.Add(propName, valueExpression);
+
+                // Skip comma if present
+                if (currentToken is CommaToken)
+                {
+                    currentToken = currentToken.Next;
+                }
+            }
+
+            if (currentToken is not ScopeEndToken)
+            {
+                throw new InvalidOperationException("Unterminated object literal - expected '}'");
+            }
+
+            currentToken = currentToken.Next; // Move past }
+
+            // Check for "as Type" or "as Type!" syntax
+            string? typeName = null;
+            bool isStrict = false;
+
+            if (currentToken is AsKeywordToken)
+            {
+                currentToken = currentToken.Next;
+
+                if (currentToken is IdentifierToken typeToken)
+                {
+                    typeName = typeToken.Value;
+                    currentToken = currentToken.Next;
+
+                    // Check for ! suffix
+                    if (currentToken is ExclamationToken)
+                    {
+                        isStrict = true;
+                        currentToken = currentToken.Next;
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Expected type name after 'as' but found {currentToken?.GetType().Name}");
+                }
+            }
+
+            return new ObjectLiteralExpression(properties, typeName, isStrict);
         }
     }
 }

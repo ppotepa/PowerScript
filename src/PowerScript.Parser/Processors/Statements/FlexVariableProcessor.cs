@@ -10,6 +10,7 @@ using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Raw;
+using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
 
@@ -393,7 +394,22 @@ public class FlexVariableProcessor : ITokenProcessor
                 };
             }
 
-            // Check if it's a function call (only if no array indexing was done)
+            // Check for property access: identifier.property (can chain: obj.prop1.prop2)
+            while (token is DotToken)
+            {
+                token = token.Next; // Move past .
+
+                if (token is not IdentifierToken propertyToken)
+                {
+                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
+                }
+
+                string propertyName = propertyToken.Value;
+                currentExpr = new PropertyAccessExpression(currentExpr, propertyName);
+                token = propertyToken.Next; // Move past property name
+            }
+
+            // Check if it's a function call (only if no array indexing or property access was done)
             if (currentExpr is IdentifierExpression && token is ParenthesisOpen)
             {
                 // Parse function arguments
@@ -462,6 +478,14 @@ public class FlexVariableProcessor : ITokenProcessor
             // If it's not followed by a number, it might be a minus expression
             // Put the token back and let the caller handle it
             token = minusToken;
+        }
+
+        // Handle object literals: {prop = val, ...}
+        if (token is ScopeStartToken)
+        {
+            // Use ExpressionParser for object literals
+            var parser = new ExpressionParser();
+            return parser.Parse(ref token);
         }
 
         // Handle .NET type access: #Char, #Console, #String, etc.

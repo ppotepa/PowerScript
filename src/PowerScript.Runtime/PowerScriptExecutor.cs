@@ -465,6 +465,8 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             TemplateStringExpression templateExpr => EvaluateTemplateString(templateExpr),
             FunctionCallExpression functionCallExpr => EvaluateFunctionCall(functionCallExpr),
             NetMemberAccessExpression netMemberExpr => EvaluateNetMemberAccess(netMemberExpr),
+            ObjectLiteralExpression objectExpr => EvaluateObjectLiteral(objectExpr),
+            PropertyAccessExpression propAccessExpr => EvaluatePropertyAccess(propAccessExpr),
             _ => throw new NotSupportedException($"Expression type {expression.ExpressionType} ({expression.GetType().Name}) is not yet supported")
         };
     }
@@ -1065,6 +1067,55 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             "!=" => !Equals(left, right),
             _ => throw new NotSupportedException($"Comparison {operatorText} between {left?.GetType()} and {right?.GetType()} is not yet supported")
         };
+    }
+
+    /// <summary>
+    /// Evaluates an object literal expression.
+    /// Creates a PowerScriptObject with the specified properties.
+    /// Example: {name = "John", age = 30} or {x = 1} as Point!
+    /// </summary>
+    private object EvaluateObjectLiteral(ObjectLiteralExpression expression)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Evaluating object literal with {expression.Properties.Count} properties");
+
+        var properties = new Dictionary<string, object?>();
+
+        foreach (var prop in expression.Properties)
+        {
+            var value = EvaluateExpression(prop.Value);
+            properties[prop.Key] = value;
+            LoggerService.Logger.Debug($"[EXECUTOR] Object property: {prop.Key} = {value}");
+        }
+
+        var obj = new Models.PowerScriptObject(properties, expression.TypeName, expression.IsStrict);
+        
+        if (expression.TypeName != null)
+        {
+            LoggerService.Logger.Debug($"[EXECUTOR] Created object of type '{expression.TypeName}'{(expression.IsStrict ? " (strict)" : "")}");
+        }
+
+        return obj;
+    }
+
+    /// <summary>
+    /// Evaluates a property access expression.
+    /// Gets the value of a property from a PowerScriptObject.
+    /// Example: person.name or obj.value
+    /// </summary>
+    private object? EvaluatePropertyAccess(PropertyAccessExpression expression)
+    {
+        var target = EvaluateExpression(expression.Target);
+        
+        LoggerService.Logger.Debug($"[EXECUTOR] Accessing property '{expression.PropertyName}' on target type {target?.GetType().Name}");
+
+        if (target is Models.PowerScriptObject obj)
+        {
+            var value = obj.GetProperty(expression.PropertyName);
+            LoggerService.Logger.Debug($"[EXECUTOR] Property value: {value}");
+            return value;
+        }
+
+        throw new InvalidOperationException($"Cannot access property '{expression.PropertyName}' on non-object value of type {target?.GetType().Name}");
     }
 
     /// <summary>

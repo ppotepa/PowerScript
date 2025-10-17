@@ -86,6 +86,43 @@ INT[32] bigNumber = 2000000   // 32-bit int
 NUMBER[64] hugeValue = 9999   // 64-bit number
 ```
 
+### objects
+
+powerscript supports lightweight object literals with optional type annotations:
+
+**basic objects** - simple property bags
+```powerscript
+FLEX person = {name = "John", age = 30}
+PRINT person              // prints: {NAME = John, AGE = 30}
+PRINT person.name         // prints: JOHN
+PRINT person.age          // prints: 30
+```
+
+**typed objects** - add type information for clarity
+```powerscript
+FLEX employee = {name = "Alice", role = "Developer"} AS Employee
+PRINT employee            // prints: {NAME = Alice, ROLE = Developer} as EMPLOYEE
+```
+
+**strict types** - prevent adding new properties after creation
+```powerscript
+FLEX point = {x = 10, y = 20} AS Point!
+PRINT point.x             // prints: 10
+// point.z = 30           // error: can't add properties to strict types
+```
+
+**expressions in objects** - property values can be expressions
+```powerscript
+FLEX data = {value = 5 + 10, text = "hello"}
+PRINT data.value          // prints: 15
+```
+
+**empty objects** - start with nothing, add properties later
+```powerscript
+FLEX empty = {}
+PRINT empty               // prints: {}
+```
+
 ### arrays
 
 arrays work pretty much like youd expect:
