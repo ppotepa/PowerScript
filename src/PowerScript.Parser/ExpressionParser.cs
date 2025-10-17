@@ -6,6 +6,7 @@ using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Raw;
+using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
 using System;
 using System.Collections.Generic;
@@ -64,12 +65,12 @@ namespace PowerScript.Parser
             if (currentToken is NetKeywordToken)
             {
                 currentToken = currentToken.Next; // Move past #
-                
+
                 if (currentToken is not IdentifierToken netIdentToken)
                 {
                     throw new InvalidOperationException($"Expected identifier after '#', but found {currentToken?.GetType().Name}");
                 }
-                
+
                 // Check for arrow operator: #identifier->Member or #identifier->Method()
                 if (netIdentToken.Next is ArrowToken)
                 {
@@ -125,7 +126,7 @@ namespace PowerScript.Parser
                         return new NetMemberAccessExpression(baseExpr, memberName);
                     }
                 }
-                
+
                 // If no arrow, just treat as identifier (shouldn't happen, but fallback)
                 currentToken = netIdentToken.Next;
                 return new IdentifierExpression(netIdentToken);
@@ -134,68 +135,22 @@ namespace PowerScript.Parser
             // Handle identifiers (check for function calls or member access first)
             if (currentToken is IdentifierToken identToken)
             {
-                // Check for arrow operator WITHOUT #: this should NOT be allowed for .NET calls
-                // But we keep it for backwards compatibility or non-.NET member access if any
+                // Check for arrow operator WITHOUT #: this is ILLEGAL
+                // Arrow operator -> can ONLY be used with # prefix for .NET calls
                 if (identToken.Next is ArrowToken)
                 {
-                    Expression baseExpr = new IdentifierExpression(identToken);
-                    currentToken = identToken.Next; // Move to ->
-                    currentToken = currentToken.Next; // Move past ->
-
-                    // Get the member name
-                    if (currentToken is not IdentifierToken memberToken)
-                    {
-                        throw new InvalidOperationException($"Expected identifier after arrow operator, but found {currentToken?.GetType().Name}");
-                    }
-
-                    string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
-                    currentToken = memberToken.Next; // Move past member name
-
-                    // Check if it's a method call (has parentheses)
-                    if (currentToken is ParenthesisOpen)
-                    {
-                        currentToken = currentToken.Next; // Move past '('
-
-                        // Parse method arguments
-                        List<Expression> arguments = new();
-                        if (currentToken is not ParenthesisClosed)
-                        {
-                            while (true)
-                            {
-                                arguments.Add(ParseBinaryExpression(ref currentToken, 0));
-
-                                if (currentToken is CommaToken)
-                                {
-                                    currentToken = currentToken.Next; // Skip comma
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (currentToken is not ParenthesisClosed)
-                        {
-                            throw new InvalidOperationException($"Expected ')' but found {currentToken?.GetType().Name}");
-                        }
-
-                        currentToken = currentToken.Next; // Move past ')'
-
-                        return new NetMemberAccessExpression(baseExpr, memberName, arguments);
-                    }
-                    else
-                    {
-                        // Property access
-                        return new NetMemberAccessExpression(baseExpr, memberName);
-                    }
+                    throw new InvalidOperationException(
+                        $"Arrow operator (->) requires # prefix for .NET calls. " +
+                        $"Use '#' before the identifier: #{identToken.RawToken?.Text}->... " +
+                        $"Example: #Console->WriteLine() instead of Console->WriteLine()");
                 }
 
                 // Check for function call: identifier(...)
                 if (identToken.Next is ParenthesisOpen)
-                {
-                    return ParseFunctionCall(ref currentToken);
-                }
+                    if (identToken.Next is ParenthesisOpen)
+                    {
+                        return ParseFunctionCall(ref currentToken);
+                    }
 
                 // Check for array indexing: identifier[...]
                 if (identToken.Next is BracketOpen)
@@ -212,6 +167,30 @@ namespace PowerScript.Parser
                         ArrayExpression = new IdentifierExpression(identToken),
                         Index = indexExpr
                     };
+                }
+
+                // Check for property access: identifier.property
+                if (identToken.Next is DotToken)
+                {
+                    Expression target = new IdentifierExpression(identToken);
+                    currentToken = identToken.Next; // Move to .
+
+                    // Chain property accesses: obj.prop1.prop2.prop3
+                    while (currentToken is DotToken)
+                    {
+                        currentToken = currentToken.Next; // Move past .
+
+                        if (currentToken is not IdentifierToken propertyToken)
+                        {
+                            throw new InvalidOperationException($"Expected property name after '.' but found {currentToken?.GetType().Name}");
+                        }
+
+                        string propertyName = propertyToken.Value;
+                        target = new PropertyAccessExpression(target, propertyName);
+                        currentToken = currentToken.Next; // Move past property name
+                    }
+
+                    return target;
                 }
 
                 // Plain identifier
@@ -244,6 +223,12 @@ namespace PowerScript.Parser
             {
                 currentToken = currentToken.Next;
                 return new StringLiteralExpression(stringLiteralToken);
+            }
+
+            // Handle object literals: {prop = val, ...}
+            if (currentToken is ScopeStartToken)
+            {
+                return ParseObjectLiteral(ref currentToken);
             }
 
             // Handle parenthesized expressions
@@ -379,6 +364,87 @@ namespace PowerScript.Parser
                 ModuloToken _ => 6,
                 _ => 0
             };
+        }
+
+        /// <summary>
+        /// Parses object literal expressions: {prop = val, ...}
+        /// Supports type annotation: {name = "John"} as Person
+        /// Supports strict typing: {x = 1} as Point!
+        /// </summary>
+        private Expression ParseObjectLiteral(ref Token currentToken)
+        {
+            if (currentToken is not ScopeStartToken)
+                throw new InvalidOperationException($"Expected '{{' to start object literal but found {currentToken?.GetType().Name}");
+
+            currentToken = currentToken.Next; // Move past {
+
+            var properties = new Dictionary<string, Expression>();
+
+            // Parse properties until we hit the closing brace
+            while (currentToken != null && currentToken is not ScopeEndToken)
+            {
+                // Parse property name
+                if (currentToken is not IdentifierToken propNameToken)
+                {
+                    throw new InvalidOperationException($"Expected property name in object literal but found {currentToken?.GetType().Name}");
+                }
+
+                string propName = propNameToken.Value;
+                currentToken = currentToken.Next;
+
+                // Parse = sign
+                if (currentToken is not EqualsToken)
+                {
+                    throw new InvalidOperationException($"Expected '=' after property name '{propName}' but found {currentToken?.GetType().Name}");
+                }
+
+                currentToken = currentToken.Next;
+
+                // Parse property value
+                Expression valueExpression = ParseBinaryExpression(ref currentToken, 0);
+                properties.Add(propName, valueExpression);
+
+                // Skip comma if present
+                if (currentToken is CommaToken)
+                {
+                    currentToken = currentToken.Next;
+                }
+            }
+
+            if (currentToken is not ScopeEndToken)
+            {
+                throw new InvalidOperationException("Unterminated object literal - expected '}'");
+            }
+
+            currentToken = currentToken.Next; // Move past }
+
+            // Check for "as Type" or "as Type!" syntax
+            string? typeName = null;
+            bool isStrict = false;
+
+            if (currentToken is AsKeywordToken)
+            {
+                currentToken = currentToken.Next;
+
+                if (currentToken is IdentifierToken typeToken)
+                {
+                    typeName = typeToken.Value;
+                    currentToken = currentToken.Next;
+
+                    // Check for ! suffix
+                    if (currentToken is ExclamationToken)
+                    {
+                        isStrict = true;
+                        currentToken = currentToken.Next;
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Expected type name after 'as' but found {currentToken?.GetType().Name}");
+                }
+            }
+
+            return new ObjectLiteralExpression(properties, typeName, isStrict);
         }
     }
 }

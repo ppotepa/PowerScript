@@ -1,0 +1,22 @@
+// EXPECTED: TRUE
+// EXPECTED: FALSE
+
+FUNCTION isPalindrome(STRING text)[STRING] {
+    INT len = LEN(text)
+    INT i = 0
+    INT halfLen = len / 2
+    CYCLE WHILE i < halfLen {
+        STRING left = SUBSTR(text, i, 1)
+        INT rightPos = len - 1
+        rightPos = rightPos - i
+        STRING right = SUBSTR(text, rightPos, 1)
+        IF left != right {
+            RETURN "FALSE"
+        }
+        i = i + 1
+    }
+    RETURN "TRUE"
+}
+
+PRINT isPalindrome("racecar")
+PRINT isPalindrome("hello")

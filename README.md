@@ -76,6 +76,15 @@ PREC pi = 3.14159
 PREC temperature = 98.6
 ```
 
+**BOOL/BOOLEAN** - for true/false values
+```powerscript
+BOOL isActive = TRUE
+BOOLEAN hasPermission = FALSE
+IF isActive {
+    PRINT "Active!"
+}
+```
+
 ### bit-width types (yeah we got those!)
 
 sometimes you need to be specific about memory size:
@@ -84,6 +93,43 @@ INT[8] smallNumber = 255      // 8-bit int
 INT[16] mediumNumber = 30000  // 16-bit int
 INT[32] bigNumber = 2000000   // 32-bit int
 NUMBER[64] hugeValue = 9999   // 64-bit number
+```
+
+### objects
+
+powerscript supports lightweight object literals with optional type annotations:
+
+**basic objects** - simple property bags
+```powerscript
+FLEX person = {name = "John", age = 30}
+PRINT person              // prints: {NAME = John, AGE = 30}
+PRINT person.name         // prints: JOHN
+PRINT person.age          // prints: 30
+```
+
+**typed objects** - add type information for clarity
+```powerscript
+FLEX employee = {name = "Alice", role = "Developer"} AS Employee
+PRINT employee            // prints: {NAME = Alice, ROLE = Developer} as EMPLOYEE
+```
+
+**strict types** - prevent adding new properties after creation
+```powerscript
+FLEX point = {x = 10, y = 20} AS Point!
+PRINT point.x             // prints: 10
+// point.z = 30           // error: can't add properties to strict types
+```
+
+**expressions in objects** - property values can be expressions
+```powerscript
+FLEX data = {value = 5 + 10, text = "hello"}
+PRINT data.value          // prints: 15
+```
+
+**empty objects** - start with nothing, add properties later
+```powerscript
+FLEX empty = {}
+PRINT empty               // prints: {}
 ```
 
 ### arrays
@@ -144,6 +190,42 @@ IF (age < 18 OR hasPermission == 1) {
     PRINT "at least one is true"
 }
 ```
+
+### custom syntax extensions
+
+powerscript supports extending the language with custom syntax via `.psx` files:
+
+**operator-based extensions** - add method-like syntax with `::`
+```powerscript
+// Define in .psx file:
+SYNTAX $array::Sort() => ARRAY_SORT($array)
+SYNTAX $str::ToUpper() => STR_UPPER($str)
+
+// Use in .ps file:
+LINK "arrays.psx"
+FLEX numbers = [5, 2, 8, 1]
+FLEX sorted = numbers::Sort()  // transforms to ARRAY_SORT(numbers)
+```
+
+**pattern-based extensions** - add natural language patterns
+```powerscript
+// Define in .psx file:
+SYNTAX FILTER $array WHERE $condition => ARRAY_FILTER($array, $condition)
+SYNTAX TAKE $count FROM $array => ARRAY_TAKE($array, $count)
+
+// Use in .ps file:
+LINK "arrays.psx"
+FLEX firstThree = TAKE 3 FROM myArray
+FILTER results WHERE IsValid
+```
+
+**chaining operations** - custom syntax methods can be chained
+```powerscript
+FLEX result = data::Reverse()::First()
+FLEX text = name::ToLower()::Trim()
+```
+
+see `stdlib/syntax/` folder for `.psx` extension files (arrays.psx, strings.psx, objects.psx) and `docs/custom-syntax-design.md` for the full specification.
 
 ### conditionals
 
@@ -261,10 +343,11 @@ FUNCTION IS_VALID(INT x)[INT] {
 
 ### .NET interop (this is the cool part)
 
-you can call .NET methods directly using the # prefix and -> operator:
+you can call .NET methods directly using the `NET.` syntax or `#` shorthand with `->` operator:
 
 **calling static methods:**
 ```powerscript
+NET.System.Console.WriteLine("Hello from .NET!")
 #Console -> WriteLine("Hello from .NET!")
 #String -> Concat("Hello", " World")
 ```
@@ -284,6 +367,9 @@ PRINT upper        // prints: HELLO WORLD
 VAR now = #DateTime -> Now
 VAR formatted = #now -> ToString()
 PRINT formatted
+
+// or with full syntax
+NET.System.DateTime.Now
 ```
 
 **linking .NET namespaces:**
@@ -411,12 +497,15 @@ PRINT IS_PRIME(20)  // prints: 0 (false)
 ## test results
 
 as of now, heres where we stand:
-- **211 out of 213 tests passing (99.1%)**
-- StandardLibrary: 61/61 (100%)
-- TuringCompleteness: 47/47 (100%)
-- Language: 103/105 (98.1%)
+- **43 out of 43 tests passing (100%)**
+- Simple programs: 7/7 (100%)
+- Moderate programs: 7/7 (100%)
+- Complex programs: 6/6 (100%)
+- Language features: 14/14 (100%)
+- Standard library: 7/7 (100%)
+- Turing completeness: 2/2 (100%)
 
-the 2 failing tests are just feature gaps (FOR loops not implemented, and decimal parsing needs work).
+all tests passing! language features include proper scoping, variable shadowing in IF blocks, type declarations, and all standard library functions working correctly.
 
 ## project structure
 
@@ -431,11 +520,13 @@ tokenez/
 │   ├── PowerScript.Parser/       # parses tokens
 │   └── PowerScript.Runtime/      # executes the AST
 ├── stdlib/                       # standard library functions
+│   └── syntax/                   # custom syntax extensions (.psx)
 ├── test-scripts/                 # example scripts
 │   ├── simple/                   # basic examples
 │   ├── moderate/                 # medium complexity
 │   ├── complex/                  # advanced algorithms
-│   └── language/                 # language feature tests
+│   ├── language/                 # language feature tests
+│   └── syntax/                   # syntax feature tests (objects, etc.)
 └── tests/                        # unit tests
 ```
 

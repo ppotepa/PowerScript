@@ -1,0 +1,16 @@
+// EXPECTED: 120
+
+FUNCTION factorial(INT n)[INT] {
+    IF n <= 1 {
+        RETURN 1
+    }
+    INT result = 1
+    INT i = 2
+    CYCLE WHILE i <= n {
+        result = result * i
+        i = i + 1
+    }
+    RETURN result
+}
+
+PRINT factorial(5)

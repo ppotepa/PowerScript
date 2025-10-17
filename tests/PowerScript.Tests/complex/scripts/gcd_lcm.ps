@@ -1,0 +1,18 @@
+// EXPECTED: 12
+// EXPECTED: 60
+
+FUNCTION gcd(INT a, INT b)[INT] {
+    CYCLE WHILE b != 0 {
+        INT temp = b
+        b = a % b
+        a = temp
+    }
+    RETURN a
+}
+
+FUNCTION lcm(INT a, INT b)[INT] {
+    RETURN (a * b) / gcd(a, b)
+}
+
+PRINT lcm(12, 15)
+PRINT gcd(48, 60)

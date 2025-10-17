@@ -88,7 +88,7 @@ public class VariableDeclarationProcessor : ITokenProcessor
 
         // Parse the initial value expression
         Expression initialValue;
-        
+
         // Special case: array literals must use dedicated parser since ExpressionParser doesn't handle them yet
         if (currentToken is BracketOpen)
         {

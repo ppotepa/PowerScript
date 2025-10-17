@@ -162,12 +162,12 @@ public class ReturnStatementProcessor : ITokenProcessor
         if (token is NetKeywordToken)
         {
             token = token.Next; // Move past #
-            
+
             if (token is not IdentifierToken netIdentToken)
             {
                 throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
             }
-            
+
             // Check for arrow operator: #identifier->Member or #identifier->Method()
             if (netIdentToken.Next is ArrowToken)
             {
@@ -201,7 +201,7 @@ public class ReturnStatementProcessor : ITokenProcessor
                     return new NetMemberAccessExpression(baseExpr, memberName);
                 }
             }
-            
+
             // If no arrow, just treat as identifier
             return new IdentifierExpression(netIdentToken);
         }
@@ -209,38 +209,15 @@ public class ReturnStatementProcessor : ITokenProcessor
         // Handle identifiers (including function calls and member access)
         if (token is IdentifierToken identToken)
         {
-            // Check for arrow operator WITHOUT #: keep for backwards compatibility or error
+            // Check for ILLEGAL arrow operator WITHOUT #
+            // Arrow operator -> can ONLY be used with # prefix for .NET calls
             if (identToken.Next is ArrowToken)
             {
-                Expression baseExpr = new IdentifierExpression(identToken);
-                token = identToken.Next; // Move to ->
-                token = token.Next; // Move past ->
-
-                // Get the member name
-                if (token is not IdentifierToken memberToken)
-                {
-                    throw new UnexpectedTokenException(token!, typeof(IdentifierToken));
-                }
-
-                string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
-                token = memberToken.Next; // Move past member name
-
-                // Check if it's a method call (has parentheses)
-                if (token is ParenthesisOpen)
-                {
-                    token = token.Next; // Move past '('
-
-                    // Parse method arguments
-                    var (arguments, nextToken) = ParseFunctionArguments(token);
-                    token = nextToken; // Move past ')'
-
-                    return new NetMemberAccessExpression(baseExpr, memberName, arguments);
-                }
-                else
-                {
-                    // Property access
-                    return new NetMemberAccessExpression(baseExpr, memberName);
-                }
+                string identName = identToken.RawToken?.Text ?? "identifier";
+                throw new InvalidOperationException(
+                    $"Arrow operator (->) requires # prefix for .NET calls. " +
+                    $"Use '#' before the identifier: #{identName}->... " +
+                    $"Example: #Console->WriteLine() instead of {identName}->WriteLine()");
             }
 
             // Check for function call: identifier(...)

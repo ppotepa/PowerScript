@@ -4,7 +4,7 @@ namespace PowerScript.Core.AST.Statements;
 
 /// <summary>
 ///     Represents a direct call to a .NET framework method.
-///     Example: NET::System.Console.WriteLine("Hello")
+///     Example: NET.System.Console.WriteLine("Hello")
 /// </summary>
 public class NetMethodCallStatement(string fullMethodPath, List<Expression>? arguments = null) : Statement
 {
@@ -23,6 +23,6 @@ public class NetMethodCallStatement(string fullMethodPath, List<Expression>? arg
     public override string ToString()
     {
         string args = string.Join(", ", Arguments.Select(a => a.ToString()));
-        return $"NET::{FullMethodPath}({args})";
+        return $"NET.{FullMethodPath}({args})";
     }
 }

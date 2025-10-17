@@ -60,12 +60,12 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
         if (context.CurrentScope.Decarations.ContainsKey(functionName))
         {
             LoggerService.Logger.Debug($"Function '{functionName}' already declared in scope '{context.CurrentScope.ScopeName}', skipping duplicate");
-            
+
             // Skip to the end of this duplicate function definition
             Token? skipToken = functionNameToken;
             int braceDepth = 0;
             bool foundOpenBrace = false;
-            
+
             while (skipToken != null)
             {
                 if (skipToken is ScopeStartToken)
@@ -84,7 +84,7 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
                 }
                 skipToken = skipToken.Next;
             }
-            
+
             throw new InvalidOperationException($"Duplicate function '{functionName}' has no matching closing brace");
         }
 

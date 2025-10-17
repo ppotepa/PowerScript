@@ -169,7 +169,8 @@ public class FunctionCallStatementProcessor : ITokenProcessor
                 arguments.Add(arg);
             }
 
-            if (current is CommaSeparatorToken)
+            // Check for both CommaToken and CommaSeparatorToken (token type inconsistency)
+            if (current is CommaSeparatorToken or CommaToken)
             {
                 current = current.Next; // Skip comma
                 continue;
@@ -198,7 +199,7 @@ public class FunctionCallStatementProcessor : ITokenProcessor
         // Use ExpressionParser to handle all expression types including binary operations
         var parser = new ExpressionParser();
         var expression = parser.Parse(ref token);
-        
+
         return expression;
     }
 }

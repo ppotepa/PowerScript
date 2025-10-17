@@ -12,8 +12,8 @@ using PowerScript.Parser.Processors.Base;
 namespace PowerScript.Parser.Processors.Statements;
 
 /// <summary>
-///     Processes NET:: method call syntax for direct .NET framework access.
-///     Handles syntax like: NET::System.Console.WriteLine("Hello")
+///     Processes NET. method call syntax for direct .NET framework access.
+///     Handles syntax like: NET.System.Console.WriteLine("Hello") or #Console.WriteLine("Hello")
 /// </summary>
 public class NetMethodCallProcessor : ITokenProcessor
 {
@@ -25,21 +25,21 @@ public class NetMethodCallProcessor : ITokenProcessor
     public TokenProcessingResult Process(Token token, ProcessingContext context)
     {
         LoggerService.Logger.Debug(
-            $"NetMethodCallProcessor: Processing NET:: or # call in scope '{context.CurrentScope.ScopeName}'");
+            $"NetMethodCallProcessor: Processing NET. or # call in scope '{context.CurrentScope.ScopeName}'");
 
         NetKeywordToken? netToken = token as NetKeywordToken;
         Token currentToken = netToken!.Next;
 
-        // Check if using # shorthand (no ::) or NET:: syntax
+        // Check if using # shorthand or NET. syntax
         bool isShorthand = netToken.RawToken.Text == "#";
 
         if (!isShorthand)
         {
-            // Expect namespace operator :: for NET syntax
-            if (currentToken is not NamespaceOperatorToken)
+            // Expect dot after NET keyword
+            if (currentToken is not DotToken)
             {
                 throw new InvalidOperationException(
-                    $"Expected :: after NET keyword, got {currentToken?.GetType().Name}");
+                    $"Expected . after NET keyword, got {currentToken?.GetType().Name}");
             }
 
             currentToken = currentToken.Next;

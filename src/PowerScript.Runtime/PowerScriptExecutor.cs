@@ -206,7 +206,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         var value = EvaluateExpression(statement.Expression);
         LoggerService.Logger.Debug($"[EXECUTOR] Print value: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
         var output = value?.ToString() ?? "";
-        
+
         // PowerScript convention: uppercase string output
         if (value is string)
         {
@@ -242,15 +242,33 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         var value = EvaluateExpression(statement.InitialValue);
         LoggerService.Logger.Debug($"[EXECUTOR] Variable value before set: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
 
-        _context.SetVariable(variableName, value);
-        LoggerService.Logger.Debug($"[EXECUTOR] Set variable {variableName} = {value}");
+        // Check if this is a new declaration or an assignment to existing variable
+        // If DeclarativeType is present, it's a type declaration (e.g., INT x = 5) - use DeclareVariable for shadowing
+        // If DeclarativeType is null, it's an assignment (e.g., x = 5) - use SetVariable to update parent scope
+        bool hasTypeToken = statement.Declaration.DeclarativeType != null;
+        var typeTokenText = statement.Declaration.DeclarativeType?.RawToken?.Text ?? "null";
+        
+        LoggerService.Logger.Debug($"[EXECUTOR] Variable '{variableName}': hasTypeToken={hasTypeToken}, typeToken='{typeTokenText}'");
+
+        if (hasTypeToken)
+        {
+            // Type declaration (e.g., INT x = 5 or INT x = 20) - use DeclareVariable to allow shadowing
+            _context.DeclareVariable(variableName, value);
+            LoggerService.Logger.Debug($"[EXECUTOR] Declared variable {variableName} = {value}");
+        }
+        else
+        {
+            // Assignment to existing variable (e.g., x = 5) - use SetVariable to update parent scope
+            _context.SetVariable(variableName, value);
+            LoggerService.Logger.Debug($"[EXECUTOR] Assigned variable {variableName} = {value}");
+        }
 
         return value;
     }
 
     /// <summary>
     /// Executes a .NET method call statement.
-    /// Example: Console -> WriteLine(42) or NET::System.Console.WriteLine("Hello")
+    /// Example: Console -> WriteLine(42) or NET.System.Console.WriteLine("Hello")
     /// </summary>
     private object? ExecuteNetMethodCall(NetMethodCallStatement statement)
     {
@@ -465,6 +483,8 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             TemplateStringExpression templateExpr => EvaluateTemplateString(templateExpr),
             FunctionCallExpression functionCallExpr => EvaluateFunctionCall(functionCallExpr),
             NetMemberAccessExpression netMemberExpr => EvaluateNetMemberAccess(netMemberExpr),
+            ObjectLiteralExpression objectExpr => EvaluateObjectLiteral(objectExpr),
+            PropertyAccessExpression propAccessExpr => EvaluatePropertyAccess(propAccessExpr),
             _ => throw new NotSupportedException($"Expression type {expression.ExpressionType} ({expression.GetType().Name}) is not yet supported")
         };
     }
@@ -1068,6 +1088,55 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     }
 
     /// <summary>
+    /// Evaluates an object literal expression.
+    /// Creates a PowerScriptObject with the specified properties.
+    /// Example: {name = "John", age = 30} or {x = 1} as Point!
+    /// </summary>
+    private object EvaluateObjectLiteral(ObjectLiteralExpression expression)
+    {
+        LoggerService.Logger.Debug($"[EXECUTOR] Evaluating object literal with {expression.Properties.Count} properties");
+
+        var properties = new Dictionary<string, object?>();
+
+        foreach (var prop in expression.Properties)
+        {
+            var value = EvaluateExpression(prop.Value);
+            properties[prop.Key] = value;
+            LoggerService.Logger.Debug($"[EXECUTOR] Object property: {prop.Key} = {value}");
+        }
+
+        var obj = new Models.PowerScriptObject(properties, expression.TypeName, expression.IsStrict);
+
+        if (expression.TypeName != null)
+        {
+            LoggerService.Logger.Debug($"[EXECUTOR] Created object of type '{expression.TypeName}'{(expression.IsStrict ? " (strict)" : "")}");
+        }
+
+        return obj;
+    }
+
+    /// <summary>
+    /// Evaluates a property access expression.
+    /// Gets the value of a property from a PowerScriptObject.
+    /// Example: person.name or obj.value
+    /// </summary>
+    private object? EvaluatePropertyAccess(PropertyAccessExpression expression)
+    {
+        var target = EvaluateExpression(expression.Target);
+
+        LoggerService.Logger.Debug($"[EXECUTOR] Accessing property '{expression.PropertyName}' on target type {target?.GetType().Name}");
+
+        if (target is Models.PowerScriptObject obj)
+        {
+            var value = obj.GetProperty(expression.PropertyName);
+            LoggerService.Logger.Debug($"[EXECUTOR] Property value: {value}");
+            return value;
+        }
+
+        throw new InvalidOperationException($"Cannot access property '{expression.PropertyName}' on non-object value of type {target?.GetType().Name}");
+    }
+
+    /// <summary>
     /// Executes an IF statement with optional ELSE clause.
     /// </summary>
     private object? ExecuteIfStatement(IfStatement statement)
@@ -1079,11 +1148,29 @@ public class PowerScriptExecutor : IPowerScriptExecutor
 
         if (isTrue)
         {
-            return ExecuteScope(statement.ThenScope);
+            // Push a new scope for the THEN block
+            _context.PushScope();
+            try
+            {
+                return ExecuteScope(statement.ThenScope);
+            }
+            finally
+            {
+                _context.PopScope();
+            }
         }
         else if (statement.ElseScope != null)
         {
-            return ExecuteScope(statement.ElseScope);
+            // Push a new scope for the ELSE block
+            _context.PushScope();
+            try
+            {
+                return ExecuteScope(statement.ElseScope);
+            }
+            finally
+            {
+                _context.PopScope();
+            }
         }
 
         return null;

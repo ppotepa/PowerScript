@@ -1,0 +1,49 @@
+// EXPECTED: 3
+
+FUNCTION binarySearch(INT target)[INT] {
+    // Sorted array: 1, 3, 5, 7, 9
+    INT arr0 = 1
+    INT arr1 = 3
+    INT arr2 = 5
+    INT arr3 = 7
+    INT arr4 = 9
+    
+    INT left = 0
+    INT right = 4
+    
+    CYCLE WHILE left <= right {
+        INT mid = (left + right) / 2
+        INT midVal = 0
+        
+        IF mid == 0 {
+            midVal = arr0
+        }
+        IF mid == 1 {
+            midVal = arr1
+        }
+        IF mid == 2 {
+            midVal = arr2
+        }
+        IF mid == 3 {
+            midVal = arr3
+        }
+        IF mid == 4 {
+            midVal = arr4
+        }
+        
+        IF midVal == target {
+            RETURN mid
+        }
+        IF midVal < target {
+            left = mid + 1
+        }
+        IF midVal > target {
+            right = mid - 1
+        }
+    }
+    
+    INT notFound = 0 - 1
+    RETURN notFound
+}
+
+PRINT binarySearch(7)

@@ -1,0 +1,75 @@
+// EXPECTED: 2
+// EXPECTED: 3
+// EXPECTED: 5
+// EXPECTED: 7
+// EXPECTED: 11
+// EXPECTED: 13
+// EXPECTED: 17
+// EXPECTED: 19
+
+FUNCTION sieveOfEratosthenes(INT limit)[STRING] {
+    // Initialize sieve array (1 = prime, 0 = not prime)
+    INT s0 = 0
+    INT s1 = 0
+    INT s2 = 1
+    INT s3 = 1
+    INT s4 = 1
+    INT s5 = 1
+    INT s6 = 1
+    INT s7 = 1
+    INT s8 = 1
+    INT s9 = 1
+    INT s10 = 1
+    INT s11 = 1
+    INT s12 = 1
+    INT s13 = 1
+    INT s14 = 1
+    INT s15 = 1
+    INT s16 = 1
+    INT s17 = 1
+    INT s18 = 1
+    INT s19 = 1
+    
+    INT i = 2
+    INT iSquared = i * i
+    CYCLE WHILE iSquared <= limit {
+        INT isPrime = 0
+        IF i == 2 { isPrime = s2 }
+        IF i == 3 { isPrime = s3 }
+        IF i == 4 { isPrime = s4 }
+        IF i == 5 { isPrime = s5 }
+        
+        IF isPrime == 1 {
+            INT j = i * i
+            CYCLE WHILE j <= limit {
+                IF j == 4 { s4 = 0 }
+                IF j == 6 { s6 = 0 }
+                IF j == 8 { s8 = 0 }
+                IF j == 9 { s9 = 0 }
+                IF j == 10 { s10 = 0 }
+                IF j == 12 { s12 = 0 }
+                IF j == 14 { s14 = 0 }
+                IF j == 15 { s15 = 0 }
+                IF j == 16 { s16 = 0 }
+                IF j == 18 { s18 = 0 }
+                j = j + i
+            }
+        }
+        i = i + 1
+        iSquared = i * i
+    }
+    
+    // Print primes
+    IF s2 == 1 { PRINT 2 }
+    IF s3 == 1 { PRINT 3 }
+    IF s5 == 1 { PRINT 5 }
+    IF s7 == 1 { PRINT 7 }
+    IF s11 == 1 { PRINT 11 }
+    IF s13 == 1 { PRINT 13 }
+    IF s17 == 1 { PRINT 17 }
+    IF s19 == 1 { PRINT 19 }
+    
+    RETURN "Done"
+}
+
+sieveOfEratosthenes(20)

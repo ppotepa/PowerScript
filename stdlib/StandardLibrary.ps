@@ -7,6 +7,11 @@ LINK "String.ps"
 LINK "IO.ps"
 LINK "Validation.ps"
 
+// Custom Syntax Extensions (disabled - SYNTAX keyword not yet implemented)
+// LINK "syntax/arrays.psx"
+// LINK "syntax/strings.psx"
+// LINK "syntax/objects.psx"
+
 // This file provides access to all standard library functions:
 //
 // CORE OPERATIONS (Core.ps):
@@ -45,3 +50,14 @@ LINK "Validation.ps"
 //   - Character: IS_ALPHA, IS_DIGIT, IS_ALPHANUMERIC, IS_UPPER, IS_LOWER, IS_WHITESPACE
 //   - String: VALIDATE_NOT_EMPTY, VALIDATE_LENGTH, VALIDATE_MIN_LENGTH, VALIDATE_MAX_LENGTH
 //   - Numeric Range: VALIDATE_RANGE, VALIDATE_MIN, VALIDATE_MAX
+//
+// CUSTOM SYNTAX EXTENSIONS (syntax/*.psx):
+//   Arrays (arrays.psx):
+//     - Operator: array::Sort(), array::Reverse(), array::First(), array::Last(), etc.
+//     - Pattern: FILTER array WHERE condition, MAP array WITH function, TAKE count FROM array
+//   Strings (strings.psx):
+//     - Operator: str::ToUpper(), str::ToLower(), str::Trim(), str::Length(), etc.
+//     - Pattern: JOIN array WITH separator, REPEAT str TIMES count
+//   Objects (objects.psx):
+//     - Operator: obj::Props(), obj::Values(), obj::Clone(), obj::HasProp(name)
+//     - Pattern: FILTER Properties {props} OF obj, MERGE obj1 WITH obj2

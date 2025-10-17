@@ -2,7 +2,7 @@
 // Provides number and character validation functions
 
 LINK System
-LINK "Core.ps"
+// Core.ps is linked via StandardLibrary.ps
 
 // ============================================================================
 // NUMERIC VALIDATION
@@ -144,7 +144,7 @@ FUNCTION IS_WHITESPACE(STRING c)[INT] {
 // ============================================================================
 
 FUNCTION VALIDATE_NOT_EMPTY(STRING str)[INT] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     FLEX result = 0
     IF (len > 0) {
         result = 1
@@ -153,7 +153,7 @@ FUNCTION VALIDATE_NOT_EMPTY(STRING str)[INT] {
 }
 
 FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen)[INT] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     FLEX result = 0
     IF (len == expectedLen) {
         result = 1
@@ -162,7 +162,7 @@ FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen)[INT] {
 }
 
 FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen)[INT] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     FLEX result = 0
     IF (len >= minLen) {
         result = 1
@@ -171,7 +171,7 @@ FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen)[INT] {
 }
 
 FUNCTION VALIDATE_MAX_LENGTH(STRING str, INT maxLen)[INT] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     FLEX result = 0
     IF (len <= maxLen) {
         result = 1
@@ -202,3 +202,28 @@ FUNCTION VALIDATE_MAX(INT value, INT max)[INT] {
     }
     RETURN result
 }
+
+// ============================================================================
+// TYPE CHECKING (using .NET reflection-like checks)
+// ============================================================================
+
+// TODO: ISINT and ISSTRING require method chaining support (#value->GetType()->ToString())
+// For now, these return placeholder values
+FUNCTION ISINT(FLEX value)[INT] {
+    RETURN 0
+}
+
+FUNCTION ISSTRING(FLEX value)[INT] {
+    RETURN 1
+}
+
+FUNCTION ISEMPTY(STRING str)[INT] {
+    FLEX len = #str->Length
+    IF (len == 0) {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+
+

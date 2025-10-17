@@ -1,0 +1,19 @@
+// strings.psx - String manipulation syntax extensions
+
+// Operator-based string extensions
+SYNTAX $str::ToUpper() => STR_UPPER($str)
+SYNTAX $str::ToLower() => STR_LOWER($str)
+SYNTAX $str::Trim() => STR_TRIM($str)
+SYNTAX $str::Length() => STR_LENGTH($str)
+SYNTAX $str::Reverse() => STR_REVERSE($str)
+SYNTAX $str::Split($delimiter) => STR_SPLIT($str, $delimiter)
+SYNTAX $str::Contains($substring) => STR_CONTAINS($str, $substring)
+SYNTAX $str::StartsWith($prefix) => STR_STARTS_WITH($str, $prefix)
+SYNTAX $str::EndsWith($suffix) => STR_ENDS_WITH($str, $suffix)
+SYNTAX $str::Replace($old, $new) => STR_REPLACE($str, $old, $new)
+SYNTAX $str::Substring($start, $length) => STR_SUBSTRING($str, $start, $length)
+SYNTAX $str::Insert($position, $text) => STR_INSERT($str, $position, $text)
+
+// Pattern-based string extensions
+SYNTAX JOIN $array WITH $separator => STR_JOIN($array, $separator)
+SYNTAX REPEAT $str TIMES $count => STR_REPEAT($str, $count)

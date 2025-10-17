@@ -1,0 +1,13 @@
+// EXPECTED: 15
+
+FUNCTION sumArray(INT size)[INT] {
+    INT sum = 0
+    INT i = 1
+    CYCLE WHILE i <= size {
+        sum = sum + i
+        i = i + 1
+    }
+    RETURN sum
+}
+
+PRINT sumArray(5)

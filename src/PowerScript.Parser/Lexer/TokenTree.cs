@@ -52,15 +52,18 @@ public partial class TokenTree
         { "AND", typeof(AndKeywordToken) }, // Logical AND operator
         { "OR", typeof(OrKeywordToken) }, // Logical OR operator
         { "INT", typeof(IntToken) }, // Integer type keyword
+        { "BOOL", typeof(BoolToken) }, // Boolean type keyword
+        { "BOOLEAN", typeof(BoolToken) }, // Boolean type keyword (alias)
         { "PREC", typeof(PrecToken) }, // Precision/float type keyword
         { "CHAR", typeof(CharToken) }, // Character type keyword
         { "STRING", typeof(StringToken) }, // String type keyword (CHAR CHAIN)
         { "NUMBER", typeof(NumberToken) }, // Number type keyword
         { "CHAIN", typeof(ChainToken) }, // Collection/array type modifier
-        { "{", typeof(ScopeStartToken) }, // Scope/block start
-        { "}", typeof(ScopeEndToken) }, // Scope/block end
+        { "{", typeof(ScopeStartToken) }, // Scope/block start (also object literal start)
+        { "}", typeof(ScopeEndToken) }, // Scope/block end (also object literal end)
         { "[", typeof(BracketOpen) }, // Return type bracket open
         { "]", typeof(BracketClosed) }, // Return type bracket close
+        { "!", typeof(ExclamationToken) }, // Exclamation mark for strict types
         { ",", typeof(CommaToken) }, // Comma delimiter
         { "+", typeof(PlusToken) }, // Addition operator
         { "->", typeof(ArrowToken) }, // Arrow operator for .NET member access
@@ -75,7 +78,7 @@ public partial class TokenTree
         { "<=", typeof(LessThanOrEqualToken) }, // Less than or equal
         { "==", typeof(EqualsEqualsToken) }, // Equality comparison
         { "!=", typeof(NotEqualsToken) }, // Not equal comparison
-        { "::", typeof(NamespaceOperatorToken) }, // Namespace operator
+        { "::", typeof(CustomSyntaxOperatorToken) }, // Custom syntax operator for extensions
         { ".", typeof(DotToken) } // Dot operator for member access
     };
 
@@ -237,7 +240,7 @@ public partial class TokenTree
 
         // Create instance of the appropriate token type
         Token token;
-        
+
         // Special handling for DecimalToken - parse the value at creation time
         if (targetType == typeof(DecimalToken))
         {

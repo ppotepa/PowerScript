@@ -18,10 +18,9 @@ public class ScopeStartToken : Token
     {
     }
 
-    /// <summary>After '{', expect PRINT, RETURN, FLEX, or nested FUNCTION declarations</summary>
+    /// <summary>After '{', expect RETURN, FLEX, or nested FUNCTION declarations (PRINT is now a library function)</summary>
     public override Type[] Expectations =>
     [
-        typeof(PrintKeywordToken),
         typeof(ReturnKeywordToken),
         typeof(FlexKeywordToken),
         typeof(FunctionToken),

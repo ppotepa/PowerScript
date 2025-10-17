@@ -1,0 +1,21 @@
+// EXPECTED: 6
+
+// Church encoding simulation: natural numbers as nested operations
+// This demonstrates lambda calculus concepts (flattened for PowerScript)
+
+FUNCTION succ(INT x)[INT] {
+    RETURN x + 1
+}
+
+FUNCTION churchNumeral(INT n)[INT] {
+    INT result = 0
+    INT i = 0
+    CYCLE WHILE i < n {
+        result = succ(result)
+        i = i + 1
+    }
+    
+    RETURN result
+}
+
+PRINT churchNumeral(6)

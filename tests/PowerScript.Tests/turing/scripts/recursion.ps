@@ -1,0 +1,10 @@
+// EXPECTED: 120
+
+FUNCTION factorialRecursive(INT n)[INT] {
+    IF n <= 1 {
+        RETURN 1
+    }
+    RETURN n * factorialRecursive(n - 1)
+}
+
+PRINT factorialRecursive(5)

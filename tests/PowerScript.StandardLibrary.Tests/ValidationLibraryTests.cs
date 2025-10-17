@@ -10,90 +10,15 @@ public class ValidationLibraryTests : StandardLibraryTestBase
     // ========================================================================
     // NUMERIC VALIDATION
     // ========================================================================
-
-    [Test]
-    public void IS_POSITIVE_PositiveNumber_ReturnsOne()
-    {
-        var code = $@"
-            LINK ""{LibPath}""
-            LINK System
-            
-            FLEX result = IS_POSITIVE(5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
-        ";
-
-        var output = ExecuteCode(code);
-        Assert.That(output, Is.EqualTo("1"));
-    }
-
-    [Test]
-    public void IS_NEGATIVE_NegativeNumber_ReturnsOne()
-    {
-        var code = $@"
-            LINK ""{LibPath}""
-            LINK System
-            
-            FLEX result = IS_NEGATIVE(0 - 5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
-        ";
-
-        var output = ExecuteCode(code);
-        Assert.That(output, Is.EqualTo("1"));
-    }
-
-    [Test]
-    public void IS_ZERO_Zero_ReturnsOne()
-    {
-        var code = $@"
-            LINK ""{LibPath}""
-            LINK System
-            
-            FLEX result = IS_ZERO(0)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
-        ";
-
-        var output = ExecuteCode(code);
-        Assert.That(output, Is.EqualTo("1"));
-    }
+    // NOTE: Basic numeric validation tests (IS_POSITIVE, IS_NEGATIVE, IS_ZERO)
+    // have been migrated to PowerScript test files in scripts/stdlib/stdlib_5_*.ps
 
     // ========================================================================
     // RANGE VALIDATION
     // ========================================================================
-
-    [Test]
-    public void IN_RANGE_NumberInRange_ReturnsOne()
-    {
-        var code = $@"
-            LINK ""{LibPath}""
-            LINK System
-            
-            FLEX result = IN_RANGE(5, 1, 10)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
-        ";
-
-        var output = ExecuteCode(code);
-        Assert.That(output, Is.EqualTo("1"));
-    }
-
-    [Test]
-    public void IN_RANGE_NumberOutOfRange_ReturnsZero()
-    {
-        var code = $@"
-            LINK ""{LibPath}""
-            LINK System
-            
-            FLEX result = IN_RANGE(15, 1, 10)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
-        ";
-
-        var output = ExecuteCode(code);
-        Assert.That(output, Is.EqualTo("0"));
-    }
+    // NOTE: Basic range tests (IN_RANGE with in/out cases) have been migrated
+    // to PowerScript test files in scripts/stdlib/stdlib_5_4_in_range.ps and
+    // stdlib_5_5_in_range_out.ps
 
     [Test]
     public void BETWEEN_INCLUSIVE_NumberAtBoundary_ReturnsOne()
@@ -103,8 +28,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = BETWEEN_INCLUSIVE(10, 10, 20)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -123,8 +48,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_DIVISIBLE(10, 5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -139,8 +64,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_MULTIPLE(15, 5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -159,8 +84,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_ALPHA(""a"")
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -175,8 +100,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_DIGIT(""5"")
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -191,8 +116,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_UPPER(""A"")
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -207,8 +132,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = IS_LOWER(""a"")
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -227,8 +152,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_NOT_EMPTY(""hello"")
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -243,8 +168,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_LENGTH(""hello"", 5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -259,8 +184,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_MIN_LENGTH(""hello"", 3)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -279,8 +204,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_RANGE(50, 1, 100)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -295,8 +220,8 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_MIN(10, 5)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
@@ -311,11 +236,14 @@ public class ValidationLibraryTests : StandardLibraryTestBase
             LINK System
             
             FLEX result = VALIDATE_MAX(10, 20)
-            FLEX str = result -> ToString()
-            FLEX dummy = Console -> WriteLine(str)
+            FLEX str = #result->ToString()
+             #Console->WriteLine(str)
         ";
 
         var output = ExecuteCode(code);
         Assert.That(output, Is.EqualTo("1"));
     }
 }
+
+
+
