@@ -508,11 +508,13 @@ tokenez/
 │   ├── PowerScript.Parser/       # parses tokens
 │   └── PowerScript.Runtime/      # executes the AST
 ├── stdlib/                       # standard library functions
+│   └── syntax/                   # custom syntax extensions (.psx)
 ├── test-scripts/                 # example scripts
 │   ├── simple/                   # basic examples
 │   ├── moderate/                 # medium complexity
 │   ├── complex/                  # advanced algorithms
-│   └── language/                 # language feature tests
+│   ├── language/                 # language feature tests
+│   └── syntax/                   # syntax feature tests (objects, etc.)
 └── tests/                        # unit tests
 ```
 
