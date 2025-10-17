@@ -85,7 +85,11 @@ public class VariableAssignmentProcessor : ITokenProcessor
                     $"Cannot find declaration for variable '{variableName}'");
             }
 
-            statement = new VariableDeclarationStatement(existingDeclaration, valueExpression)
+            // Create a new VariableDeclaration WITHOUT the type token to indicate this is an assignment
+            // This allows the executor to distinguish between declarations (INT x = 5) and assignments (x = 5)
+            var assignmentDeclaration = new VariableDeclaration(identifierToken);
+
+            statement = new VariableDeclarationStatement(assignmentDeclaration, valueExpression)
             {
                 StartToken = identifierToken
             };
@@ -138,12 +142,11 @@ public class VariableAssignmentProcessor : ITokenProcessor
     }
 
     /// <summary>
-    /// Check if token starts a new statement
+    /// Check if token starts a new statement (PRINT removed - now a library function)
     /// </summary>
     private bool IsStatementStart(Token token)
     {
-        return token is PrintKeywordToken ||
-               token is FlexKeywordToken ||
+        return token is FlexKeywordToken ||
                token is ReturnKeywordToken ||
                token is IfKeywordToken ||
                token is CycleKeywordToken ||
@@ -201,10 +204,16 @@ public class VariableAssignmentProcessor : ITokenProcessor
             }
         }
 
-        // Check for arrow operator pattern: identifier -> MemberName() or identifier -> Property
+        // Check for ILLEGAL arrow operator pattern without #: identifier -> MemberName()
+        // Arrow operator -> can ONLY be used with # prefix for .NET calls
         if (tokens.Count >= 3 && tokens[1] is ArrowToken)
         {
-            return ParseArrowExpression(tokens);
+            var identToken = tokens[0] as IdentifierToken;
+            string identName = identToken?.RawToken?.Text ?? "identifier";
+            throw new InvalidOperationException(
+                $"Arrow operator (->) requires # prefix for .NET calls. " +
+                $"Use '#' before the identifier: #{identName}->... " +
+                $"Example: #Console->WriteLine() instead of {identName}->WriteLine()");
         }
 
         // For multi-token expressions with operators, create a binary expression
@@ -396,89 +405,6 @@ public class VariableAssignmentProcessor : ITokenProcessor
         var expression = parser.Parse(ref currentToken);
 
         return expression;
-    }
-
-    /// <summary>
-    /// Parses an arrow operator expression: object -> MemberName() or object -> Property
-    /// </summary>
-    private Expression ParseArrowExpression(List<Token> tokens)
-    {
-        // Pattern: identifier -> member() or identifier -> member
-        // tokens[0] = base object (identifier)
-        // tokens[1] = arrow operator
-        // tokens[2] = member name (identifier)
-        // tokens[3+] = optional parentheses and arguments
-
-        if (tokens[0] is not IdentifierToken baseObject)
-        {
-            throw new InvalidOperationException($"Expected identifier before arrow operator, found {tokens[0].GetType().Name}");
-        }
-
-        if (tokens[2] is not IdentifierToken memberName)
-        {
-            throw new InvalidOperationException($"Expected member name after arrow operator, found {tokens[2].GetType().Name}");
-        }
-
-        Expression baseExpression = new IdentifierExpression(baseObject);
-        string member = memberName.RawToken?.OriginalText ?? memberName.RawToken?.Text ?? "";
-
-        // Check if there are parentheses (method call)
-        if (tokens.Count > 3 && tokens[3] is ParenthesisOpen)
-        {
-            // Method call: parse arguments
-            List<Expression> arguments = new();
-
-            // Find matching closing parenthesis
-            int openIndex = 3;
-            int closeIndex = -1;
-            int depth = 0;
-
-            for (int i = openIndex; i < tokens.Count; i++)
-            {
-                if (tokens[i] is ParenthesisOpen) depth++;
-                if (tokens[i] is ParenthesisClosed)
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        closeIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            if (closeIndex == -1)
-            {
-                throw new InvalidOperationException("Unmatched parentheses in arrow expression");
-            }
-
-            // Parse arguments between parentheses (if any)
-            if (closeIndex > openIndex + 1)
-            {
-                List<Token> argTokens = new();
-                for (int i = openIndex + 1; i < closeIndex; i++)
-                {
-                    argTokens.Add(tokens[i]);
-                }
-
-                // Simple argument parsing - split by commas at depth 0
-                List<List<Token>> argumentGroups = SplitByCommas(argTokens);
-                foreach (var argGroup in argumentGroups)
-                {
-                    if (argGroup.Count > 0)
-                    {
-                        arguments.Add(BuildExpression(argGroup));
-                    }
-                }
-            }
-
-            return new NetMemberAccessExpression(baseExpression, member, arguments);
-        }
-        else
-        {
-            // Property access (no parentheses)
-            return new NetMemberAccessExpression(baseExpression, member);
-        }
     }
 
     /// <summary>

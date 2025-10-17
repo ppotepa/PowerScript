@@ -1,0 +1,22 @@
+// EXPECTED: 5
+
+FUNCTION countVowels(STRING text)[INT] {
+    INT count = 0
+    INT i = 0
+    INT textLen = LEN(text)
+    CYCLE WHILE i < textLen {
+        INT isVowel = 0
+        IF SUBSTR(text, i, 1) == "a" { isVowel = 1 }
+        IF SUBSTR(text, i, 1) == "e" { isVowel = 1 }
+        IF SUBSTR(text, i, 1) == "i" { isVowel = 1 }
+        IF SUBSTR(text, i, 1) == "o" { isVowel = 1 }
+        IF SUBSTR(text, i, 1) == "u" { isVowel = 1 }
+        IF isVowel == 1 {
+            count = count + 1
+        }
+        i = i + 1
+    }
+    RETURN count
+}
+
+PRINT countVowels("aeiou")

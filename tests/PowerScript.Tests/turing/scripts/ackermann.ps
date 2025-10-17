@@ -1,0 +1,18 @@
+// EXPECTED: 7
+
+// Ackermann function - simplified version (avoiding nested calls)
+FUNCTION ackermann(INT m, INT n)[INT] {
+    IF m == 0 {
+        RETURN n + 1
+    }
+    IF n == 0 {
+        INT m1 = m - 1
+        RETURN ackermann(m1, 1)
+    }
+    INT n1 = n - 1
+    INT innerResult = ackermann(m, n1)
+    INT m1 = m - 1
+    RETURN ackermann(m1, innerResult)
+}
+
+PRINT ackermann(2, 2)

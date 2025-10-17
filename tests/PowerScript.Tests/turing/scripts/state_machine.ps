@@ -1,0 +1,22 @@
+// EXPECTED: A
+// EXPECTED: B
+// EXPECTED: A
+// EXPECTED: B
+// EXPECTED: A
+
+// Simple state machine: two states (A and B) that alternate
+FUNCTION stateMachine(INT steps)[STRING] {
+    CYCLE steps {
+        INT remainder = A % 2
+        IF remainder == 0 {
+            PRINT "A"
+        }
+        IF remainder == 1 {
+            PRINT "B"
+        }
+    }
+    
+    RETURN "Done"
+}
+
+stateMachine(5)

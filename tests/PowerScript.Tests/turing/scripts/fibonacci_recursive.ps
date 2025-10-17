@@ -1,0 +1,18 @@
+// EXPECTED: 0
+// EXPECTED: 1
+// EXPECTED: 1
+// EXPECTED: 2
+// EXPECTED: 3
+// EXPECTED: 5
+
+// Fibonacci as proof of Turing completeness through recursion
+FUNCTION fibRecursive(INT n)[INT] {
+    IF n <= 1 {
+        RETURN n
+    }
+    RETURN fibRecursive(n - 1) + fibRecursive(n - 2)
+}
+
+CYCLE 6 {
+    PRINT fibRecursive(A)
+}

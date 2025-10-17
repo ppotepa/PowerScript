@@ -1,0 +1,26 @@
+// EXPECTED: TRUE
+// EXPECTED: FALSE
+// EXPECTED: TRUE
+
+FUNCTION isPrime(INT n)[STRING] {
+    IF n <= 1 {
+        RETURN "FALSE"
+    }
+    IF n == 2 {
+        RETURN "TRUE"
+    }
+    INT i = 2
+    INT iSquared = i * i
+    CYCLE WHILE iSquared <= n {
+        IF n % i == 0 {
+            RETURN "FALSE"
+        }
+        i = i + 1
+        iSquared = i * i
+    }
+    RETURN "TRUE"
+}
+
+PRINT isPrime(7)
+PRINT isPrime(10)
+PRINT isPrime(13)

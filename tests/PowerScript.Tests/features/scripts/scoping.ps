@@ -1,0 +1,14 @@
+// EXPECTED: 10
+// EXPECTED: 20
+// EXPECTED: 10
+
+// Variable scoping test
+INT x = 10
+PRINT x
+
+IF TRUE {
+    INT x = 20
+    PRINT x
+}
+
+PRINT x

@@ -1,9 +1,0 @@
-LINK "../../stdlib/IO.ps"
-LINK System
-
-FLEX factorial = 1
-CYCLE 5 AS i {
-    FLEX num = i + 1
-    FLEX factorial = factorial * num
-}
-PRINT(factorial)

@@ -51,9 +51,24 @@ public interface IExecutionContext
     void SetVariable(string name, object? value);
 
     /// <summary>
+    /// Declares a new variable in the current scope (allows shadowing parent scopes).
+    /// </summary>
+    void DeclareVariable(string name, object? value);
+
+    /// <summary>
     /// Checks if a variable exists.
     /// </summary>
     bool HasVariable(string name);
+
+    /// <summary>
+    /// Pushes a new scope onto the stack (for IF blocks).
+    /// </summary>
+    void PushScope();
+
+    /// <summary>
+    /// Pops the current scope from the stack (when exiting IF block).
+    /// </summary>
+    void PopScope();
 
     /// <summary>
     /// Clears all variables and resets the context.

@@ -52,6 +52,8 @@ public partial class TokenTree
         { "AND", typeof(AndKeywordToken) }, // Logical AND operator
         { "OR", typeof(OrKeywordToken) }, // Logical OR operator
         { "INT", typeof(IntToken) }, // Integer type keyword
+        { "BOOL", typeof(BoolToken) }, // Boolean type keyword
+        { "BOOLEAN", typeof(BoolToken) }, // Boolean type keyword (alias)
         { "PREC", typeof(PrecToken) }, // Precision/float type keyword
         { "CHAR", typeof(CharToken) }, // Character type keyword
         { "STRING", typeof(StringToken) }, // String type keyword (CHAR CHAIN)

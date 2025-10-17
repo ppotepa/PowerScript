@@ -1,0 +1,9 @@
+// EXPECTED: Hello-World
+// EXPECTED: World
+
+// Test REPLACE and string operations
+STRING text = "Hello World"
+PRINT REPLACE(text, " ", "-")
+
+STRING replaced = REPLACE(text, "Hello ", "")
+PRINT replaced

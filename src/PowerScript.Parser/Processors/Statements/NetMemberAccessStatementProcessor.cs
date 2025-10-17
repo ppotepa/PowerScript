@@ -13,7 +13,7 @@ namespace PowerScript.Parser.Processors.Statements;
 
 /// <summary>
 ///     Processes .NET member access statements using arrow operator.
-///     Handles syntax like: #Console -> WriteLine(42) or #myObject -> SomeMethod()
+///     Handles syntax like: ##Console -> WriteLine(42) or #myObject -> SomeMethod()
 ///     Requires # prefix before the identifier to indicate .NET interop.
 /// </summary>
 public class NetMemberAccessStatementProcessor : ITokenProcessor

@@ -1,11 +1,11 @@
 // objects.psx - Object manipulation syntax extensions
 
 // Operator-based object extensions
-SYNTAX $obj::Keys() => OBJECT_KEYS($obj)
+SYNTAX $obj::Props() => OBJECT_PROPS($obj)
 SYNTAX $obj::Values() => OBJECT_VALUES($obj)
-SYNTAX $obj::HasProperty($name) => OBJECT_HAS_PROPERTY($obj, $name)
-SYNTAX $obj::GetProperty($name) => OBJECT_GET_PROPERTY($obj, $name)
-SYNTAX $obj::SetProperty($name, $value) => OBJECT_SET_PROPERTY($obj, $name, $value)
+SYNTAX $obj::HasProp($name) => OBJECT_HAS_PROP($obj, $name)
+SYNTAX $obj::GetProp($name) => OBJECT_GET_PROP($obj, $name)
+SYNTAX $obj::SetProp($name, $value) => OBJECT_SET_PROP($obj, $name, $value)
 SYNTAX $obj::Clone() => OBJECT_CLONE($obj)
 
 // Pattern-based object extensions

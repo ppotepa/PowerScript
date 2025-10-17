@@ -20,7 +20,6 @@ using PowerScript.Runtime.Interfaces;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using ILogger = PowerScript.Common.Logging.ILogger;
 using Logging_ILogger = PowerScript.Common.Logging.ILogger;
 
 namespace PowerScript.CLI;
@@ -195,7 +194,7 @@ public static class Program
                 // Order matters: more specific processors should come first
                 reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
                 reg.Register(new FunctionProcessor(parameterProcessor));
-                reg.Register(new NetMemberAccessStatementProcessor()); // Console -> WriteLine(42)
+                reg.Register(new NetMemberAccessStatementProcessor()); // #Console -> WriteLine(42)
                 reg.Register(new LinkStatementProcessor()); // LINK System or LINK "file.ps"
                 reg.Register(new FlexVariableProcessor());
                 reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
@@ -203,7 +202,7 @@ public static class Program
                 reg.Register(new CycleLoopProcessor(scopeBuilder));
                 reg.Register(new IfStatementProcessor(scopeBuilder));
                 reg.Register(new ReturnStatementProcessor());
-                reg.Register(new PrintStatementProcessor()); // PRINT statement - MUST come before FunctionCallStatementProcessor
+                // PrintStatementProcessor removed - PRINT is now a library function
                 reg.Register(new FunctionCallStatementProcessor()); // Single-param: PRINT x, Multi-param: FUNC(a,b) - MUST come before FunctionCallProcessor
                 reg.Register(new FunctionCallProcessor()); // Legacy processor - kept for backwards compatibility
                 reg.Register(new ExecuteCommandProcessor());
@@ -219,9 +218,9 @@ public static class Program
         // Register the new separated domain components
         services.AddTransient<IPowerScriptCompilerNew>(provider =>
         {
-            var registry = provider.GetRequiredService<ITokenProcessorRegistry>();
-            var dotNetLinker = provider.GetRequiredService<IDotNetLinker>();
-            var scopeBuilder = provider.GetRequiredService<IScopeBuilder>();
+            ITokenProcessorRegistry registry = provider.GetRequiredService<ITokenProcessorRegistry>();
+            IDotNetLinker dotNetLinker = provider.GetRequiredService<IDotNetLinker>();
+            IScopeBuilder scopeBuilder = provider.GetRequiredService<IScopeBuilder>();
             return new PowerScriptCompilerNew(registry, dotNetLinker, scopeBuilder);
         });
 
@@ -229,8 +228,8 @@ public static class Program
 
         services.AddTransient<IPowerScriptInterpreter>(provider =>
         {
-            var compiler = provider.GetRequiredService<IPowerScriptCompilerNew>();
-            var executor = provider.GetRequiredService<IPowerScriptExecutor>();
+            IPowerScriptCompilerNew compiler = provider.GetRequiredService<IPowerScriptCompilerNew>();
+            IPowerScriptExecutor executor = provider.GetRequiredService<IPowerScriptExecutor>();
             return new PowerScriptInterpreter(compiler, executor);
         });
         services.AddTransient<TokenTree>();

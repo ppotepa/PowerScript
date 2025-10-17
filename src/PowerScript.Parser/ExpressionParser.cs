@@ -135,68 +135,22 @@ namespace PowerScript.Parser
             // Handle identifiers (check for function calls or member access first)
             if (currentToken is IdentifierToken identToken)
             {
-                // Check for arrow operator WITHOUT #: this should NOT be allowed for .NET calls
-                // But we keep it for backwards compatibility or non-.NET member access if any
+                // Check for arrow operator WITHOUT #: this is ILLEGAL
+                // Arrow operator -> can ONLY be used with # prefix for .NET calls
                 if (identToken.Next is ArrowToken)
                 {
-                    Expression baseExpr = new IdentifierExpression(identToken);
-                    currentToken = identToken.Next; // Move to ->
-                    currentToken = currentToken.Next; // Move past ->
-
-                    // Get the member name
-                    if (currentToken is not IdentifierToken memberToken)
-                    {
-                        throw new InvalidOperationException($"Expected identifier after arrow operator, but found {currentToken?.GetType().Name}");
-                    }
-
-                    string memberName = memberToken.RawToken?.OriginalText ?? memberToken.RawToken?.Text ?? "";
-                    currentToken = memberToken.Next; // Move past member name
-
-                    // Check if it's a method call (has parentheses)
-                    if (currentToken is ParenthesisOpen)
-                    {
-                        currentToken = currentToken.Next; // Move past '('
-
-                        // Parse method arguments
-                        List<Expression> arguments = new();
-                        if (currentToken is not ParenthesisClosed)
-                        {
-                            while (true)
-                            {
-                                arguments.Add(ParseBinaryExpression(ref currentToken, 0));
-
-                                if (currentToken is CommaToken)
-                                {
-                                    currentToken = currentToken.Next; // Skip comma
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (currentToken is not ParenthesisClosed)
-                        {
-                            throw new InvalidOperationException($"Expected ')' but found {currentToken?.GetType().Name}");
-                        }
-
-                        currentToken = currentToken.Next; // Move past ')'
-
-                        return new NetMemberAccessExpression(baseExpr, memberName, arguments);
-                    }
-                    else
-                    {
-                        // Property access
-                        return new NetMemberAccessExpression(baseExpr, memberName);
-                    }
+                    throw new InvalidOperationException(
+                        $"Arrow operator (->) requires # prefix for .NET calls. " +
+                        $"Use '#' before the identifier: #{identToken.RawToken?.Text}->... " +
+                        $"Example: #Console->WriteLine() instead of Console->WriteLine()");
                 }
 
                 // Check for function call: identifier(...)
                 if (identToken.Next is ParenthesisOpen)
-                {
-                    return ParseFunctionCall(ref currentToken);
-                }
+                    if (identToken.Next is ParenthesisOpen)
+                    {
+                        return ParseFunctionCall(ref currentToken);
+                    }
 
                 // Check for array indexing: identifier[...]
                 if (identToken.Next is BracketOpen)

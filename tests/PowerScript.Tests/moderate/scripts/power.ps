@@ -1,0 +1,19 @@
+// EXPECTED: 1
+// EXPECTED: 2
+// EXPECTED: 4
+// EXPECTED: 8
+// EXPECTED: 16
+
+FUNCTION power(INT base, INT exp)[INT] {
+    INT result = 1
+    INT i = 0
+    CYCLE WHILE i < exp {
+        result = result * base
+        i = i + 1
+    }
+    RETURN result
+}
+
+CYCLE 5 {
+    PRINT power(2, A)
+}

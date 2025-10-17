@@ -1,0 +1,37 @@
+// EXPECTED: 21
+// EXPECTED: 96
+
+FUNCTION matrixSum(INT rows, INT cols)[INT] {
+    // 2x3 matrix: [[1,2,3], [4,5,6]]
+    INT m00 = 1
+    INT m01 = 2
+    INT m02 = 3
+    INT m10 = 4
+    INT m11 = 5
+    INT m12 = 6
+    
+    INT sum = 0
+    sum = sum + m00 + m01 + m02
+    sum = sum + m10 + m11 + m12
+    
+    RETURN sum
+}
+
+FUNCTION matrixProduct(INT rows, INT cols)[INT] {
+    // 2x3 matrix: [[2,3,4], [1,2,2]]
+    INT m00 = 2
+    INT m01 = 3
+    INT m02 = 4
+    INT m10 = 1
+    INT m11 = 2
+    INT m12 = 2
+    
+    INT product = 1
+    product = product * m00 * m01 * m02
+    product = product * m10 * m11 * m12
+    
+    RETURN product
+}
+
+PRINT matrixSum(2, 3)
+PRINT matrixProduct(2, 3)

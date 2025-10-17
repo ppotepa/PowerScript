@@ -242,8 +242,26 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         var value = EvaluateExpression(statement.InitialValue);
         LoggerService.Logger.Debug($"[EXECUTOR] Variable value before set: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
 
-        _context.SetVariable(variableName, value);
-        LoggerService.Logger.Debug($"[EXECUTOR] Set variable {variableName} = {value}");
+        // Check if this is a new declaration or an assignment to existing variable
+        // If DeclarativeType is present, it's a type declaration (e.g., INT x = 5) - use DeclareVariable for shadowing
+        // If DeclarativeType is null, it's an assignment (e.g., x = 5) - use SetVariable to update parent scope
+        bool hasTypeToken = statement.Declaration.DeclarativeType != null;
+        var typeTokenText = statement.Declaration.DeclarativeType?.RawToken?.Text ?? "null";
+        
+        LoggerService.Logger.Debug($"[EXECUTOR] Variable '{variableName}': hasTypeToken={hasTypeToken}, typeToken='{typeTokenText}'");
+
+        if (hasTypeToken)
+        {
+            // Type declaration (e.g., INT x = 5 or INT x = 20) - use DeclareVariable to allow shadowing
+            _context.DeclareVariable(variableName, value);
+            LoggerService.Logger.Debug($"[EXECUTOR] Declared variable {variableName} = {value}");
+        }
+        else
+        {
+            // Assignment to existing variable (e.g., x = 5) - use SetVariable to update parent scope
+            _context.SetVariable(variableName, value);
+            LoggerService.Logger.Debug($"[EXECUTOR] Assigned variable {variableName} = {value}");
+        }
 
         return value;
     }
@@ -1130,11 +1148,29 @@ public class PowerScriptExecutor : IPowerScriptExecutor
 
         if (isTrue)
         {
-            return ExecuteScope(statement.ThenScope);
+            // Push a new scope for the THEN block
+            _context.PushScope();
+            try
+            {
+                return ExecuteScope(statement.ThenScope);
+            }
+            finally
+            {
+                _context.PopScope();
+            }
         }
         else if (statement.ElseScope != null)
         {
-            return ExecuteScope(statement.ElseScope);
+            // Push a new scope for the ELSE block
+            _context.PushScope();
+            try
+            {
+                return ExecuteScope(statement.ElseScope);
+            }
+            finally
+            {
+                _context.PopScope();
+            }
         }
 
         return null;

@@ -1,0 +1,14 @@
+// EXPECTED: 9
+
+FUNCTION findMax(INT a, INT b, INT c)[INT] {
+    INT max = a
+    IF b > max {
+        max = b
+    }
+    IF c > max {
+        max = c
+    }
+    RETURN max
+}
+
+PRINT findMax(3, 9, 5)

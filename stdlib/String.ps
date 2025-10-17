@@ -2,15 +2,20 @@
 // Provides comprehensive string processing functions
 
 LINK System
-LINK "Core.ps"
+// Core.ps is linked via StandardLibrary.ps
 
 // ============================================================================
 // STRING PROPERTIES
 // ============================================================================
 
 FUNCTION STR_LENGTH(STRING str)[INT] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     RETURN len
+}
+
+FUNCTION STR_CONCAT(STRING str1, STRING str2)[STRING] {
+    FLEX result = #String->Concat(str1, str2)
+    RETURN result
 }
 
 FUNCTION IS_EMPTY(STRING str)[INT] {
@@ -27,23 +32,23 @@ FUNCTION IS_EMPTY(STRING str)[INT] {
 // ============================================================================
 
 FUNCTION STR_UPPER(STRING str)[STRING] {
-    FLEX result = str -> ToUpper()
+    FLEX result = #str->ToUpper()
     RETURN result
 }
 
 FUNCTION STR_LOWER(STRING str)[STRING] {
-    FLEX result = str -> ToLower()
+    FLEX result = #str->ToLower()
     RETURN result
 }
 
 FUNCTION STR_REVERSE(STRING str)[STRING] {
-    FLEX len = str -> Length
+    FLEX len = #str->Length
     FLEX result = ""
     FLEX i = SUB(len, 1)
     
     CYCLE WHILE (i >= 0) {
-        FLEX ch = str -> Substring(i, 1)
-        result = String -> Concat(result, ch)
+        FLEX ch = #str->Substring(i, 1)
+        result = #String->Concat(result, ch)
         i = SUB(i, 1)
     }
     
@@ -51,17 +56,17 @@ FUNCTION STR_REVERSE(STRING str)[STRING] {
 }
 
 FUNCTION STR_TRIM(STRING str)[STRING] {
-    FLEX result = str -> Trim()
+    FLEX result = #str->Trim()
     RETURN result
 }
 
 FUNCTION STR_TRIM_START(STRING str)[STRING] {
-    FLEX result = str -> TrimStart()
+    FLEX result = #str->TrimStart()
     RETURN result
 }
 
 FUNCTION STR_TRIM_END(STRING str)[STRING] {
-    FLEX result = str -> TrimEnd()
+    FLEX result = #str->TrimEnd()
     RETURN result
 }
 
@@ -70,12 +75,12 @@ FUNCTION STR_TRIM_END(STRING str)[STRING] {
 // ============================================================================
 
 FUNCTION STR_INDEX_OF(STRING str, STRING search)[INT] {
-    FLEX result = str -> IndexOf(search)
+    FLEX result = #str->IndexOf(search)
     RETURN result
 }
 
 FUNCTION STR_CONTAINS(STRING str, STRING search)[INT] {
-    FLEX contains = str -> Contains(search)
+    FLEX contains = #str->Contains(search)
     FLEX result = 0
     IF (contains == 1) {
         result = 1
@@ -84,7 +89,7 @@ FUNCTION STR_CONTAINS(STRING str, STRING search)[INT] {
 }
 
 FUNCTION STR_STARTS_WITH(STRING str, STRING prefix)[INT] {
-    FLEX startsWith = str -> StartsWith(prefix)
+    FLEX startsWith = #str->StartsWith(prefix)
     FLEX result = 0
     IF (startsWith == 1) {
         result = 1
@@ -93,7 +98,7 @@ FUNCTION STR_STARTS_WITH(STRING str, STRING prefix)[INT] {
 }
 
 FUNCTION STR_ENDS_WITH(STRING str, STRING suffix)[INT] {
-    FLEX endsWith = str -> EndsWith(suffix)
+    FLEX endsWith = #str->EndsWith(suffix)
     FLEX result = 0
     IF (endsWith == 1) {
         result = 1
@@ -106,22 +111,22 @@ FUNCTION STR_ENDS_WITH(STRING str, STRING suffix)[INT] {
 // ============================================================================
 
 FUNCTION STR_SUBSTRING(STRING str, INT start, INT length)[STRING] {
-    FLEX result = str -> Substring(start, length)
+    FLEX result = #str->Substring(start, length)
     RETURN result
 }
 
 FUNCTION STR_REPLACE(STRING str, STRING oldStr, STRING newStr)[STRING] {
-    FLEX result = str -> Replace(oldStr, newStr)
+    FLEX result = #str->Replace(oldStr, newStr)
     RETURN result
 }
 
 FUNCTION STR_REMOVE(STRING str, INT start, INT count)[STRING] {
-    FLEX result = str -> Remove(start, count)
+    FLEX result = #str->Remove(start, count)
     RETURN result
 }
 
 FUNCTION STR_INSERT(STRING str, INT index, STRING insert)[STRING] {
-    FLEX result = str -> Insert(index, insert)
+    FLEX result = #str->Insert(index, insert)
     RETURN result
 }
 
@@ -130,13 +135,13 @@ FUNCTION STR_INSERT(STRING str, INT index, STRING insert)[STRING] {
 // ============================================================================
 
 FUNCTION STR_SPLIT(STRING str, STRING delimiter)[STRING] {
-    FLEX parts = str -> Split(delimiter)
-    FLEX first = parts -> GetValue(0)
+    FLEX parts = #str->Split(delimiter)
+    FLEX first = #parts->GetValue(0)
     RETURN first
 }
 
 FUNCTION STR_JOIN(STRING delimiter, STRING a, STRING b)[STRING] {
-    FLEX result = String -> Concat(a, delimiter, b)
+    FLEX result = #String->Concat(a, delimiter, b)
     RETURN result
 }
 
@@ -145,12 +150,12 @@ FUNCTION STR_JOIN(STRING delimiter, STRING a, STRING b)[STRING] {
 // ============================================================================
 
 FUNCTION STR_PAD_LEFT(STRING str, INT totalWidth)[STRING] {
-    FLEX result = str -> PadLeft(totalWidth)
+    FLEX result = #str->PadLeft(totalWidth)
     RETURN result
 }
 
 FUNCTION STR_PAD_RIGHT(STRING str, INT totalWidth)[STRING] {
-    FLEX result = str -> PadRight(totalWidth)
+    FLEX result = #str->PadRight(totalWidth)
     RETURN result
 }
 
@@ -163,7 +168,7 @@ FUNCTION STR_REPEAT(STRING str, INT count)[STRING] {
     FLEX counter = 0
     
     CYCLE WHILE (counter < count) {
-        result = String -> Concat(result, str)
+        result = #String->Concat(result, str)
         counter = ADD(counter, 1)
     }
     
@@ -175,15 +180,64 @@ FUNCTION STR_REPEAT(STRING str, INT count)[STRING] {
 // ============================================================================
 
 FUNCTION STR_COMPARE(STRING a, STRING b)[INT] {
-    FLEX result = String -> Compare(a, b)
+    FLEX result = #String->Compare(a, b)
     RETURN result
 }
 
 FUNCTION STR_EQUALS(STRING a, STRING b)[INT] {
-    FLEX equals = String -> Equals(a, b)
+    FLEX equals = #String->Equals(a, b)
     FLEX result = 0
     IF (equals == 1) {
         result = 1
     }
     RETURN result
 }
+
+// ============================================================================
+// CONVENIENCE ALIASES (shorter names for common operations)
+// ============================================================================
+
+FUNCTION LEN(STRING str)[INT] {
+    RETURN STR_LENGTH(str)
+}
+
+FUNCTION UPPER(STRING str)[STRING] {
+    RETURN STR_UPPER(str)
+}
+
+FUNCTION LOWER(STRING str)[STRING] {
+    RETURN STR_LOWER(str)
+}
+
+FUNCTION SUBSTR(STRING str, INT start, INT length)[STRING] {
+    RETURN STR_SUBSTRING(str, start, length)
+}
+
+FUNCTION REPLACE(STRING str, STRING oldStr, STRING newStr)[STRING] {
+    RETURN STR_REPLACE(str, oldStr, newStr)
+}
+
+FUNCTION TRIM(STRING str)[STRING] {
+    RETURN STR_TRIM(str)
+}
+
+FUNCTION TRIMSTART(STRING str)[STRING] {
+    RETURN STR_TRIM_START(str)
+}
+
+FUNCTION TRIMEND(STRING str)[STRING] {
+    RETURN STR_TRIM_END(str)
+}
+
+FUNCTION INDEXOF(STRING str, STRING search)[INT] {
+    RETURN STR_INDEX_OF(str, search)
+}
+
+FUNCTION CONTAINS(STRING str, STRING search)[INT] {
+    RETURN STR_CONTAINS(str, search)
+}
+
+FUNCTION CONCAT(STRING str1, STRING str2)[STRING] {
+    RETURN STR_CONCAT(str1, str2)
+}
+

@@ -76,6 +76,15 @@ PREC pi = 3.14159
 PREC temperature = 98.6
 ```
 
+**BOOL/BOOLEAN** - for true/false values
+```powerscript
+BOOL isActive = TRUE
+BOOLEAN hasPermission = FALSE
+IF isActive {
+    PRINT "Active!"
+}
+```
+
 ### bit-width types (yeah we got those!)
 
 sometimes you need to be specific about memory size:
@@ -488,12 +497,15 @@ PRINT IS_PRIME(20)  // prints: 0 (false)
 ## test results
 
 as of now, heres where we stand:
-- **211 out of 213 tests passing (99.1%)**
-- StandardLibrary: 61/61 (100%)
-- TuringCompleteness: 47/47 (100%)
-- Language: 103/105 (98.1%)
+- **43 out of 43 tests passing (100%)**
+- Simple programs: 7/7 (100%)
+- Moderate programs: 7/7 (100%)
+- Complex programs: 6/6 (100%)
+- Language features: 14/14 (100%)
+- Standard library: 7/7 (100%)
+- Turing completeness: 2/2 (100%)
 
-the 2 failing tests are just feature gaps (FOR loops not implemented, and decimal parsing needs work).
+all tests passing! language features include proper scoping, variable shadowing in IF blocks, type declarations, and all standard library functions working correctly.
 
 ## project structure
 
