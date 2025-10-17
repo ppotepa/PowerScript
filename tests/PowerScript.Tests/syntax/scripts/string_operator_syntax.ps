@@ -1,0 +1,18 @@
+// EXPECTED: HELLO
+hello
+5
+
+// Test string operator-based custom syntax
+LINK "stdlib/syntax/strings.psx"
+
+STRING text = "hello"
+
+// Test ::ToUpper()
+PRINT text::ToUpper()
+
+// Test ::ToLower()
+STRING upper = "HELLO"
+PRINT upper::ToLower()
+
+// Test ::Length()
+PRINT text::Length()

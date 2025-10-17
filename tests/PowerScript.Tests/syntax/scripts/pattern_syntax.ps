@@ -1,0 +1,15 @@
+// EXPECTED: 2
+3
+
+// Test pattern-based custom syntax
+LINK "stdlib/syntax/arrays.psx"
+
+FLEX numbers = [1, 2, 3, 4, 5]
+
+// Test TAKE pattern
+FLEX firstTwo = TAKE 2 FROM numbers
+PRINT firstTwo::Length()
+
+// Test SKIP pattern
+FLEX lastThree = SKIP 2 IN numbers
+PRINT lastThree::Length()

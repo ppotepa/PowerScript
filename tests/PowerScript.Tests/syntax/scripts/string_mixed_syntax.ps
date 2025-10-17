@@ -1,0 +1,18 @@
+// EXPECTED: TRUE
+TRUE
+olleH
+
+// Test mixed custom syntax with strings
+LINK "stdlib/syntax/strings.psx"
+
+STRING greeting = "  Hello  "
+
+// Test ::Trim() then ::Contains()
+FLEX trimmed = greeting::Trim()
+PRINT trimmed::Contains("Hello")
+
+// Test ::StartsWith()
+PRINT trimmed::StartsWith("Hello")
+
+// Test ::Reverse()
+PRINT trimmed::Reverse()
