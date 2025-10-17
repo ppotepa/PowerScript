@@ -1,0 +1,26 @@
+// syntax_object_case_insensitive.ps
+// Test: Case-insensitive property names
+
+LINK System
+
+PRINT "=== Case Insensitive Properties ==="
+
+FLEX item = {Name = "Test", VALUE = 100, Status = "Active"}
+FLEX str = item -> ToString()
+FLEX dummy1 = Console -> WriteLine(str)
+
+PRINT "=== Accessing with Different Cases ==="
+
+FLEX name = item.name
+FLEX nameStr = name -> ToString()
+FLEX dummy2 = Console -> WriteLine(nameStr)
+
+FLEX value = item.value
+FLEX valueStr = value -> ToString()
+FLEX dummy3 = Console -> WriteLine(valueStr)
+
+FLEX status = item.STATUS
+FLEX statusStr = status -> ToString()
+FLEX dummy4 = Console -> WriteLine(statusStr)
+
+PRINT "Test completed successfully"

@@ -1,0 +1,32 @@
+// syntax_object_reassignment.ps
+// Test: Object reassignment and variable updates
+
+LINK System
+
+PRINT "=== Initial Object ==="
+
+FLEX obj = {value = 1, flag = 0}
+FLEX str1 = obj -> ToString()
+FLEX dummy1 = Console -> WriteLine(str1)
+
+FLEX val1 = obj.value
+FLEX val1Str = val1 -> ToString()
+FLEX dummy2 = Console -> WriteLine(val1Str)
+
+PRINT "=== Reassigned Object ==="
+
+FLEX obj = {value = 2, flag = 1}
+FLEX str2 = obj -> ToString()
+FLEX dummy3 = Console -> WriteLine(str2)
+
+FLEX val2 = obj.value
+FLEX val2Str = val2 -> ToString()
+FLEX dummy4 = Console -> WriteLine(val2Str)
+
+PRINT "=== Different Type Assignment ==="
+
+FLEX obj = {name = "Changed", count = 99}
+FLEX str3 = obj -> ToString()
+FLEX dummy5 = Console -> WriteLine(str3)
+
+PRINT "Test completed successfully"

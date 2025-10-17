@@ -1,0 +1,21 @@
+// syntax_object_typed.ps
+// Test: Object creation with type annotations
+
+LINK System
+
+PRINT "=== Type Annotation ==="
+
+FLEX employee = {name = "Alice", role = "Developer", salary = 75000} AS Employee
+FLEX str = employee -> ToString()
+FLEX dummy = Console -> WriteLine(str)
+
+PRINT "=== Accessing Typed Object Properties ==="
+FLEX name = employee.name
+FLEX nameStr = name -> ToString()
+FLEX dummy2 = Console -> WriteLine(nameStr)
+
+FLEX role = employee.role
+FLEX roleStr = role -> ToString()
+FLEX dummy3 = Console -> WriteLine(roleStr)
+
+PRINT "Test completed successfully"

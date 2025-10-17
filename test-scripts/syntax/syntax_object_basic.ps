@@ -1,0 +1,21 @@
+// syntax_object_basic.ps
+// Test: Basic object creation with simple properties
+
+LINK System
+
+PRINT "=== Basic Object Creation ==="
+
+FLEX person = {name = "John", age = 30}
+FLEX str = person -> ToString()
+FLEX dummy = Console -> WriteLine(str)
+
+PRINT "=== Property Access ==="
+FLEX name = person.name
+FLEX nameStr = name -> ToString()
+FLEX dummy2 = Console -> WriteLine(nameStr)
+
+FLEX age = person.age
+FLEX ageStr = age -> ToString()
+FLEX dummy3 = Console -> WriteLine(ageStr)
+
+PRINT "Test completed successfully"

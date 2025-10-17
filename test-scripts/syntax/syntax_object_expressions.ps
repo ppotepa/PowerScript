@@ -1,0 +1,25 @@
+// syntax_object_expressions.ps
+// Test: Objects with expressions as property values
+
+LINK System
+
+PRINT "=== Object with Expression Values ==="
+
+FLEX data = {sum = 5 + 10, product = 6 * 7, text = "hello"}
+FLEX str = data -> ToString()
+FLEX dummy = Console -> WriteLine(str)
+
+PRINT "=== Accessing Computed Properties ==="
+FLEX sum = data.sum
+FLEX sumStr = sum -> ToString()
+FLEX dummy2 = Console -> WriteLine(sumStr)
+
+FLEX product = data.product
+FLEX productStr = product -> ToString()
+FLEX dummy3 = Console -> WriteLine(productStr)
+
+FLEX text = data.text
+FLEX textStr = text -> ToString()
+FLEX dummy4 = Console -> WriteLine(textStr)
+
+PRINT "Test completed successfully"

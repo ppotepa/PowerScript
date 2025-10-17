@@ -1,0 +1,34 @@
+// syntax_object_multiple.ps
+// Test: Multiple objects and property manipulation
+
+LINK System
+
+PRINT "=== Multiple Objects ==="
+
+FLEX person1 = {name = "Alice", age = 30}
+FLEX person2 = {name = "Bob", age = 25}
+FLEX person3 = {name = "Charlie", age = 35}
+
+FLEX str1 = person1 -> ToString()
+FLEX dummy1 = Console -> WriteLine(str1)
+
+FLEX str2 = person2 -> ToString()
+FLEX dummy2 = Console -> WriteLine(str2)
+
+FLEX str3 = person3 -> ToString()
+FLEX dummy3 = Console -> WriteLine(str3)
+
+PRINT "=== Accessing Multiple Properties ==="
+FLEX name1 = person1.name
+FLEX name1Str = name1 -> ToString()
+FLEX dummy4 = Console -> WriteLine(name1Str)
+
+FLEX age2 = person2.age
+FLEX age2Str = age2 -> ToString()
+FLEX dummy5 = Console -> WriteLine(age2Str)
+
+FLEX name3 = person3.name
+FLEX name3Str = name3 -> ToString()
+FLEX dummy6 = Console -> WriteLine(name3Str)
+
+PRINT "Test completed successfully"

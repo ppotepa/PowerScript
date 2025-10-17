@@ -1,0 +1,17 @@
+// syntax_object_empty.ps
+// Test: Empty object creation
+
+LINK System
+
+PRINT "=== Empty Object ==="
+
+FLEX empty = {}
+FLEX str = empty -> ToString()
+FLEX dummy = Console -> WriteLine(str)
+
+PRINT "=== Empty Object with Type ==="
+FLEX typedEmpty = {} AS EmptyType
+FLEX str2 = typedEmpty -> ToString()
+FLEX dummy2 = Console -> WriteLine(str2)
+
+PRINT "Test completed successfully"

@@ -1,0 +1,42 @@
+// syntax_object_complex.ps
+// Test: Complex object scenarios with mixed types
+
+LINK System
+
+PRINT "=== Complex Object ==="
+
+FLEX config = {
+    host = "localhost",
+    port = 8080,
+    ssl = 1,
+    timeout = 30,
+    maxConnections = 100
+}
+
+FLEX str = config -> ToString()
+FLEX dummy = Console -> WriteLine(str)
+
+PRINT "=== Typed Complex Object ==="
+
+FLEX settings = {
+    apiKey = "abc123",
+    retries = 3,
+    debugMode = 1
+} AS Settings
+
+FLEX str2 = settings -> ToString()
+FLEX dummy2 = Console -> WriteLine(str2)
+
+PRINT "=== Strict Complex Object ==="
+
+FLEX point3d = {
+    x = 10,
+    y = 20,
+    z = 30,
+    label = "Origin"
+} AS Point3D!
+
+FLEX str3 = point3d -> ToString()
+FLEX dummy3 = Console -> WriteLine(str3)
+
+PRINT "Test completed successfully"
