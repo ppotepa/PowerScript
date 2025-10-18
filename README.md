@@ -11,6 +11,8 @@ this thing compiles to .NET 8.0 and has a bunch of cool stuff:
 - functions that compile to actual lambda expressions
 - a standard library with common stuff you need
 - proper type system with both static and dynamic types
+- **custom syntax extensions** via `.psx` files - extend the language with your own patterns and operators
+- **syntax block notation** `![...]` for inline pattern transformations
 
 ## getting started
 
@@ -195,6 +197,20 @@ IF (age < 18 OR hasPermission == 1) {
 
 powerscript supports extending the language with custom syntax via `.psx` files:
 
+**syntax block notation** - use `![...]` for pattern transformations
+```powerscript
+// Define patterns in .psx file:
+SYNTAX MAX OF $array:ARRAY => ARRAY_MAX($array)
+SYNTAX MIN OF $array:ARRAY => ARRAY_MIN($array)
+
+// Use in .ps file with ![...] blocks:
+FLEX numbers = [5, 2, 8, 1, 3]
+FLEX maxVal = ![MAX OF numbers]  // transforms to ARRAY_MAX(numbers)
+FLEX minVal = ![MIN OF numbers]  // transforms to ARRAY_MIN(numbers)
+PRINT maxVal  // prints: 8
+PRINT minVal  // prints: 1
+```
+
 **operator-based extensions** - add method-like syntax with `::`
 ```powerscript
 // Define in .psx file:
@@ -223,9 +239,13 @@ FILTER results WHERE IsValid
 ```powerscript
 FLEX result = data::Reverse()::First()
 FLEX text = name::ToLower()::Trim()
+
+// chaining with syntax blocks
+FLEX result = ![MAX OF numbers]
+FLEX chained = ![MIN OF ![TAKE 5 FROM data]]
 ```
 
-see `stdlib/syntax/` folder for `.psx` extension files (arrays.psx, strings.psx, objects.psx) and `docs/custom-syntax-design.md` for the full specification.
+see `stdlib/syntax/` folder for `.psx` extension files (array_patterns_v2.psx, strings.psx, math_patterns.psx) and `docs/custom-syntax-design.md` for the full specification.
 
 ### conditionals
 
@@ -497,15 +517,21 @@ PRINT IS_PRIME(20)  // prints: 0 (false)
 ## test results
 
 as of now, heres where we stand:
-- **43 out of 43 tests passing (100%)**
+- **62 out of 62 tests passing (100%)**
 - Simple programs: 7/7 (100%)
 - Moderate programs: 7/7 (100%)
 - Complex programs: 6/6 (100%)
 - Language features: 14/14 (100%)
 - Standard library: 7/7 (100%)
 - Turing completeness: 2/2 (100%)
+- **Custom syntax**: 5/5 (100%)
+  - Array operator syntax
+  - String operator syntax
+  - Pattern-based syntax
+  - Chaining operations
+  - Mixed syntax forms
 
-all tests passing! language features include proper scoping, variable shadowing in IF blocks, type declarations, and all standard library functions working correctly.
+all tests passing! language features include proper scoping, variable shadowing in IF blocks, type declarations, custom syntax transformations with `![...]` blocks, and all standard library functions working correctly.
 
 ## project structure
 
