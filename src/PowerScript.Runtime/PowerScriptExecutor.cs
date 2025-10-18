@@ -6,6 +6,7 @@ using PowerScript.Core.AST;
 using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Statements; // For ExpressionStatement
 using PowerScript.Runtime.Interfaces;
@@ -161,7 +162,6 @@ public class PowerScriptExecutor : IPowerScriptExecutor
 
         return statement switch
         {
-            PrintStatement printStmt => ExecutePrintStatement(printStmt),
             VariableDeclarationStatement varStmt => ExecuteVariableDeclaration(varStmt),
             ReturnStatement returnStmt => ExecuteReturnStatement(returnStmt),
             IfStatement ifStmt => ExecuteIfStatement(ifStmt),
@@ -198,28 +198,6 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     }
 
     /// <summary>
-    /// Executes a PRINT statement.
-    /// PowerScript convention: String values are printed in uppercase.
-    /// </summary>
-    private object? ExecutePrintStatement(PrintStatement statement)
-    {
-        var value = EvaluateExpression(statement.Expression);
-        LoggerService.Logger.Debug($"[EXECUTOR] Print value: '{value}' (type={value?.GetType().Name}, length={value?.ToString()?.Length})");
-        var output = value?.ToString() ?? "";
-
-        // PowerScript convention: uppercase string output
-        if (value is string)
-        {
-            output = output.ToUpperInvariant();
-        }
-
-        Console.WriteLine(output);
-        LoggerService.Logger.Debug($"[EXECUTOR] Printed: {output}");
-
-        return null;
-    }
-
-    /// <summary>
     /// Executes an expression statement (typically a function call).
     /// The return value is evaluated but discarded.
     /// </summary>
@@ -236,7 +214,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? ExecuteVariableDeclaration(VariableDeclarationStatement statement)
     {
-        var variableName = statement.Declaration.Identifier.RawToken?.Text ??
+        var variableName = statement.Declaration.Identifier.RawToken?.OriginalText ??
                           throw new InvalidOperationException("Variable declaration missing identifier");
 
         var value = EvaluateExpression(statement.InitialValue);
@@ -247,7 +225,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
         // If DeclarativeType is null, it's an assignment (e.g., x = 5) - use SetVariable to update parent scope
         bool hasTypeToken = statement.Declaration.DeclarativeType != null;
         var typeTokenText = statement.Declaration.DeclarativeType?.RawToken?.Text ?? "null";
-        
+
         LoggerService.Logger.Debug($"[EXECUTOR] Variable '{variableName}': hasTypeToken={hasTypeToken}, typeToken='{typeTokenText}'");
 
         if (hasTypeToken)
@@ -416,7 +394,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             {
                 ValueToken valToken => int.Parse(valToken.RawToken?.Text ?? "0"),
                 StringLiteralToken strToken => strToken.RawToken?.Text?.Trim('"') ?? "",
-                IdentifierToken idToken => _context.GetVariable(idToken.RawToken?.Text ?? ""),
+                IdentifierToken idToken => _context.GetVariable(idToken.RawToken?.OriginalText ?? ""),
                 _ => throw new InvalidOperationException($"Unsupported argument token type: {argToken.GetType().Name}")
             };
             arguments.Add(argValue);
@@ -437,7 +415,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             for (int i = 0; i < function.Parameters.Count; i++)
             {
                 var param = function.Parameters[i];
-                var paramName = param.Identifier.RawToken?.Text ?? throw new InvalidOperationException("Parameter missing name");
+                var paramName = param.Identifier.RawToken?.OriginalText ?? throw new InvalidOperationException("Parameter missing name");
                 var argValue = i < arguments.Count ? arguments[i] : null;
 
                 _context.SetVariable(paramName, argValue);
@@ -545,6 +523,18 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? EvaluateLiteral(LiteralExpression expression)
     {
+        // Handle TrueToken - evaluates to 1 (PowerScript uses 1 for true)
+        if (expression.Value is TrueToken)
+        {
+            return 1;
+        }
+
+        // Handle FalseToken - evaluates to 0 (PowerScript uses 0 for false)
+        if (expression.Value is FalseToken)
+        {
+            return 0;
+        }
+
         // Handle DecimalToken directly (already parsed)
         if (expression.Value is DecimalToken decimalToken)
         {
@@ -574,13 +564,20 @@ public class PowerScriptExecutor : IPowerScriptExecutor
     /// </summary>
     private object? EvaluateIdentifier(IdentifierExpression expression)
     {
-        var variableName = expression.Identifier.RawToken?.Text ??
+        var variableName = expression.Identifier.RawToken?.OriginalText ??
                           throw new InvalidOperationException("Identifier expression missing name");
 
         LoggerService.Logger.Debug($"[EXECUTOR] Looking for variable: '{variableName}'");
 
+        // First, check if it's an actual variable
+        if (_context.HasVariable(variableName))
+        {
+            return _context.GetVariable(variableName);
+        }
+
         // Special case: Check for .NET types for static member access
         // This supports #Char, #Console, #String, etc.
+        // Only try .NET type resolution if variable doesn't exist
         Type? netType = ResolveCommonNetType(variableName);
         if (netType != null)
         {
@@ -588,12 +585,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             return netType;
         }
 
-        if (!_context.HasVariable(variableName))
-        {
-            throw new InvalidOperationException($"Variable '{variableName}' is not defined");
-        }
-
-        return _context.GetVariable(variableName);
+        throw new InvalidOperationException($"Variable '{variableName}' is not defined");
     }
 
     /// <summary>
@@ -736,7 +728,7 @@ public class PowerScriptExecutor : IPowerScriptExecutor
             for (int i = 0; i < function.Parameters.Count; i++)
             {
                 var param = function.Parameters[i];
-                var paramName = param.Identifier.RawToken?.Text ?? throw new InvalidOperationException("Parameter missing name");
+                var paramName = param.Identifier.RawToken?.OriginalText ?? throw new InvalidOperationException("Parameter missing name");
                 var argValue = i < arguments.Count ? arguments[i] : null;
 
                 _context.SetVariable(paramName, argValue);

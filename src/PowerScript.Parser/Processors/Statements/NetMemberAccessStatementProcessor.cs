@@ -159,6 +159,22 @@ public class NetMemberAccessStatementProcessor : ITokenProcessor
             return expr;
         }
 
+        // Handle TRUE keyword
+        if (token is TrueToken trueToken)
+        {
+            Expression expr = new LiteralExpression(trueToken);
+            token = token.Next;
+            return expr;
+        }
+
+        // Handle FALSE keyword
+        if (token is FalseToken falseToken)
+        {
+            Expression expr = new LiteralExpression(falseToken);
+            token = token.Next;
+            return expr;
+        }
+
         // Handle identifiers (variable references)
         if (token is IdentifierToken identifierToken)
         {

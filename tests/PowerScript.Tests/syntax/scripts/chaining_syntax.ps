@@ -1,18 +1,39 @@
+// EXPECTED: 8
 // EXPECTED: 1
-2
-5
 
-// Test chaining custom syntax operators
-LINK "stdlib/syntax/arrays.psx"
+LINK "stdlib/IO.ps"
 
-FLEX numbers = [5, 2, 8, 1, 3]
+// Inline helper functions for custom syntax using CYCLE
+FUNCTION ARRAY_MAX(FLEX arr)[FLEX] {
+    FLEX max = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element > max {
+            max = element
+        }
+    }
+    
+    RETURN max
+}
 
-// Test chaining: Sort() then First()
-PRINT numbers::Sort()::First()
+FUNCTION ARRAY_MIN(FLEX arr)[FLEX] {
+    FLEX min = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element < min {
+            min = element
+        }
+    }
+    
+    RETURN min
+}
 
-// Test chaining: Sort() then accessing by index
-FLEX sorted = numbers::Sort()
-PRINT sorted[1]
+// Test chaining custom syntax with ![ ] blocks
+FLEX numbers = [5,2,8,1,3]
 
-// Test chaining: Max()
-PRINT numbers::Max()
+// Test MAX and MIN via custom syntax blocks
+FLEX maxVal = ![MAX OF numbers]
+PRINT maxVal
+
+FLEX minVal = ![MIN OF numbers]
+PRINT minVal

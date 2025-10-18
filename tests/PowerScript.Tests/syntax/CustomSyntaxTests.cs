@@ -22,7 +22,7 @@ public class CustomSyntaxTests : TestBase
         // Arrange
         string baseDirectory = TestContext.CurrentContext.TestDirectory;
         string fullPath = Path.Combine(baseDirectory, ScriptsFolder, scriptPath);
-        
+
         string expectedOutput = ParseExpectedOutput(fullPath);
         string actualOutput = ExecuteScriptFile(fullPath);
 

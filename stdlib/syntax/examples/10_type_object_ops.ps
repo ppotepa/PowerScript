@@ -1,0 +1,34 @@
+// Example 10: Type Conversion & Object Operators
+// Demonstrates type conversion and object manipulation operators
+
+LINK "TypeSystem.ps"
+
+FUNCTION DEMO_TYPE_AND_OBJECT_OPS()[INT] {
+    // Type conversion
+    FLEX strValue = "42"
+    FLEX intValue = strValue AS "INT"
+    FLEX safeConvert = "invalid" ?> "INT"  // Returns null on failure
+    
+    // Object operators
+    FLEX person = #{ name: "John", age: 30 }
+    
+    // Nested property access
+    FLEX city = person .. "address.city.name"
+    
+    // Null coalescing
+    FLEX name = person.name ?? "Guest"
+    FLEX missing = person.email ?? "no-email@example.com"
+    
+    // Immutable object update
+    FLEX updated = person WITH { age: 31, role: "admin" }
+    
+    // Verify results
+    IF (intValue != 42) { RETURN 0 }
+    IF (safeConvert != NULL) { RETURN 0 }
+    IF (name != "John") { RETURN 0 }
+    IF (missing != "no-email@example.com") { RETURN 0 }
+    IF (person.age != 30) { RETURN 0 }  // Original unchanged
+    IF (updated.age != 31) { RETURN 0 }
+    
+    RETURN 1
+}

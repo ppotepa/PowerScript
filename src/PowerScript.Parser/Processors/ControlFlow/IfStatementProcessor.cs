@@ -274,6 +274,20 @@ public class IfStatementProcessor(IScopeBuilder scopeBuilder) : ITokenProcessor
             return expr;
         }
 
+        if (currentToken is TrueToken trueToken)
+        {
+            LiteralExpression expr = new(trueToken);
+            currentToken = currentToken.Next;
+            return expr;
+        }
+
+        if (currentToken is FalseToken falseToken)
+        {
+            LiteralExpression expr = new(falseToken);
+            currentToken = currentToken.Next;
+            return expr;
+        }
+
         if (currentToken is StringLiteralToken stringToken)
         {
             StringLiteralExpression expr = new(stringToken);

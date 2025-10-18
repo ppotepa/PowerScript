@@ -134,14 +134,17 @@ public class PowerScriptCompilerNew : IPowerScriptCompilerNew
     {
         var lines = sourceCode.Split('\n');
         var result = new List<string>();
-        var linkPattern = new System.Text.RegularExpressions.Regex(@"^\s*LINK\s+""([^""]+)""\s*$");
+        // Collect .psx / SYNTAX links and append them at the end of this pass
+        var deferredSyntax = new List<string>();
+        var linkPattern = new System.Text.RegularExpressions.Regex(@"^\s*LINK(?:\s+(SYNTAX))?\s+""([^""]+)""\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         foreach (var line in lines)
         {
             var match = linkPattern.Match(line);
             if (match.Success)
             {
-                var linkedFile = match.Groups[1].Value;
+                var isSyntaxDirective = !string.IsNullOrEmpty(match.Groups[1].Value);
+                var linkedFile = match.Groups[2].Value;
 
                 // Try multiple resolution strategies
                 string? resolvedPath = null;
@@ -173,16 +176,37 @@ public class PowerScriptCompilerNew : IPowerScriptCompilerNew
 
                 if (resolvedPath != null)
                 {
-                    LoggerService.Logger.Debug($"[COMPILER] Inlining linked file: {resolvedPath}");
-                    var linkedContent = File.ReadAllText(resolvedPath);
+                    // If this is a .psx file, load it via PsxFileLoader instead of inlining
+                    var isPsx = string.Equals(Path.GetExtension(resolvedPath), ".psx", StringComparison.OrdinalIgnoreCase);
+                    if (isSyntaxDirective || isPsx)
+                    {
+                        LoggerService.Logger.Debug($"[COMPILER] Loading .psx syntax file: {resolvedPath}");
+                        // Load the .psx file to register its patterns
+                        try
+                        {
+                            PsxFileLoader.LoadFile(resolvedPath);
+                            LoggerService.Logger.Info($"[COMPILER] Loaded syntax patterns from: {resolvedPath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LoggerService.Logger.Warning($"[COMPILER] Failed to load .psx file {resolvedPath}: {ex.Message}");
+                        }
+                        // Don't inline .psx content - just add a comment marker
+                        result.Add($"// SYNTAX LOADED: {linkedFile}");
+                    }
+                    else
+                    {
+                        LoggerService.Logger.Debug($"[COMPILER] Inlining linked file: {resolvedPath}");
+                        var linkedContent = File.ReadAllText(resolvedPath);
 
-                    // Recursively process LINK statements in the linked file,
-                    // using the linked file's path as the new source file for relative resolution
-                    var processedLinkedContent = ProcessLinkStatementsOnce(linkedContent, resolvedPath);
+                        // Recursively process LINK statements in the linked file,
+                        // using the linked file's path as the new source file for relative resolution
+                        var processedLinkedContent = ProcessLinkStatementsOnce(linkedContent, resolvedPath);
 
-                    result.Add($"// LINK {linkedFile} - START");
-                    result.Add(processedLinkedContent);
-                    result.Add($"// LINK {linkedFile} - END");
+                        result.Add($"// LINK {linkedFile} - START");
+                        result.Add(processedLinkedContent);
+                        result.Add($"// LINK {linkedFile} - END");
+                    }
                 }
                 else
                 {
@@ -195,7 +219,7 @@ public class PowerScriptCompilerNew : IPowerScriptCompilerNew
                 result.Add(line);
             }
         }
-
+        // Note: deferredSyntax is no longer used since .psx files are loaded directly
         var preprocessed = string.Join('\n', result);
         LoggerService.Logger.Debug($"[COMPILER] Preprocessed {lines.Length} lines -> {result.Count} segments, {preprocessed.Split('\n').Length} final lines");
         return preprocessed;

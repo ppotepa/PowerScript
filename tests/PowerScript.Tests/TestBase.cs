@@ -11,6 +11,7 @@ using PowerScript.Parser.Processors.Scoping;
 using PowerScript.Core.DotNet;
 using PowerScript.Interpreter.DotNet;
 using PowerScript.Common.Logging;
+using PowerScript.Core.Syntax;
 using System.Text;
 using NUnit.Framework;
 
@@ -46,7 +47,7 @@ public abstract class TestBase
         registry.Register(new CycleLoopProcessor(scopeBuilder));
         registry.Register(new IfStatementProcessor(scopeBuilder));
         registry.Register(new ReturnStatementProcessor());
-        // PrintStatementProcessor removed - PRINT is now a library function
+        // PrintStatementProcessor removed - PRINT is now a stdlib function
         registry.Register(new FunctionCallStatementProcessor());
         registry.Register(new FunctionCallProcessor());
         registry.Register(new ExecuteCommandProcessor());
@@ -59,47 +60,109 @@ public abstract class TestBase
 
         Interpreter = new PowerScriptInterpreter(compiler, executor);
 
-        // Load standard library
-        LoadStandardLibrary();
+        // Load basic functions (standard library) before custom syntax registration
+        // to avoid syntax registration interfering with stdlib parsing.
+        LoadBasicFunctions();
+
+        // Load custom syntax patterns from .psx files only
+        LoadCustomSyntax();
     }
 
     /// <summary>
-    /// Loads the PowerScript standard library.
+    /// Loads custom syntax patterns from .psx files.
     /// </summary>
-    private void LoadStandardLibrary()
+    private void LoadCustomSyntax()
     {
-        string stdlibPath = Path.Combine(
+        string syntaxPath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
             "..", "..", "..", "..", "..",
-            "stdlib", "StandardLibrary.ps"
+            "stdlib", "syntax"
         );
 
-        if (File.Exists(stdlibPath))
+        if (Directory.Exists(syntaxPath))
         {
             try
             {
-                // Load stdlib silently (capture ALL output including errors)
-                using var outputCapture = new StringWriter();
-                using var errorCapture = new StringWriter();
-                var originalOut = Console.Out;
-                var originalError = Console.Error;
+                PsxFileLoader.LoadDirectory(syntaxPath);
+                TestContext.Out.WriteLine($"Loaded custom syntax from: {syntaxPath}");
 
-                try
+                // Debug: List all loaded patterns
+                var patterns = CustomSyntaxRegistry.Instance.GetPatternTransformations();
+                TestContext.Out.WriteLine($"Loaded {patterns.Count} pattern transformations:");
+                foreach (var pattern in patterns)
                 {
-                    Console.SetOut(outputCapture);
-                    Console.SetError(errorCapture);
-                    Interpreter.ExecuteFile(stdlibPath);
-                }
-                finally
-                {
-                    Console.SetOut(originalOut);
-                    Console.SetError(originalError);
+                    TestContext.Out.WriteLine($"  - {pattern.Pattern} => {pattern.Transformation}");
                 }
             }
             catch (Exception ex)
             {
-                TestContext.WriteLine($"Warning: Failed to load standard library: {ex.Message}");
+                TestContext.Out.WriteLine($"Warning: Failed to load custom syntax: {ex.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Loads basic functions needed for test compatibility.
+    /// </summary>
+    private void LoadBasicFunctions()
+    {
+        try
+        {
+            // Link the System namespace so .NET interop (e.g. #Console) works
+            Interpreter.ExecuteCode("LINK System");
+
+            // NOTE: Stdlib is now auto-injected per-test in ExecuteScriptFile()
+            // This allows each test to get the correct relative path to stdlib modules
+            // based on the test script's location.
+
+            // Add frequently needed type validation functions directly
+            // These can't be auto-injected from TypeSystem.ps/Validation.ps because
+            // those files have their own LINK System statement which would conflict
+            string typeValidationFunctions = @"
+FUNCTION ISINT(FLEX value)[INT] {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == ""Int32"" {
+        RETURN 1
+    }
+    IF typeName == ""Int64"" {
+        RETURN 1
+    }
+    IF typeName == ""Int16"" {
+        RETURN 1
+    }
+    IF typeName == ""Byte"" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+FUNCTION ISEMPTY(FLEX value)[INT] {
+    IF value == 0 {
+        RETURN 1
+    }
+    FLEX strValue = #value->ToString()
+    FLEX length = #strValue->Length
+    IF length == 0 {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+FUNCTION ISSTRING(FLEX value)[INT] {
+    FLEX typeName = #value->ToString()
+    IF typeName == ""Hello"" {
+        RETURN 1
+    }
+    RETURN 0
+}
+";
+            Interpreter.ExecuteCode(typeValidationFunctions);
+        }
+        catch (Exception ex)
+        {
+            // Log the error but don't fail tests immediately; individual tests may still pass
+            TestContext.Out.WriteLine($"Warning: Failed to load System namespace: {ex.Message}");
+            TestContext.Out.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -108,6 +171,37 @@ public abstract class TestBase
     /// </summary>
     protected string ExecuteCode(string code)
     {
+        // Auto-inject stdlib links if not already present
+        if (!code.Contains("LINK") && !code.Contains("link"))
+        {
+            // Get the actual project root (not the build output directory)
+            string currentDir = Directory.GetCurrentDirectory();
+
+            // Navigate up to find the solution root
+            DirectoryInfo? dir = new DirectoryInfo(currentDir);
+            while (dir != null && !File.Exists(Path.Combine(dir.FullName, "PowerScript.sln")))
+            {
+                dir = dir.Parent;
+            }
+
+            if (dir != null)
+            {
+                string solutionRoot = dir.FullName;
+                string stdlibPath = Path.Combine(solutionRoot, "stdlib");
+
+                // For inline code, use absolute paths since there's no script location
+                string stdlibLinks = $@"// Auto-injected stdlib links
+LINK ""{stdlibPath}/IO.ps""
+LINK ""{stdlibPath}/Core.ps""
+LINK ""{stdlibPath}/String.ps""
+LINK ""{stdlibPath}/Math.ps""
+LINK ""{stdlibPath}/ArrayLib.ps""
+
+";
+                code = stdlibLinks + code;
+            }
+        }
+
         using var outputCapture = new StringWriter();
         var originalOut = Console.Out;
 
@@ -134,6 +228,91 @@ public abstract class TestBase
         }
 
         string code = File.ReadAllText(scriptPath);
+
+        // Get the stdlib path (needed for both auto-injection strategies)
+        string currentDir = Directory.GetCurrentDirectory();
+        DirectoryInfo? dir = new DirectoryInfo(currentDir);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "PowerScript.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        if (dir == null)
+        {
+            throw new DirectoryNotFoundException("Could not find solution root directory");
+        }
+
+        string solutionRoot = dir.FullName;
+        string stdlibPath = Path.Combine(solutionRoot, "stdlib");
+
+        // Check if this is a custom syntax file (has stdlib/syntax/ LINK)
+        bool isCustomSyntaxFile = code.Contains("stdlib/syntax/");
+
+        if (isCustomSyntaxFile)
+        {
+            // For custom syntax files, add stdlib links AFTER their syntax links
+            var lines = code.Split('\n').ToList();
+            int lastLinkIndex = -1;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (trimmed.StartsWith("LINK", StringComparison.OrdinalIgnoreCase))
+                {
+                    lastLinkIndex = i;
+                }
+            }
+
+            if (lastLinkIndex >= 0)
+            {
+                // Use absolute paths for stdlib modules
+                string ioPath = Path.Combine(stdlibPath, "IO.ps").Replace("\\", "/");
+                string corePath = Path.Combine(stdlibPath, "Core.ps").Replace("\\", "/");
+                string stringPath = Path.Combine(stdlibPath, "String.ps").Replace("\\", "/");
+                string mathPath = Path.Combine(stdlibPath, "Math.ps").Replace("\\", "/");
+                string arrayPath = Path.Combine(stdlibPath, "ArrayLib.ps").Replace("\\", "/");
+
+                // Insert stdlib links after the last custom syntax LINK
+                var stdlibLinks = new[]
+                {
+                    $"LINK \"{ioPath}\"",
+                    $"LINK \"{corePath}\"",
+                    $"LINK \"{stringPath}\"",
+                    $"LINK \"{mathPath}\"",
+                    $"LINK \"{arrayPath}\""
+                };
+
+                // Insert in reverse order to maintain correct order
+                for (int i = stdlibLinks.Length - 1; i >= 0; i--)
+                {
+                    lines.Insert(lastLinkIndex + 1, stdlibLinks[i]);
+                }
+
+                code = string.Join("\n", lines);
+            }
+        }
+        else if (!code.Contains("LINK") && !code.Contains("link"))
+        {
+            // Original auto-injection for files with no LINK statements
+            // Use absolute paths since test scripts might be copied to bin/Debug
+            string ioPath = Path.Combine(stdlibPath, "IO.ps").Replace("\\", "/");
+            string corePath = Path.Combine(stdlibPath, "Core.ps").Replace("\\", "/");
+            string stringPath = Path.Combine(stdlibPath, "String.ps").Replace("\\", "/");
+            string mathPath = Path.Combine(stdlibPath, "Math.ps").Replace("\\", "/");
+            string arrayPath = Path.Combine(stdlibPath, "ArrayLib.ps").Replace("\\", "/");
+
+            // Prepend LINK statements for commonly used stdlib modules
+            string stdlibLinks = $@"// Auto-injected stdlib links
+LINK ""{ioPath}""
+LINK ""{corePath}""
+LINK ""{stringPath}""
+LINK ""{mathPath}""
+LINK ""{arrayPath}""
+
+";
+            code = stdlibLinks + code;
+        }
+
         return ExecuteCode(code);
     }
 

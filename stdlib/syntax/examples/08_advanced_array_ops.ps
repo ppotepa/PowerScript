@@ -1,0 +1,33 @@
+// Example 8: Advanced Array Operators
+// Demonstrates advanced array operations with custom operators
+
+LINK "ArrayLib.ps"
+
+FUNCTION DEMO_ADVANCED_ARRAY_OPS()[INT] {
+    // Test data
+    FLEX arr1 = [1, 2, 3]
+    FLEX arr2 = [3, 4, 5]
+    FLEX arr3 = [2, 3]
+    
+    // Array concatenation
+    FLEX concat = arr1 + arr2  // [1, 2, 3, 3, 4, 5]
+    
+    // Set difference
+    FLEX diff = arr1 - arr3  // [1]
+    
+    // Set intersection
+    FLEX intersect = arr1 & arr2  // [3]
+    
+    // Array indexing
+    FLEX slice = arr1[0..2]  // [1, 2]
+    FLEX pluck = people[..name]  // Extract all names
+    FLEX found = arr1[?(n) => n > 2]  // Find first > 2
+    
+    // Verify results
+    IF (ARRAY_LENGTH(concat) != 6) { RETURN 0 }
+    IF (ARRAY_LENGTH(diff) != 1) { RETURN 0 }
+    IF (ARRAY_LENGTH(intersect) != 1) { RETURN 0 }
+    IF (intersect[0] != 3) { RETURN 0 }
+    
+    RETURN 1
+}

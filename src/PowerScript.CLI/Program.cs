@@ -6,6 +6,7 @@ using PowerScript.Common.Logging;
 using PowerScript.Compiler;
 using PowerScript.Compiler.Interfaces;
 using PowerScript.Core.DotNet;
+using PowerScript.Core.Syntax;
 using PowerScript.Interpreter;
 using PowerScript.Interpreter.DotNet;
 using PowerScript.Interpreter.Interfaces;
@@ -149,6 +150,9 @@ public static class Program
         Action<IServiceProvider> initAction = _serviceProvider.GetRequiredService<Action<IServiceProvider>>();
         initAction(_serviceProvider);
 
+        // Initialize custom syntax from .psx files
+        InitializeCustomSyntax();
+
         // Initialize LoggerService with the custom logger
         Logging_ILogger customLogger = _serviceProvider.GetRequiredService<Logging_ILogger>();
         LoggerService.Logger = customLogger;
@@ -157,6 +161,68 @@ public static class Program
         IStringLocalizerFactory localizerFactory = _serviceProvider.GetRequiredService<IStringLocalizerFactory>();
         IStringLocalizer localizer = localizerFactory.Create("Messages", typeof(Program).Assembly.GetName().Name!);
         LocalizationService.Initialize(localizer);
+    }
+
+    /// <summary>
+    ///     Initializes custom syntax by loading .psx files from stdlib/syntax directory
+    /// </summary>
+    private static void InitializeCustomSyntax()
+    {
+        try
+        {
+            // Try multiple starting points to find stdlib
+            string? stdlibPath = null;
+
+            // 1. Try from current working directory (works with dotnet run)
+            stdlibPath = FindStdlibDirectory(Directory.GetCurrentDirectory());
+
+            // 2. If not found, try from base directory (works with compiled exe)
+            if (stdlibPath == null)
+            {
+                stdlibPath = FindStdlibDirectory(AppDomain.CurrentDomain.BaseDirectory);
+            }
+
+            if (stdlibPath != null)
+            {
+                PsxFileLoader.LoadStandardSyntax(stdlibPath);
+                Log.Information($"Custom syntax loaded from: {Path.Combine(stdlibPath, "syntax")}");
+            }
+            else
+            {
+                Log.Warning("stdlib directory not found - custom syntax will not be available");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to load custom syntax: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Searches for the stdlib directory starting from the given path
+    /// </summary>
+    private static string? FindStdlibDirectory(string startPath)
+    {
+        string currentPath = startPath;
+
+        // Try current directory and up to 5 levels up
+        for (int i = 0; i < 6; i++)
+        {
+            string stdlibPath = Path.Combine(currentPath, "stdlib");
+            if (Directory.Exists(stdlibPath))
+            {
+                return stdlibPath;
+            }
+
+            string? parentPath = Directory.GetParent(currentPath)?.FullName;
+            if (parentPath == null)
+            {
+                break;
+            }
+            currentPath = parentPath;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -192,6 +258,7 @@ public static class Program
 
                 // Register all token processors
                 // Order matters: more specific processors should come first
+                reg.Register(new PatternSyntaxProcessor()); // FILTER ... WHERE ... (custom syntax patterns)
                 reg.Register(new StaticTypeVariableProcessor()); // INT, STRING, NUMBER
                 reg.Register(new FunctionProcessor(parameterProcessor));
                 reg.Register(new NetMemberAccessStatementProcessor()); // #Console -> WriteLine(42)

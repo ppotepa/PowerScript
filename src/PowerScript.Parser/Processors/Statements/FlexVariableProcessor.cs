@@ -3,6 +3,7 @@ using PowerScript.Core.AST;
 using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Exceptions;
+using PowerScript.Core.Syntax;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
@@ -109,8 +110,96 @@ public class FlexVariableProcessor : ITokenProcessor
 
         currentToken = currentToken.Next;
 
-        // Parse the initialization expression
-        Expression initExpression = ParseExpression(ref currentToken);
+        // Check if the value is a pattern syntax expression (e.g., TAKE 3 FROM arr)
+        Expression initExpression;
+        if (currentToken is CustomKeywordToken customKeywordToken && customKeywordToken.PositionInPattern == 0)
+        {
+            // This is a pattern keyword at position 0 - delegate to PatternSyntaxProcessor
+            LoggerService.Logger.Debug($"[FlexVariableProcessor] Detected pattern syntax starting with '{customKeywordToken.RawToken?.Text}'");
+
+            var patternProcessor = new PatternSyntaxProcessor();
+
+            // Check if the pattern processor can handle this token
+            if (!patternProcessor.CanProcess(customKeywordToken))
+            {
+                LoggerService.Logger.Debug($"[FlexVariableProcessor] Pattern processor cannot handle token '{customKeywordToken}'");
+                throw new InvalidOperationException($"Pattern processor cannot handle token '{customKeywordToken}'");
+            }
+
+            // Remember the statement count before processing
+            int statementCountBefore = context.CurrentScope.Statements.Count;
+
+            var patternResult = patternProcessor.Process(customKeywordToken, context);
+
+            // PatternSyntaxProcessor adds an ExpressionStatement to the scope - remove it and extract the expression
+            if (context.CurrentScope.Statements.Count > statementCountBefore &&
+                context.CurrentScope.Statements[^1] is ExpressionStatement exprStmt)
+            {
+                context.CurrentScope.Statements.RemoveAt(context.CurrentScope.Statements.Count - 1);
+                initExpression = exprStmt.Expression;
+                currentToken = patternResult.NextToken;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Pattern processor did not add an ExpressionStatement for pattern starting with '{customKeywordToken.RawToken?.Text}'");
+            }
+        }
+        else if (currentToken is IdentifierToken patternCheckToken)
+        {
+            // Check if this starts a pattern
+            var patterns = CustomSyntaxRegistry.Instance.GetPatternTransformations();
+            string firstWord = patternCheckToken.Value.ToUpperInvariant();
+            bool isPattern = patterns.Any(p =>
+            {
+                int spaceIndex = p.Pattern.IndexOf(' ');
+                string patternFirst = spaceIndex < 0 ? p.Pattern.ToUpperInvariant() : p.Pattern.Substring(0, spaceIndex).ToUpperInvariant();
+                return patternFirst == firstWord;
+            });
+
+            if (isPattern)
+            {
+                // This is a pattern syntax - use PatternSyntaxProcessor to parse it
+                var patternProcessor = new PatternSyntaxProcessor();
+
+                // Check if the pattern processor can handle this token
+                if (!patternProcessor.CanProcess(currentToken))
+                {
+                    LoggerService.Logger.Debug($"[FlexVariableProcessor] Pattern processor cannot handle token '{currentToken}' - not a pattern");
+                    // Fall back to normal expression parsing
+                    initExpression = ParseExpression(ref currentToken);
+                }
+                else
+                {
+                    var dummyContext = new ProcessingContext(context.CurrentScope, context.Depth);
+                    var result = patternProcessor.Process(currentToken, dummyContext);
+
+                    // Extract the expression that was added to the scope
+                    var lastStatement = context.CurrentScope.Statements[context.CurrentScope.Statements.Count - 1];
+                    if (lastStatement is ExpressionStatement exprStmt)
+                    {
+                        initExpression = exprStmt.Expression;
+                        // Remove it from statements since we're using it in variable declaration
+                        context.CurrentScope.Statements.RemoveAt(context.CurrentScope.Statements.Count - 1);
+                        currentToken = result.NextToken;
+                    }
+                    else
+                    {
+                        // Fallback to normal parsing
+                        initExpression = ParseExpression(ref currentToken);
+                    }
+                }
+            }
+            else
+            {
+                // Normal expression parsing
+                initExpression = ParseExpression(ref currentToken);
+            }
+        }
+        else
+        {
+            // Normal expression parsing
+            initExpression = ParseExpression(ref currentToken);
+        }
 
         // Create variable declaration
         VariableDeclaration variableDecl = new(identifierToken); // No type token for FLEX variables
@@ -191,6 +280,14 @@ public class FlexVariableProcessor : ITokenProcessor
     /// </summary>
     private Expression ParsePrimaryExpression(ref Token? token)
     {
+        // Handle custom syntax blocks: ![MAX OF numbers]
+        if (token is CustomSyntaxBlockOpen)
+        {
+            // Use the global ExpressionParser to handle custom syntax blocks
+            var expressionParser = new ExpressionParser();
+            return expressionParser.ParseCustomSyntaxBlock(ref token);
+        }
+
         // Handle parentheses for precedence override
         if (token is ParenthesisOpen)
         {
@@ -353,6 +450,13 @@ public class FlexVariableProcessor : ITokenProcessor
             return expr;
         }
 
+        if (token is DecimalToken decimalToken)
+        {
+            LiteralExpression expr = new(decimalToken);
+            token = token.Next;
+            return expr;
+        }
+
         if (token is StringLiteralToken stringToken)
         {
             StringLiteralExpression expr = new(stringToken);
@@ -369,6 +473,17 @@ public class FlexVariableProcessor : ITokenProcessor
 
         if (token is IdentifierToken identifierToken)
         {
+            // Check for custom syntax operator: identifier::Method()
+            if (identifierToken.Next is CustomSyntaxOperatorToken)
+            {
+                // Delegate to ExpressionParser to handle custom syntax
+                Token currentParseToken = identifierToken;
+                var parser = new ExpressionParser();
+                var expr = parser.Parse(ref currentParseToken);
+                token = currentParseToken;
+                return expr;
+            }
+
             // Start with identifier expression
             Expression currentExpr = new IdentifierExpression(identifierToken);
             token = identifierToken.Next;

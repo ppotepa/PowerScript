@@ -1,0 +1,31 @@
+// Example 9: Pipeline Operators
+// Demonstrates pipeline syntax for data transformation
+
+LINK "ArrayLib.ps"
+LINK "String.ps"
+
+FUNCTION DEMO_PIPELINE_OPS()[INT] {
+    // Test data
+    FLEX data = [1, 2, 3, 4, 5]
+    
+    // Pipeline operator |>
+    FLEX result1 = data |> ARRAY_FILTER_GT(5) |> ARRAY_SORT |> ARRAY_REVERSE
+    
+    // Transform operator =>
+    FLEX result2 = data => FILTER => MAP => REDUCE
+    
+    // String pipeline
+    FLEX text = "hello world" |> STRING_TO_UPPER |> STRING_SPLIT(" ")
+    
+    // Data processing pipeline
+    FLEX processed = data 
+        |> (d) => FILTER d WHERE > 2
+        |> (d) => MAP d WITH (n) => n * 2
+        |> (d) => TAKE 2 FROM d
+    
+    // Verify results
+    IF (ARRAY_LENGTH(processed) != 2) { RETURN 0 }
+    IF (processed[0] != 6) { RETURN 0 }
+    
+    RETURN 1
+}

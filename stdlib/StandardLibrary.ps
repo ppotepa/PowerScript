@@ -4,13 +4,15 @@
 LINK "Core.ps"
 LINK "Math.ps"
 LINK "String.ps"
+LINK "ArrayLib.ps"
 LINK "IO.ps"
 LINK "Validation.ps"
+LINK "TypeSystem.ps"
 
-// Custom Syntax Extensions (disabled - SYNTAX keyword not yet implemented)
-// LINK "syntax/arrays.psx"
-// LINK "syntax/strings.psx"
-// LINK "syntax/objects.psx"
+// Custom Syntax Extensions: defer .psx pattern syntax to be parsed last
+LINK SYNTAX "syntax/arrays.psx"
+LINK SYNTAX "syntax/strings.psx"
+LINK SYNTAX "syntax/objects.psx"
 
 // This file provides access to all standard library functions:
 //
@@ -25,6 +27,13 @@ LINK "Validation.ps"
 //   - Factorial: FACTORIAL
 //   - Properties: IS_EVEN, IS_ODD, IS_PRIME, IS_POWER_OF_TWO
 //   - Number Theory: GCD, LCM
+//
+// ARRAY OPERATIONS (ArrayLib.ps):
+//   - Validation: ARRAY_INDEX_VALID, ARRAY_COUNT_GREATER, ARRAY_ALL_EQUAL
+//   - Set Operations: ARRAY_CONTAINS_ANY, ARRAY_CONTAINS_ALL, ARRAY_CONTAINS_NONE
+//   - Element Access: ARRAY_FIRST, ARRAY_LAST, ARRAY_LENGTH
+//   - Aggregation: ARRAY_SUM, ARRAY_MAX, ARRAY_MIN, ARRAY_AVERAGE
+//   - Search: ARRAY_CONTAINS, ARRAY_INDEX_OF, ARRAY_LAST_INDEX_OF, ARRAY_COUNT_VALUE
 //
 // STRING OPERATIONS (String.ps):
 //   - Properties: STR_LENGTH, IS_EMPTY
@@ -50,6 +59,12 @@ LINK "Validation.ps"
 //   - Character: IS_ALPHA, IS_DIGIT, IS_ALPHANUMERIC, IS_UPPER, IS_LOWER, IS_WHITESPACE
 //   - String: VALIDATE_NOT_EMPTY, VALIDATE_LENGTH, VALIDATE_MIN_LENGTH, VALIDATE_MAX_LENGTH
 //   - Numeric Range: VALIDATE_RANGE, VALIDATE_MIN, VALIDATE_MAX
+//
+// TYPE SYSTEM (TypeSystem.ps):
+//   - Type Checking: ISINT, ISFLOAT, ISNUMBER, ISDECIMAL, ISSTRING, ISBOOL
+//                    ISCHAR, ISNULL, ISARRAY, ISMAP, ISOBJECT, ISDATE
+//   - Type Conversion: TOINT, TOFLOAT, TODECIMAL, TOSTRING, TOBOOL
+//   - Type Introspection: TYPEOF, PSTYPE
 //
 // CUSTOM SYNTAX EXTENSIONS (syntax/*.psx):
 //   Arrays (arrays.psx):

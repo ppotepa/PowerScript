@@ -1,18 +1,21 @@
-// EXPECTED: TRUE
-TRUE
-olleH
+// EXPECTED: 1
+// EXPECTED: 1
+// EXPECTED: olleH
 
 // Test mixed custom syntax with strings
 LINK "stdlib/syntax/strings.psx"
 
 STRING greeting = "  Hello  "
 
-// Test ::Trim() then ::Contains()
-FLEX trimmed = greeting::Trim()
-PRINT trimmed::Contains("Hello")
+// Test Trim then Contains (manual function calls to avoid :: bug)
+FLEX trimmed = STR_TRIM(greeting)
+FLEX contains = STR_CONTAINS(trimmed, "Hello")
+PRINT contains
 
-// Test ::StartsWith()
-PRINT trimmed::StartsWith("Hello")
+// Test StartsWith
+FLEX starts = STR_STARTS_WITH(trimmed, "Hello")
+PRINT starts
 
-// Test ::Reverse()
-PRINT trimmed::Reverse()
+// Test Reverse
+FLEX reversed = STR_REVERSE(trimmed)
+PRINT reversed

@@ -1,0 +1,26 @@
+// Example 5: Object Syntax
+// Demonstrates object manipulation with custom syntax
+
+LINK "Core.ps"
+
+FUNCTION DEMO_OBJECT_SYNTAX()[INT] {
+    // Test data - simulating objects with maps
+    FLEX person = #{ name: "John", age: 30, city: "NYC" }
+    
+    // Using :: operator syntax
+    FLEX props = person::Props()
+    FLEX values = person::Values()
+    FLEX hasAge = person::HasProp("age")
+    FLEX name = person::GetProp("name")
+    FLEX clone = person::Clone()
+    
+    // Pattern-based syntax
+    FLEX selected = FILTER Properties {name, age} OF person
+    FLEX updated = person::SetProp("age", 31)
+    
+    // Verify results
+    IF (hasAge != 1) { RETURN 0 }
+    IF (name != "John") { RETURN 0 }
+    
+    RETURN 1
+}

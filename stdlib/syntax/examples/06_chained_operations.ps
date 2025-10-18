@@ -1,0 +1,27 @@
+// Example 6: Chained Operations
+// Demonstrates chaining multiple custom syntax operations
+
+LINK "ArrayLib.ps"
+LINK "String.ps"
+
+FUNCTION DEMO_CHAINED_OPERATIONS()[INT] {
+    // Test data
+    FLEX numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    
+    // Chaining operations
+    FLEX result = numbers::Sort()::Reverse()::First()
+    
+    // Chaining with patterns
+    FLEX filtered = TAKE 5 FROM (FILTER numbers WHERE > 5)
+    
+    // Mixed syntax chaining
+    FLEX processed = numbers WHERE > 3 THEN MAP WITH (n) => n * 2 THEN TAKE 3
+    
+    // Verify results
+    IF (result != 10) { RETURN 0 }
+    IF (ARRAY_LENGTH(filtered) != 5) { RETURN 0 }
+    IF (ARRAY_LENGTH(processed) != 3) { RETURN 0 }
+    IF (processed[0] != 8) { RETURN 0 }
+    
+    RETURN 1
+}

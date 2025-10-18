@@ -162,6 +162,17 @@ public class ParameterProcessor
         // Current token should now be the identifier (parameter name)
         if (currentToken is not IdentifierToken identifierToken)
         {
+            string tokenTypeName = currentToken.GetType().Name;
+            string keywordName = currentToken.RawToken?.Text?.ToUpper() ?? tokenTypeName;
+
+            // Provide helpful error for keywords
+            if (tokenTypeName.Contains("Token") && !tokenTypeName.Equals("IdentifierToken"))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot use reserved keyword '{keywordName}' as parameter name. " +
+                    $"Keywords like TRUE, FALSE, IF, WHILE, FUNC, etc. cannot be used as identifiers.");
+            }
+
             throw new UnexpectedTokenException(currentToken, typeof(IdentifierToken));
         }
 
