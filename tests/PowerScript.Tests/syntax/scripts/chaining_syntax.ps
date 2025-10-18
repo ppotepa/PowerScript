@@ -1,0 +1,39 @@
+// EXPECTED: 8
+// EXPECTED: 1
+
+LINK "stdlib/IO.ps"
+
+// Inline helper functions for custom syntax using CYCLE
+FUNCTION ARRAY_MAX(FLEX arr)[FLEX] {
+    FLEX max = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element > max {
+            max = element
+        }
+    }
+    
+    RETURN max
+}
+
+FUNCTION ARRAY_MIN(FLEX arr)[FLEX] {
+    FLEX min = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element < min {
+            min = element
+        }
+    }
+    
+    RETURN min
+}
+
+// Test chaining custom syntax with ![ ] blocks
+FLEX numbers = [5,2,8,1,3]
+
+// Test MAX and MIN via custom syntax blocks
+FLEX maxVal = ![MAX OF numbers]
+PRINT maxVal
+
+FLEX minVal = ![MIN OF numbers]
+PRINT minVal

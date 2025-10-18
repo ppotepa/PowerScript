@@ -5,6 +5,7 @@ using PowerScript.Core.AST.Statements;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
+using PowerScript.Core.Syntax.Tokens.Interfaces;
 using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Keywords.Types;
 using PowerScript.Core.Syntax.Tokens.Operators;
@@ -69,10 +70,22 @@ public class StaticTypeVariableProcessor : ITokenProcessor
         }
 
         // Next token must be an identifier (variable name)
+        // Check if a reserved keyword is being used as a variable name
         if (currentToken is not IdentifierToken)
         {
+            string tokenTypeName = currentToken.GetType().Name;
+            string keywordName = currentToken.RawToken?.Text?.ToUpper() ?? tokenTypeName;
+
+            // Provide helpful error for keywords
+            if (tokenTypeName.Contains("Token") && !tokenTypeName.Equals("IdentifierToken"))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot use reserved keyword '{keywordName}' as variable name. " +
+                    $"Keywords like TRUE, FALSE, IF, WHILE, FUNC, etc. cannot be used as identifiers.");
+            }
+
             throw new InvalidOperationException(
-                $"Expected identifier after {typeName}{(bitWidth.HasValue ? $"[{bitWidth}]" : "")}, found {currentToken.GetType().Name}");
+                $"Expected identifier after {typeName}{(bitWidth.HasValue ? $"[{bitWidth}]" : "")}, found {tokenTypeName}");
         }
 
         IdentifierToken identifierToken = (IdentifierToken)currentToken;

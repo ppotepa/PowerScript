@@ -7,6 +7,7 @@ using PowerScript.Core.Syntax.Tokens.Delimiters;
 using PowerScript.Core.Syntax.Tokens.Identifiers;
 using PowerScript.Core.Syntax.Tokens.Keywords;
 using PowerScript.Core.Syntax.Tokens.Operators;
+using PowerScript.Core.Syntax.Tokens.Raw;
 using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
 using PowerScript.Parser.Processors.Base;
@@ -142,6 +143,33 @@ public class ReturnStatementProcessor : ITokenProcessor
     /// </summary>
     private Expression ParsePrimaryExpression(ref Token? token)
     {
+        // Handle unary minus for negative numbers
+        if (token is MinusToken)
+        {
+            token = token.Next; // Move past minus
+
+            if (token is ValueToken negValueToken)
+            {
+                token = token.Next;
+                // Create negative literal
+                RawToken negativeRaw = RawToken.Create($"-{negValueToken.RawToken.OriginalText}");
+                ValueToken negativeToken = new(negativeRaw);
+                return new LiteralExpression(negativeToken);
+            }
+            else if (token is DecimalToken negDecimalToken)
+            {
+                token = token.Next;
+                // Create negative decimal literal
+                RawToken negativeRaw = RawToken.Create($"-{negDecimalToken.RawToken.OriginalText}");
+                double negativeValue = -negDecimalToken.Value;
+                DecimalToken negativeToken = new(negativeRaw, negativeValue);
+                return new LiteralExpression(negativeToken);
+            }
+
+            // If not followed by a literal, throw error
+            throw new UnexpectedTokenException(token!, typeof(ValueToken), typeof(DecimalToken));
+        }
+
         // Handle parentheses for precedence override
         if (token is ParenthesisOpen)
         {
@@ -250,6 +278,13 @@ public class ReturnStatementProcessor : ITokenProcessor
             return new LiteralExpression(valueToken);
         }
 
+        // Handle decimal literals
+        if (token is DecimalToken decimalToken)
+        {
+            token = token.Next;
+            return new LiteralExpression(decimalToken);
+        }
+
         // Handle string literals
         if (token is StringLiteralToken stringToken)
         {
@@ -258,7 +293,7 @@ public class ReturnStatementProcessor : ITokenProcessor
         }
 
         throw new UnexpectedTokenException(token!, typeof(IdentifierToken), typeof(ValueToken),
-            typeof(StringLiteralToken), typeof(ParenthesisOpen));
+            typeof(DecimalToken), typeof(StringLiteralToken), typeof(ParenthesisOpen));
     }
 
     /// <summary>

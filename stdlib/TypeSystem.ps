@@ -1,0 +1,317 @@
+// TypeSystem.ps - Core type checking and conversion functions for PowerScript
+// Provides runtime type inspection and conversion utilities
+
+LINK System
+
+// ============================================================================
+// TYPE CHECKING FUNCTIONS
+// Returns 1 (TRUE) or 0 (FALSE)
+// ============================================================================
+
+/// Checks if value is an integer type
+FUNCTION ISINT(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "INT32" {
+        RETURN 1
+    }
+    IF typeName == "INT64" {
+        RETURN 1
+    }
+    IF typeName == "INT16" {
+        RETURN 1
+    }
+    IF typeName == "BYTE" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a floating point number
+FUNCTION ISFLOAT(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "DOUBLE" {
+        RETURN 1
+    }
+    IF typeName == "SINGLE" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is any numeric type (int or float)
+FUNCTION ISNUMBER(FLEX value) {
+    IF ISINT(value) == 1 {
+        RETURN 1
+    }
+    IF ISFLOAT(value) == 1 {
+        RETURN 1
+    }
+    IF ISDECIMAL(value) == 1 {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a high-precision decimal
+FUNCTION ISDECIMAL(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "DECIMAL" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a string
+FUNCTION ISSTRING(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "STRING" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a boolean
+FUNCTION ISBOOL(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "BOOLEAN" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a character
+FUNCTION ISCHAR(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "CHAR" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is null
+FUNCTION ISNULL(FLEX value) {
+    IF value == NULL {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is an array/collection (implements IEnumerable)
+FUNCTION ISARRAY(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN 0
+    }
+    FLEX type = #value->GetType()
+    // Check if implements IEnumerable but not String (strings are enumerable but not arrays)
+    IF ISSTRING(value) == 1 {
+        RETURN 0
+    }
+    FLEX interfaces = #type->GetInterfaces()
+    FLEX loopCount = #interfaces->Length
+    FLEX i = 0
+    CYCLE loopCount {
+        FLEX interface = interfaces[i]
+        FLEX interfaceName = #interface->Name
+        IF interfaceName == "IENUMERABLE" {
+            RETURN 1
+        }
+        i = i + 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is a dictionary/map (implements IDictionary)
+FUNCTION ISMAP(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN 0
+    }
+    FLEX type = #value->GetType()
+    FLEX interfaces = #type->GetInterfaces()
+    FLEX loopCount = #interfaces->Length
+    FLEX i = 0
+    CYCLE loopCount {
+        FLEX interface = interfaces[i]
+        FLEX interfaceName = #interface->Name
+        IF interfaceName == "IDICTIONARY" {
+            RETURN 1
+        }
+        i = i + 1
+    }
+    RETURN 0
+}
+
+/// Checks if value is an object (not array, not primitive, not string)
+FUNCTION ISOBJECT(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN 0
+    }
+    IF ISARRAY(value) == 1 {
+        RETURN 0
+    }
+    IF ISMAP(value) == 1 {
+        RETURN 0
+    }
+    IF ISSTRING(value) == 1 {
+        RETURN 0
+    }
+    IF ISNUMBER(value) == 1 {
+        RETURN 0
+    }
+    IF ISBOOL(value) == 1 {
+        RETURN 0
+    }
+    IF ISCHAR(value) == 1 {
+        RETURN 0
+    }
+    RETURN 1
+}
+
+/// Checks if value is a DateTime
+FUNCTION ISDATE(FLEX value) {
+    FLEX typeName = #value->GetType()->Name
+    IF typeName == "DATETIME" {
+        RETURN 1
+    }
+    RETURN 0
+}
+
+// ============================================================================
+// TYPE CONVERSION FUNCTIONS
+// Converts values between types with error handling
+// ============================================================================
+
+/// Converts value to integer
+FUNCTION TOINT(FLEX value) {
+    IF ISINT(value) == 1 {
+        RETURN value
+    }
+    IF ISSTRING(value) == 1 {
+        /// TODO: Parse string to int
+        RETURN 0
+    }
+    IF ISFLOAT(value) == 1 {
+        /// Truncate float to int by subtracting and adding
+        FLEX temp = value - 0.5
+        temp = temp + 0.5
+        RETURN temp
+    }
+    IF ISBOOL(value) == 1 {
+        IF value == TRUE {
+            RETURN 1
+        }
+        RETURN 0
+    }
+    RETURN 0
+}
+
+/// Converts value to float
+/// RETURNS: FLOAT
+FUNCTION TOFLOAT(FLEX value) {
+    IF ISFLOAT(value) == 1 {
+        RETURN value
+    }
+    IF ISINT(value) == 1 {
+        RETURN value + 0.0
+    }
+    IF ISSTRING(value) == 1 {
+        /// TODO: Parse string to float
+        RETURN 0.0
+    }
+    RETURN 0.0
+}
+
+/// Converts value to decimal (high precision)
+FUNCTION TODECIMAL(FLEX value) {
+    IF ISDECIMAL(value) == 1 {
+        RETURN value
+    }
+    IF ISSTRING(value) == 1 {
+        /// TODO: Parse string to decimal
+        RETURN 0.0
+    }
+    IF ISNUMBER(value) == 1 {
+        RETURN value + 0.0
+    }
+    RETURN 0.0
+}
+
+/// Converts value to string
+FUNCTION TOSTRING(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN ""
+    }
+    IF ISSTRING(value) == 1 {
+        RETURN value
+    }
+    RETURN #value->ToString()
+}
+
+/// Converts value to boolean
+FUNCTION TOBOOL(FLEX value) {
+    IF ISBOOL(value) == 1 {
+        RETURN value
+    }
+    IF ISINT(value) == 1 {
+        IF value != 0 {
+            RETURN TRUE
+        }
+        RETURN FALSE
+    }
+    IF ISSTRING(value) == 1 {
+        IF value == "TRUE" {
+            RETURN TRUE
+        }
+        IF value == "1" {
+            RETURN TRUE
+        }
+        RETURN FALSE
+    }
+    RETURN FALSE
+}
+
+/// Gets the type name of a value as a string
+FUNCTION TYPEOF(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN "NULL"
+    }
+    FLEX type = #value->GetType()
+    RETURN #type->Name
+}
+
+/// Gets a human-readable PowerScript type name
+FUNCTION PSTYPE(FLEX value) {
+    IF ISNULL(value) == 1 {
+        RETURN "NULL"
+    }
+    IF ISINT(value) == 1 {
+        RETURN "INT"
+    }
+    IF ISFLOAT(value) == 1 {
+        RETURN "FLOAT"
+    }
+    IF ISDECIMAL(value) == 1 {
+        RETURN "PREC"
+    }
+    IF ISBOOL(value) == 1 {
+        RETURN "BOOL"
+    }
+    IF ISCHAR(value) == 1 {
+        RETURN "CHAR"
+    }
+    IF ISSTRING(value) == 1 {
+        RETURN "STRING"
+    }
+    IF ISDATE(value) == 1 {
+        RETURN "DATE"
+    }
+    IF ISMAP(value) == 1 {
+        RETURN "MAP"
+    }
+    IF ISARRAY(value) == 1 {
+        RETURN "ARRAY"
+    }
+    IF ISOBJECT(value) == 1 {
+        RETURN "OBJECT"
+    }
+    RETURN "UNKNOWN"
+}

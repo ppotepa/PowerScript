@@ -1,0 +1,16 @@
+// Math pattern syntax definitions
+// Compatible with PSXFileLoader - includes type constraints
+
+SYNTAX DIVIDE $a:INT BY $b:INT => DIVIDE($a, $b)
+SYNTAX MULTIPLY $a:FLOAT BY $b:FLOAT => MULTIPLY($a, $b)
+SYNTAX ADD $a:INT TO $b:INT => ADD($a, $b)
+SYNTAX SUBTRACT $a:INT FROM $b:INT => SUBTRACT($b, $a)
+SYNTAX POWER $base:FLOAT TO $exponent:FLOAT => POWER($base, $exponent)
+SYNTAX SQUARE ROOT OF $number:FLOAT => SQRT($number)
+SYNTAX ABSOLUTE VALUE OF $number:FLOAT => ABS($number)
+SYNTAX ROUND $number:FLOAT TO $decimals:INT => ROUND($number, $decimals)
+
+SYNTAX $base RAISED TO POWER $exponent => POWER($base, $exponent)
+SYNTAX ABSOLUTE VALUE OF $number => ABS($number)
+SYNTAX SQUARE ROOT OF $number => SQRT($number)
+SYNTAX SUM OF $array => SUM($array)

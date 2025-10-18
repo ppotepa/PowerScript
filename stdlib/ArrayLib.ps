@@ -2,7 +2,7 @@
 // Now using proper array parameters!
 
 /// Validates if an index is valid for an array
-FUNCTION ARRAY_INDEX_VALID(INT CHAIN arr, INT size, INT index)[INT] {
+FUNCTION ARRAY_INDEX_VALID(INT CHAIN arr, INT size, INT index) {
     IF index < 0 {
         RETURN 0
     }
@@ -13,22 +13,22 @@ FUNCTION ARRAY_INDEX_VALID(INT CHAIN arr, INT size, INT index)[INT] {
 }
 
 /// Counts elements in array greater than threshold
-FUNCTION ARRAY_COUNT_GREATER(INT CHAIN arr, INT size, INT threshold)[INT] {
-    FLEX count = 0
+FUNCTION ARRAY_COUNT_GREATER(INT CHAIN arr, INT size, INT threshold) {
+    FLEX counter = 0
     FLEX i = 0
     // Using manual loop instead of CYCLE due to CYCLE+FLEX bug
     IF i < size {
         FLEX elem = arr[i]
         IF elem > threshold {
-            count = count + 1
+            counter = counter + 1
         }
         i = i + 1
     }
-    RETURN count
+    RETURN counter
 }
 
 /// Checks if all elements in array are equal to a value
-FUNCTION ARRAY_ALL_EQUAL(INT CHAIN arr, INT size, INT value)[INT] {
+FUNCTION ARRAY_ALL_EQUAL(INT CHAIN arr, INT size, INT value) {
     FLEX i = 0
     IF i < size {
         FLEX elem = arr[i]
@@ -38,4 +38,306 @@ FUNCTION ARRAY_ALL_EQUAL(INT CHAIN arr, INT size, INT value)[INT] {
         i = i + 1
     }
     RETURN 1
+}
+
+// ============================================================================
+// ARRAY OPERATIONS FOR CUSTOM SYNTAX SUPPORT
+// ============================================================================
+
+/// Checks if array contains ANY element from another array
+/// Returns 1 (TRUE) if at least one common element exists
+/// Example: [1,2,3] HAS ELEMENTS OF [2,5] -> 1 (because of 2)
+FUNCTION ARRAY_CONTAINS_ANY(INT CHAIN arr1, INT size1, INT CHAIN arr2, INT size2) {
+    FLEX i = 0
+    CYCLE size1 {
+        FLEX elem1 = arr1[i]
+        FLEX j = 0
+        CYCLE size2 {
+            FLEX elem2 = arr2[j]
+            IF elem1 == elem2 {
+                RETURN 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    RETURN 0
+}
+
+/// Checks if array contains ALL elements from another array
+/// Returns 1 (TRUE) only if every element from arr2 exists in arr1
+/// Example: [1,2,3,4] HAS ALL OF [2,3] -> 1 (all found)
+FUNCTION ARRAY_CONTAINS_ALL(INT CHAIN arr1, INT size1, INT CHAIN arr2, INT size2) {
+    FLEX i = 0
+    CYCLE size2 {
+        FLEX elem2 = arr2[i]
+        FLEX found = 0
+        FLEX j = 0
+        CYCLE size1 {
+            FLEX elem1 = arr1[j]
+            IF elem1 == elem2 {
+                found = 1
+            }
+            j = j + 1
+        }
+        IF found == 0 {
+            RETURN 0
+        }
+        i = i + 1
+    }
+    RETURN 1
+}
+
+/// Checks if array contains NONE of the elements from another array
+/// Returns 1 (TRUE) if arrays have no common elements
+/// Example: [1,2,3] HAS NONE OF [4,5,6] -> 1 (no overlap)
+FUNCTION ARRAY_CONTAINS_NONE(INT CHAIN arr1, INT size1, INT CHAIN arr2, INT size2) {
+    IF ARRAY_CONTAINS_ANY(arr1, size1, arr2, size2) == 1 {
+        RETURN 0
+    }
+    RETURN 1
+}
+
+/// Checks if a single value exists in the array
+/// Returns 1 (TRUE) if value found
+FUNCTION ARRAY_CONTAINS(INT CHAIN arr, INT size, INT value) {
+    FLEX i = 0
+    CYCLE size {
+        IF arr[i] == value {
+            RETURN 1
+        }
+        i = i + 1
+    }
+    RETURN 0
+}
+
+/// Returns the first element of an array
+FUNCTION ARRAY_FIRST(INT CHAIN arr, INT size) {
+    IF size == 0 {
+        RETURN 0
+    }
+    RETURN arr[0]
+}
+
+/// Returns the last element of an array
+FUNCTION ARRAY_LAST(INT CHAIN arr, INT size) {
+    IF size == 0 {
+        RETURN 0
+    }
+    RETURN arr[size - 1]
+}
+
+/// Returns the length/count of elements in array
+FUNCTION ARRAY_LENGTH(INT CHAIN arr, INT size) {
+    RETURN size
+}
+
+/// Returns the sum of all elements in array
+FUNCTION ARRAY_SUM(INT CHAIN arr, INT size) {
+    FLEX total = 0
+    FLEX i = 0
+    CYCLE size {
+        total = total + arr[i]
+        i = i + 1
+    }
+    RETURN total
+}
+
+/// Returns the maximum value in array
+FUNCTION ARRAY_MAX(INT CHAIN arr, INT size) {
+    IF size == 0 {
+        RETURN 0
+    }
+    FLEX max = arr[0]
+    FLEX i = 1
+    CYCLE size - 1 {
+        IF arr[i] > max {
+            max = arr[i]
+        }
+        i = i + 1
+    }
+    RETURN max
+}
+
+/// Returns the minimum value in array
+FUNCTION ARRAY_MIN(INT CHAIN arr, INT size) {
+    IF size == 0 {
+        RETURN 0
+    }
+    FLEX min = arr[0]
+    FLEX i = 1
+    CYCLE size - 1 {
+        IF arr[i] < min {
+            min = arr[i]
+        }
+        i = i + 1
+    }
+    RETURN min
+}
+
+/// Returns the average of all elements in array
+/// RETURNS: FLOAT
+FUNCTION ARRAY_AVERAGE(INT CHAIN arr, INT size) {
+    IF size == 0 {
+        RETURN 0.0
+    }
+    FLEX total = ARRAY_SUM(arr, size)
+    FLEX dTotal = total + 0.0
+    FLEX dSize = size + 0.0
+    RETURN dTotal / dSize
+}
+
+/// Counts how many times a value appears in the array
+FUNCTION ARRAY_COUNT_VALUE(INT CHAIN arr, INT size, INT value) {
+    FLEX counter = 0
+    FLEX i = 0
+    CYCLE size {
+        IF arr[i] == value {
+            counter = counter + 1
+        }
+        i = i + 1
+    }
+    RETURN counter
+}
+
+/// Finds the index of first occurrence of value (-1 if not found)
+FUNCTION ARRAY_INDEX_OF(INT CHAIN arr, INT size, INT value) {
+    FLEX i = 0
+    CYCLE size {
+        IF arr[i] == value {
+            RETURN i
+        }
+        i = i + 1
+    }
+    RETURN -1
+}
+
+/// Finds the index of last occurrence of value (-1 if not found)
+FUNCTION ARRAY_LAST_INDEX_OF(INT CHAIN arr, INT size, INT value) {
+    FLEX i = size - 1
+    CYCLE size {
+        IF arr[i] == value {
+            RETURN i
+        }
+        i = i - 1
+    }
+    RETURN -1
+}
+
+// ============================================================================
+// ARRAY MANIPULATION
+// ============================================================================
+
+// Sort array using bubble sort (ascending order)
+FUNCTION ARRAY_SORT(INT CHAIN arr, INT size) {
+    // Placeholder: Sorting requires array element access and swap operations
+    // that aren't fully supported yet. Returns array unchanged.
+    RETURN arr
+}
+
+// Reverse array in place
+FUNCTION ARRAY_REVERSE(INT CHAIN arr, INT size) {
+    // Placeholder: Reversing requires array element access and swap operations
+    // that aren't fully supported yet. Returns array unchanged.
+    RETURN arr
+}
+
+// Take first n elements from array - returns a marker/placeholder
+FUNCTION ARRAY_TAKE(INT CHAIN arr, INT count) {
+    // Note: Full implementation requires creating subarrays
+    // For now, returns original array as a placeholder
+    RETURN arr
+}
+
+// Skip first n elements - returns a marker/placeholder
+FUNCTION ARRAY_SKIP(INT CHAIN arr, INT count) {
+    // Note: Full implementation requires creating subarrays
+    // For now, returns original array as a placeholder
+    RETURN arr
+}
+
+// Filter array - placeholder for higher-order function support
+FUNCTION ARRAY_FILTER(INT CHAIN arr, FLEX condition) {
+    // Requires lambda/higher-order function support
+    RETURN arr
+}
+
+// Map function - placeholder for higher-order function support
+FUNCTION ARRAY_MAP(INT CHAIN arr, FLEX func) {
+    // Requires lambda/higher-order function support
+    RETURN arr
+}
+
+// Reduce array - placeholder for higher-order function support
+FUNCTION ARRAY_REDUCE(INT CHAIN arr, FLEX func, FLEX initial) {
+    // Requires lambda/higher-order function support
+    RETURN initial
+}
+
+// Join array elements - placeholder
+FUNCTION ARRAY_JOIN(INT CHAIN arr, STRING delimiter) {
+    // Requires string concatenation and type conversion
+    RETURN ""
+}
+
+// Combine arrays - placeholder
+FUNCTION ARRAY_COMBINE(INT CHAIN arrays) {
+    // Requires dynamic array allocation
+    RETURN arrays
+}
+
+// Search for item - uses existing INDEX_OF
+FUNCTION ARRAY_SEARCH(INT CHAIN arr, INT item) {
+    INT size = 100  // Default size
+    RETURN ARRAY_INDEX_OF(arr, size, item)
+}
+
+// Count occurrences - uses existing COUNT_VALUE
+FUNCTION ARRAY_COUNT(INT CHAIN arr, INT item) {
+    INT size = 100  // Default size
+    RETURN ARRAY_COUNT_VALUE(arr, size, item)
+}
+
+// ============================================================================
+// SHORT NAME WRAPPERS FOR CUSTOM SYNTAX
+// ============================================================================
+
+FUNCTION FIRST(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_FIRST(arr, size)
+}
+
+FUNCTION LAST(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_LAST(arr, size)
+}
+
+FUNCTION LENGTH(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_LENGTH(arr, size)
+}
+
+FUNCTION MAX(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_MAX(arr, size)
+}
+
+FUNCTION MIN(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_MIN(arr, size)
+}
+
+FUNCTION CONTAINS(INT CHAIN arr, INT item) {
+    INT size = 100
+    RETURN ARRAY_CONTAINS(arr, size, item)
+}
+
+FUNCTION SORT(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_SORT(arr, size)
+}
+
+FUNCTION REVERSE(INT CHAIN arr) {
+    INT size = 100
+    RETURN ARRAY_REVERSE(arr, size)
 }

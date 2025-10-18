@@ -1,0 +1,19 @@
+// Array pattern syntax definitions - v2 format
+// Compatible with PSXFileLoader
+
+SYNTAX TAKE $count:INT FROM $array:ARRAY => ARRAY_TAKE($array, $count)
+SYNTAX FILTER $array:ARRAY WHERE $condition => ARRAY_FILTER($array, $condition)
+SYNTAX MAP $array:ARRAY WITH $function => ARRAY_MAP($array, $function)
+SYNTAX LENGTH OF $array:ARRAY => ARRAY_LENGTH($array)
+SYNTAX SKIP $count:INT FROM $array:ARRAY => ARRAY_SKIP($array, $count)
+SYNTAX JOIN $array:ARRAY WITH $delimiter:STRING => ARRAY_JOIN($array, $delimiter)
+SYNTAX SORT $array:ARRAY ASCENDING? => ARRAY_SORT($array)
+SYNTAX REVERSE $array:ARRAY => ARRAY_REVERSE($array)
+SYNTAX $array:ARRAY CONTAINS $item => ARRAY_CONTAINS($array, $item)
+SYNTAX COMBINE $arrays:ARRAY => ARRAY_COMBINE($arrays)
+SYNTAX MAX OF $array:ARRAY => ARRAY_MAX($array)
+SYNTAX MIN OF $array:ARRAY => ARRAY_MIN($array)
+
+// Optional element patterns for testing
+SYNTAX SEARCH $array:ARRAY FOR $item CASE_SENSITIVE? => ARRAY_SEARCH($array, $item)
+SYNTAX COUNT $item? IN $array:ARRAY => ARRAY_COUNT($array, $item)

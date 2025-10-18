@@ -1,0 +1,55 @@
+// EXPECTED: 8
+// EXPECTED: 1
+// EXPECTED: 5
+
+LINK "stdlib/IO.ps"
+
+// Inline helper functions for custom syntax using CYCLE
+FUNCTION ARRAY_MAX(FLEX arr)[FLEX] {
+    FLEX max = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element > max {
+            max = element
+        }
+    }
+    
+    RETURN max
+}
+
+FUNCTION ARRAY_MIN(FLEX arr)[FLEX] {
+    FLEX min = arr[0]
+    
+    CYCLE ELEMENTS OF arr AS element {
+        IF element < min {
+            min = element
+        }
+    }
+    
+    RETURN min
+}
+
+FUNCTION ARRAY_LENGTH(FLEX arr)[INT] {
+    INT count = 0
+    
+    CYCLE ELEMENTS OF arr AS element {
+        count = count + 1
+    }
+    
+    RETURN count
+}
+
+// Test array operator-based custom syntax using ![ ] blocks
+FLEX numbers = [5,2,8,1,3]
+
+// Test MAX OF pattern
+FLEX maxVal = ![MAX OF numbers]
+PRINT maxVal
+
+// Test MIN OF pattern  
+FLEX minVal = ![MIN OF numbers]
+PRINT minVal
+
+// Test array length using function
+FLEX length = ARRAY_LENGTH(numbers)
+PRINT length

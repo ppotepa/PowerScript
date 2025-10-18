@@ -73,6 +73,7 @@ FUNCTION PRINT_LABELED(STRING label, INT value)[INT] {
 // PRINT FUNCTIONS - Polymorphic print that works with any type
 // ============================================================================
 
+// Main PRINT function - Generic print function that works with any type
 FUNCTION PRINT(FLEX value)[INT] {
     FLEX str = #value->ToString()
      #Console->WriteLine(str)
@@ -97,6 +98,24 @@ FUNCTION PRINT_INT(INT value)[INT] {
 
 FUNCTION PRINT_LINE()[INT] {
      #Console->WriteLine()
+    RETURN 0
+}
+
+// Additional compatibility functions
+FUNCTION CONCAT(STRING a, STRING b)[STRING] {
+    RETURN a + b
+}
+
+// TRUE and FALSE are now reserved keywords - no need for functions
+
+FUNCTION HELLO()[STRING] {
+    RETURN "Hello"
+}
+
+// SYNTAX function for custom syntax tests
+FUNCTION SYNTAX(STRING pattern, STRING transformation)[INT] {
+    // Placeholder - actual syntax processing is handled by PatternSyntaxProcessor
+    PRINT("Custom syntax: " + pattern + " => " + transformation)
     RETURN 0
 }
 

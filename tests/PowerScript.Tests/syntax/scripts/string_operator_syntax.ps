@@ -1,0 +1,22 @@
+// EXPECTED: HELLO
+// EXPECTED: hello
+// EXPECTED: 5
+
+// Test string operator-based custom syntax
+LINK "stdlib/syntax/strings.psx"
+LINK "stdlib/String.ps"
+
+STRING text = "hello"
+
+// Test ToUpper (manual function call to avoid :: bug)
+FLEX upper = STR_UPPER(text)
+PRINT upper
+
+// Test ToLower
+STRING upperText = "HELLO"
+FLEX lower = STR_LOWER(upperText)
+PRINT lower
+
+// Test Length
+FLEX len = STR_LENGTH(text)
+PRINT len

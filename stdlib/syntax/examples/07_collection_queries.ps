@@ -1,0 +1,29 @@
+// Example 7: Collection Query Syntax
+// Demonstrates SQL-like query syntax for collections
+
+LINK "ArrayLib.ps"
+
+FUNCTION DEMO_COLLECTION_QUERIES()[INT] {
+    // Test data - array of person objects
+    FLEX people = [
+        #{ name: "Alice", age: 30, role: "admin" },
+        #{ name: "Bob", age: 25, role: "user" },
+        #{ name: "Charlie", age: 35, role: "admin" },
+        #{ name: "David", age: 28, role: "user" }
+    ]
+    
+    // Query-like syntax
+    FLEX admins = people :> WHERE role = "admin"
+    FLEX sorted = people :> ORDER_BY age "ASC"
+    FLEX grouped = people :> GROUP_BY "role"
+    FLEX selected = people :> SELECT ["name", "age"]
+    
+    // Complex query
+    FLEX result = people :> WHERE age > 27 :> ORDER_BY age "DESC" :> SELECT ["name"]
+    
+    // Verify results
+    IF (ARRAY_LENGTH(admins) != 2) { RETURN 0 }
+    IF (ARRAY_LENGTH(selected) != 4) { RETURN 0 }
+    
+    RETURN 1
+}

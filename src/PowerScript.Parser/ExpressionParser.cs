@@ -1,3 +1,4 @@
+using PowerScript.Common.Logging;
 using PowerScript.Core.AST.Expressions;
 using PowerScript.Core.Syntax.Tokens.Base;
 using PowerScript.Core.Syntax.Tokens.Delimiters;
@@ -8,8 +9,10 @@ using PowerScript.Core.Syntax.Tokens.Operators;
 using PowerScript.Core.Syntax.Tokens.Raw;
 using PowerScript.Core.Syntax.Tokens.Scoping;
 using PowerScript.Core.Syntax.Tokens.Values;
+using PowerScript.Core.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PowerScript.Parser
 {
@@ -60,6 +63,12 @@ namespace PowerScript.Parser
         {
             if (currentToken == null)
                 throw new InvalidOperationException("Unexpected end of tokens in expression");
+
+            // Handle custom syntax block: ![pattern syntax]
+            if (currentToken is CustomSyntaxBlockOpen)
+            {
+                return ParseCustomSyntaxBlock(ref currentToken);
+            }
 
             // Handle .NET interop: #identifier -> method() or #Type -> StaticMethod()
             if (currentToken is NetKeywordToken)
@@ -145,12 +154,17 @@ namespace PowerScript.Parser
                         $"Example: #Console->WriteLine() instead of Console->WriteLine()");
                 }
 
+                // Check for custom syntax operator: identifier::Method()
+                if (identToken.Next is CustomSyntaxOperatorToken)
+                {
+                    return ParseCustomSyntaxCall(ref currentToken);
+                }
+
                 // Check for function call: identifier(...)
                 if (identToken.Next is ParenthesisOpen)
-                    if (identToken.Next is ParenthesisOpen)
-                    {
-                        return ParseFunctionCall(ref currentToken);
-                    }
+                {
+                    return ParseFunctionCall(ref currentToken);
+                }
 
                 // Check for array indexing: identifier[...]
                 if (identToken.Next is BracketOpen)
@@ -167,6 +181,12 @@ namespace PowerScript.Parser
                         ArrayExpression = new IdentifierExpression(identToken),
                         Index = indexExpr
                     };
+                }
+
+                // Check for custom syntax operator: identifier::Method()
+                if (identToken.Next is CustomSyntaxOperatorToken)
+                {
+                    return ParseCustomSyntaxCall(ref currentToken);
                 }
 
                 // Check for property access: identifier.property
@@ -210,6 +230,20 @@ namespace PowerScript.Parser
             {
                 currentToken = currentToken.Next;
                 return new LiteralExpression(decimalToken);
+            }
+
+            // Handle TRUE keyword
+            if (currentToken is TrueToken trueToken)
+            {
+                currentToken = currentToken.Next;
+                return new LiteralExpression(trueToken);
+            }
+
+            // Handle FALSE keyword
+            if (currentToken is FalseToken falseToken)
+            {
+                currentToken = currentToken.Next;
+                return new LiteralExpression(falseToken);
             }
 
             // Handle string literals
@@ -323,6 +357,259 @@ namespace PowerScript.Parser
             funcCall.Arguments.AddRange(arguments);
 
             return funcCall;
+        }
+
+        /// <summary>
+        /// Parses custom syntax calls using the :: operator.
+        /// Example: array::Sort() => ARRAY_SORT(array)
+        /// </summary>
+        private Expression ParseCustomSyntaxCall(ref Token currentToken)
+        {
+            var targetToken = currentToken as IdentifierToken;
+            currentToken = currentToken.Next; // Move to ::
+
+            if (!(currentToken is CustomSyntaxOperatorToken))
+                throw new InvalidOperationException($"Expected '::' but found {currentToken?.GetType().Name}");
+
+            currentToken = currentToken.Next; // Move past ::
+
+            if (!(currentToken is IdentifierToken methodToken))
+                throw new InvalidOperationException($"Expected method name after '::' but found {currentToken?.GetType().Name}");
+
+            string methodName = methodToken.Value;
+            currentToken = currentToken.Next; // Move past method name
+
+            // Check if it has parentheses (method call)
+            List<Expression> arguments = new();
+            if (currentToken is ParenthesisOpen)
+            {
+                currentToken = currentToken.Next; // Move past (
+
+                // Parse arguments
+                while (currentToken != null && !(currentToken is ParenthesisClosed))
+                {
+                    arguments.Add(ParseBinaryExpression(ref currentToken, 0));
+
+                    if (currentToken is CommaToken)
+                    {
+                        currentToken = currentToken.Next; // Skip comma
+                    }
+                    else if (!(currentToken is ParenthesisClosed))
+                    {
+                        throw new InvalidOperationException($"Expected ',' or ')' in method call");
+                    }
+                }
+
+                if (!(currentToken is ParenthesisClosed))
+                    throw new InvalidOperationException($"Expected ')' to close method call");
+
+                currentToken = currentToken.Next; // Move past )
+            }
+
+            // Transform to function call: obj::Method(args) => METHOD(obj, args)
+            // Try to get transformation from registry
+            var registry = CustomSyntaxRegistry.Instance;
+            if (registry.TryGetOperatorTransformation(methodName, out var transformation))
+            {
+                // Build the transformed function call
+                // For now, use simple transformation: METHOD(target, args...)
+                var transformedFunctionName = transformation!.Transformation.Split('(')[0].Trim();
+
+                // Create function call with target as first argument
+                var funcCallArgs = new List<Expression> { new IdentifierExpression(targetToken!) };
+                funcCallArgs.AddRange(arguments);
+
+                // Create a raw token for the function name
+                var funcNameRaw = RawToken.Create(transformedFunctionName);
+                var funcNameToken = new IdentifierToken(funcNameRaw);
+
+                return new FunctionCallExpression
+                {
+                    FunctionName = funcNameToken,
+                    Arguments = funcCallArgs
+                };
+            }
+            else
+            {
+                // No transformation found - use default pattern: METHOD(target, args)
+                var defaultFunctionName = methodName.ToUpperInvariant();
+
+                var funcCallArgs = new List<Expression> { new IdentifierExpression(targetToken!) };
+                funcCallArgs.AddRange(arguments);
+
+                // Create a raw token for the function name
+                var funcNameRaw = RawToken.Create(defaultFunctionName);
+                var funcNameToken = new IdentifierToken(funcNameRaw);
+
+                return new FunctionCallExpression
+                {
+                    FunctionName = funcNameToken,
+                    Arguments = funcCallArgs
+                };
+            }
+        }
+
+        /// <summary>
+        /// Parses custom syntax blocks using the ![...] syntax.
+        /// Example: ![MAX OF numbers] => MAX(numbers)
+        /// Collects all tokens within the block and tries to match against pattern transformations.
+        /// </summary>
+        public Expression ParseCustomSyntaxBlock(ref Token currentToken)
+        {
+            if (!(currentToken is CustomSyntaxBlockOpen))
+                throw new InvalidOperationException($"Expected '![' but found {currentToken?.GetType().Name}");
+
+            currentToken = currentToken.Next; // Move past ![
+
+            // Collect all tokens until we hit ]
+            List<Token> blockTokens = new();
+            while (currentToken != null && !(currentToken is BracketClosed))
+            {
+                blockTokens.Add(currentToken);
+                currentToken = currentToken.Next;
+            }
+
+            if (!(currentToken is BracketClosed))
+                throw new InvalidOperationException("Expected ']' to close custom syntax block");
+
+            currentToken = currentToken.Next; // Move past ]
+
+            // Try to match the block tokens against pattern transformations
+            var registry = CustomSyntaxRegistry.Instance;
+            var patterns = registry.GetPatternTransformations();
+
+            // Build a text representation of the tokens for pattern matching
+            string blockText = string.Join(" ", blockTokens.Select(t => t.RawToken?.Text ?? ""));
+
+            // Try each pattern to see if it matches
+            foreach (var pattern in patterns)
+            {
+                if (TryMatchPattern(blockTokens, pattern, out var matchedExpression))
+                {
+                    return matchedExpression;
+                }
+            }
+
+            // If no pattern matched, throw an error
+            throw new InvalidOperationException($"No custom syntax pattern matched: ![{blockText}]");
+        }
+
+        /// <summary>
+        /// Attempts to match a list of tokens against a pattern transformation.
+        /// </summary>
+        private bool TryMatchPattern(List<Token> tokens, SyntaxTransformation pattern, out Expression expression)
+        {
+            expression = null!;
+
+            // Use the Pattern and Transformation properties directly from SyntaxTransformation
+            string patternText = pattern.Pattern.Trim();
+            string transformation = pattern.Transformation.Trim();
+
+            // Split pattern into components
+            var patternComponents = patternText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            // Try to match tokens against pattern
+            Dictionary<string, Expression> captures = new();
+            int tokenIndex = 0;
+
+            foreach (var component in patternComponents)
+            {
+                if (tokenIndex >= tokens.Count)
+                    return false; // Not enough tokens
+
+                if (component.StartsWith("$"))
+                {
+                    // This is a variable capture
+                    string varName = component.Substring(1);
+
+                    // Check if it has a type constraint (e.g., $array:ARRAY)
+                    string[] varParts = varName.Split(':');
+                    varName = varParts[0];
+
+                    // Capture the token as an expression
+                    if (tokens[tokenIndex] is IdentifierToken identToken)
+                    {
+                        captures[varName] = new IdentifierExpression(identToken);
+                        tokenIndex++;
+                    }
+                    else if (tokens[tokenIndex] is NumberToken numToken)
+                    {
+                        captures[varName] = new LiteralExpression(numToken);
+                        tokenIndex++;
+                    }
+                    else
+                    {
+                        return false; // Token type doesn't match expected variable
+                    }
+                }
+                else
+                {
+                    // This is a keyword - must match exactly
+                    if (tokenIndex >= tokens.Count)
+                        return false;
+
+                    string tokenText = tokens[tokenIndex].RawToken?.Text ?? "";
+                    if (!tokenText.Equals(component, StringComparison.OrdinalIgnoreCase))
+                        return false; // Keyword doesn't match
+
+                    tokenIndex++;
+                }
+            }
+
+            // Check if we consumed all tokens
+            if (tokenIndex != tokens.Count)
+                return false; // Extra tokens that didn't match
+
+            // Build the transformed expression
+            // Parse the transformation to extract function name and arguments
+            // Format: FUNCTION($var1, $var2)
+            int parenIndex = transformation.IndexOf('(');
+            if (parenIndex < 0)
+            {
+                LoggerService.Logger.Error($"[CustomSyntax] Invalid transformation format: '{transformation}' - missing '('");
+                return false;
+            }
+
+            string functionName = transformation.Substring(0, parenIndex).Trim();
+            string argsText = transformation.Substring(parenIndex + 1, transformation.Length - parenIndex - 2).Trim();
+
+            LoggerService.Logger.Debug($"[CustomSyntax] Matched pattern: '{patternText}' => '{transformation}'");
+            LoggerService.Logger.Debug($"[CustomSyntax] Function name: '{functionName}', Args: '{argsText}'");
+            LoggerService.Logger.Debug($"[CustomSyntax] Captures: {string.Join(", ", captures.Keys.Select(k => $"{k}={captures[k].GetType().Name}"))}");
+
+            // Create function call expression
+            var funcNameRaw = RawToken.Create(functionName);
+            var funcNameToken = new IdentifierToken(funcNameRaw);
+
+            var arguments = new List<Expression>();
+
+            // Parse arguments from transformation
+            if (!string.IsNullOrEmpty(argsText))
+            {
+                var argNames = argsText.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var argName in argNames)
+                {
+                    string cleanArgName = argName.Trim().TrimStart('$');
+                    if (captures.ContainsKey(cleanArgName))
+                    {
+                        arguments.Add(captures[cleanArgName]);
+                    }
+                    else
+                    {
+                        LoggerService.Logger.Warning($"[CustomSyntax] Argument '{cleanArgName}' not found in captures");
+                    }
+                }
+            }
+
+            expression = new FunctionCallExpression
+            {
+                FunctionName = funcNameToken,
+                Arguments = arguments
+            };
+
+            LoggerService.Logger.Debug($"[CustomSyntax] Created FunctionCallExpression: {functionName}({arguments.Count} args)");
+
+            return true;
         }
 
         /// <summary>

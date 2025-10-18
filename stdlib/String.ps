@@ -205,6 +205,10 @@ FUNCTION UPPER(STRING str)[STRING] {
     RETURN STR_UPPER(str)
 }
 
+FUNCTION TOUPPER(STRING str)[STRING] {
+    RETURN STR_UPPER(str)
+}
+
 FUNCTION LOWER(STRING str)[STRING] {
     RETURN STR_LOWER(str)
 }
@@ -239,5 +243,41 @@ FUNCTION CONTAINS(STRING str, STRING search)[INT] {
 
 FUNCTION CONCAT(STRING str1, STRING str2)[STRING] {
     RETURN STR_CONCAT(str1, str2)
+}
+
+// ============================================================================
+// STRING_ Aliases for Custom Syntax Compatibility
+// ============================================================================
+
+FUNCTION STRING_REPLACE(STRING str, STRING oldStr, STRING newStr)[STRING] {
+    RETURN STR_REPLACE(str, oldStr, newStr)
+}
+
+FUNCTION STRING_UPPER(STRING str)[STRING] {
+    RETURN STR_UPPER(str)
+}
+
+FUNCTION STRING_LOWER(STRING str)[STRING] {
+    RETURN STR_LOWER(str)
+}
+
+FUNCTION STRING_TRIM(STRING str)[STRING] {
+    RETURN STR_TRIM(str)
+}
+
+FUNCTION STRING_SPLIT(STRING str, STRING delimiter)[STRING] {
+    RETURN STR_SPLIT(str, delimiter)
+}
+
+FUNCTION STRING_STARTS_WITH(STRING str, STRING prefix)[INT] {
+    RETURN STR_STARTS_WITH(str, prefix)
+}
+
+FUNCTION STRING_ENDS_WITH(STRING str, STRING suffix)[INT] {
+    RETURN STR_ENDS_WITH(str, suffix)
+}
+
+FUNCTION STRING_CONTAINS(STRING str, STRING substring)[INT] {
+    RETURN STR_CONTAINS(str, substring)
 }
 

@@ -1,0 +1,32 @@
+// Example 1: Array Operator Syntax
+// Demonstrates :: operator for array manipulation
+
+LINK "ArrayLib.ps"
+
+FUNCTION DEMO_ARRAY_OPERATORS()[INT] {
+    // Test data
+    FLEX numbers = [5, 2, 8, 1, 9, 3]
+    
+    // Using :: operator syntax
+    FLEX sorted = numbers::Sort()
+    FLEX reversed = numbers::Reverse()
+    FLEX first = numbers::First()
+    FLEX last = numbers::Last()
+    FLEX length = numbers::Length()
+    FLEX hasThree = numbers::Contains(3)
+    FLEX sum = numbers::Sum()
+    FLEX max = numbers::Max()
+    FLEX min = numbers::Min()
+    
+    // Verify results
+    IF (sorted[0] != 1) { RETURN 0 }
+    IF (first != 5) { RETURN 0 }
+    IF (last != 3) { RETURN 0 }
+    IF (length != 6) { RETURN 0 }
+    IF (hasThree != 1) { RETURN 0 }
+    IF (sum != 28) { RETURN 0 }
+    IF (max != 9) { RETURN 0 }
+    IF (min != 1) { RETURN 0 }
+    
+    RETURN 1
+}

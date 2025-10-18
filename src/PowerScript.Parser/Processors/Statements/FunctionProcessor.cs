@@ -48,11 +48,29 @@ public class FunctionProcessor(ParameterProcessor parameterProcessor) : ITokenPr
             $"Created new function scope: {functionScope.ScopeName} (Type={functionScope.Type})");
 
         // Function must be followed by an identifier (function name)
-        if (functionToken?.Next is not IdentifierToken functionNameToken)
+        Token? afterFuncToken = functionToken?.Next;
+
+        // Check if trying to use a keyword as function name
+        if (afterFuncToken is not IdentifierToken)
         {
-            throw new UnexpectedTokenException(functionToken?.Next ?? functionToken!, typeof(IdentifierToken));
+            if (afterFuncToken != null)
+            {
+                string tokenTypeName = afterFuncToken.GetType().Name;
+                string keywordName = afterFuncToken.RawToken?.Text?.ToUpper() ?? tokenTypeName;
+
+                // Provide helpful error for keywords
+                if (tokenTypeName.Contains("Token") && !tokenTypeName.Equals("IdentifierToken"))
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot use reserved keyword '{keywordName}' as function name. " +
+                        $"Keywords like TRUE, FALSE, IF, WHILE, FUNC, etc. cannot be used as identifiers.");
+                }
+            }
+
+            throw new UnexpectedTokenException(afterFuncToken ?? functionToken!, typeof(IdentifierToken));
         }
 
+        IdentifierToken functionNameToken = (IdentifierToken)afterFuncToken;
         string functionName = functionNameToken.RawToken!.Text;
         BuilderLogger.LogFunctionName(functionName, context.Depth);
 

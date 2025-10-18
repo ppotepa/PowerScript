@@ -160,7 +160,8 @@ public class ExecutionContext : IExecutionContext
             throw new ArgumentNullException(nameof(function));
         }
 
-        _functions[name] = function;
+        // Normalize function names to uppercase for case-insensitive matching
+        _functions[name.ToUpperInvariant()] = function;
     }
 
     /// <summary>
@@ -173,7 +174,8 @@ public class ExecutionContext : IExecutionContext
             return false;
         }
 
-        return _functions.ContainsKey(name);
+        // Normalize function names to uppercase for case-insensitive matching
+        return _functions.ContainsKey(name.ToUpperInvariant());
     }
 
     /// <summary>
@@ -186,7 +188,8 @@ public class ExecutionContext : IExecutionContext
             return null;
         }
 
-        _functions.TryGetValue(name, out var function);
+        // Normalize function names to uppercase for case-insensitive matching
+        _functions.TryGetValue(name.ToUpperInvariant(), out var function);
         return function;
     }
 

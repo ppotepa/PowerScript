@@ -1,0 +1,32 @@
+// Example 3: String Operator Syntax
+// Demonstrates :: operator for string manipulation
+
+LINK "String.ps"
+
+FUNCTION DEMO_STRING_OPERATORS()[INT] {
+    // Test data
+    FLEX text = "  Hello World  "
+    
+    // Using :: operator syntax
+    FLEX upper = text::ToUpper()
+    FLEX lower = text::ToLower()
+    FLEX trimmed = text::Trim()
+    FLEX length = text::Length()
+    FLEX reversed = text::Reverse()
+    FLEX parts = text::Split(" ")
+    FLEX hasHello = text::Contains("Hello")
+    FLEX starts = text::StartsWith("  Hello")
+    FLEX ends = text::EndsWith("World  ")
+    FLEX replaced = text::Replace("World", "PowerScript")
+    
+    // Verify results
+    IF (upper != "  HELLO WORLD  ") { RETURN 0 }
+    IF (lower != "  hello world  ") { RETURN 0 }
+    IF (trimmed != "Hello World") { RETURN 0 }
+    IF (length != 15) { RETURN 0 }
+    IF (hasHello != 1) { RETURN 0 }
+    IF (starts != 1) { RETURN 0 }
+    IF (ends != 1) { RETURN 0 }
+    
+    RETURN 1
+}

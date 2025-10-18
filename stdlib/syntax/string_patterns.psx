@@ -1,0 +1,11 @@
+// String pattern syntax definitions
+// Compatible with PSXFileLoader - includes type constraints
+
+SYNTAX REPLACE $old WITH $new IN $text => STRING_REPLACE($text, $old, $new)
+SYNTAX UPPER $text => STRING_UPPER($text)
+SYNTAX LOWER $text => STRING_LOWER($text)
+SYNTAX TRIM $text => STRING_TRIM($text)
+SYNTAX SPLIT $text BY $delimiter => STRING_SPLIT($text, $delimiter)
+SYNTAX $text STARTS WITH $prefix => STRING_STARTS_WITH($text, $prefix)
+SYNTAX $text ENDS WITH $suffix => STRING_ENDS_WITH($text, $suffix)
+SYNTAX $text CONTAINS $substring => STRING_CONTAINS($text, $substring)

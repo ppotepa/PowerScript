@@ -8,7 +8,7 @@ LINK System
 // NUMERIC VALIDATION
 // ============================================================================
 
-FUNCTION IS_POSITIVE(INT n)[INT] {
+FUNCTION IS_POSITIVE(INT n) {
     FLEX result = 0
     IF (n > 0) {
         result = 1
@@ -16,7 +16,7 @@ FUNCTION IS_POSITIVE(INT n)[INT] {
     RETURN result
 }
 
-FUNCTION IS_NEGATIVE(INT n)[INT] {
+FUNCTION IS_NEGATIVE(INT n) {
     FLEX result = 0
     IF (n < 0) {
         result = 1
@@ -24,7 +24,7 @@ FUNCTION IS_NEGATIVE(INT n)[INT] {
     RETURN result
 }
 
-FUNCTION IS_ZERO(INT n)[INT] {
+FUNCTION IS_ZERO(INT n) {
     FLEX result = 0
     IF (n == 0) {
         result = 1
@@ -32,7 +32,7 @@ FUNCTION IS_ZERO(INT n)[INT] {
     RETURN result
 }
 
-FUNCTION IS_NON_NEGATIVE(INT n)[INT] {
+FUNCTION IS_NON_NEGATIVE(INT n) {
     FLEX result = 0
     IF (n >= 0) {
         result = 1
@@ -40,7 +40,7 @@ FUNCTION IS_NON_NEGATIVE(INT n)[INT] {
     RETURN result
 }
 
-FUNCTION IS_NON_POSITIVE(INT n)[INT] {
+FUNCTION IS_NON_POSITIVE(INT n) {
     FLEX result = 0
     IF (n <= 0) {
         result = 1
@@ -52,7 +52,7 @@ FUNCTION IS_NON_POSITIVE(INT n)[INT] {
 // RANGE VALIDATION
 // ============================================================================
 
-FUNCTION IN_RANGE(INT value, INT min, INT max)[INT] {
+FUNCTION IN_RANGE(INT value, INT min, INT max) {
     FLEX result = 0
     IF (value >= min) {
         IF (value <= max) {
@@ -62,7 +62,7 @@ FUNCTION IN_RANGE(INT value, INT min, INT max)[INT] {
     RETURN result
 }
 
-FUNCTION BETWEEN(INT value, INT min, INT max)[INT] {
+FUNCTION BETWEEN(INT value, INT min, INT max) {
     FLEX result = 0
     IF (value > min) {
         IF (value < max) {
@@ -72,7 +72,7 @@ FUNCTION BETWEEN(INT value, INT min, INT max)[INT] {
     RETURN result
 }
 
-FUNCTION BETWEEN_INCLUSIVE(INT value, INT min, INT max)[INT] {
+FUNCTION BETWEEN_INCLUSIVE(INT value, INT min, INT max) {
     FLEX result = 0
     IF (value >= min) {
         IF (value <= max) {
@@ -86,7 +86,7 @@ FUNCTION BETWEEN_INCLUSIVE(INT value, INT min, INT max)[INT] {
 // DIVISIBILITY CHECKS
 // ============================================================================
 
-FUNCTION IS_DIVISIBLE(INT n, INT divisor)[INT] {
+FUNCTION IS_DIVISIBLE(INT n, INT divisor) {
     FLEX remainder = MOD(n, divisor)
     FLEX result = 0
     IF (remainder == 0) {
@@ -95,7 +95,7 @@ FUNCTION IS_DIVISIBLE(INT n, INT divisor)[INT] {
     RETURN result
 }
 
-FUNCTION IS_MULTIPLE(INT n, INT base)[INT] {
+FUNCTION IS_MULTIPLE(INT n, INT base) {
     RETURN IS_DIVISIBLE(n, base)
 }
 
@@ -103,37 +103,37 @@ FUNCTION IS_MULTIPLE(INT n, INT base)[INT] {
 // CHARACTER VALIDATION
 // ============================================================================
 
-FUNCTION IS_ALPHA(STRING c)[INT] {
+FUNCTION IS_ALPHA(STRING c) {
     FLEX isLetter = #Char.IsLetter(c, 0)
     FLEX result = #Convert.ToInt32(isLetter)
     RETURN result
 }
 
-FUNCTION IS_DIGIT(STRING c)[INT] {
+FUNCTION IS_DIGIT(STRING c) {
     FLEX isDigit = #Char.IsDigit(c, 0)
     FLEX result = #Convert.ToInt32(isDigit)
     RETURN result
 }
 
-FUNCTION IS_ALPHANUMERIC(STRING c)[INT] {
+FUNCTION IS_ALPHANUMERIC(STRING c) {
     FLEX isLetterOrDigit = #Char.IsLetterOrDigit(c, 0)
     FLEX result = #Convert.ToInt32(isLetterOrDigit)
     RETURN result
 }
 
-FUNCTION IS_UPPER(STRING c)[INT] {
+FUNCTION IS_UPPER(STRING c) {
     FLEX isUpper = #Char.IsUpper(c, 0)
     FLEX result = #Convert.ToInt32(isUpper)
     RETURN result
 }
 
-FUNCTION IS_LOWER(STRING c)[INT] {
+FUNCTION IS_LOWER(STRING c) {
     FLEX isLower = #Char.IsLower(c, 0)
     FLEX result = #Convert.ToInt32(isLower)
     RETURN result
 }
 
-FUNCTION IS_WHITESPACE(STRING c)[INT] {
+FUNCTION IS_WHITESPACE(STRING c) {
     FLEX isWhiteSpace = #Char.IsWhiteSpace(c, 0)
     FLEX result = #Convert.ToInt32(isWhiteSpace)
     RETURN result
@@ -143,7 +143,7 @@ FUNCTION IS_WHITESPACE(STRING c)[INT] {
 // STRING VALIDATION
 // ============================================================================
 
-FUNCTION VALIDATE_NOT_EMPTY(STRING str)[INT] {
+FUNCTION VALIDATE_NOT_EMPTY(STRING str) {
     FLEX len = #str->Length
     FLEX result = 0
     IF (len > 0) {
@@ -152,7 +152,7 @@ FUNCTION VALIDATE_NOT_EMPTY(STRING str)[INT] {
     RETURN result
 }
 
-FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen)[INT] {
+FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen) {
     FLEX len = #str->Length
     FLEX result = 0
     IF (len == expectedLen) {
@@ -161,7 +161,7 @@ FUNCTION VALIDATE_LENGTH(STRING str, INT expectedLen)[INT] {
     RETURN result
 }
 
-FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen)[INT] {
+FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen) {
     FLEX len = #str->Length
     FLEX result = 0
     IF (len >= minLen) {
@@ -170,7 +170,7 @@ FUNCTION VALIDATE_MIN_LENGTH(STRING str, INT minLen)[INT] {
     RETURN result
 }
 
-FUNCTION VALIDATE_MAX_LENGTH(STRING str, INT maxLen)[INT] {
+FUNCTION VALIDATE_MAX_LENGTH(STRING str, INT maxLen) {
     FLEX len = #str->Length
     FLEX result = 0
     IF (len <= maxLen) {
@@ -183,11 +183,11 @@ FUNCTION VALIDATE_MAX_LENGTH(STRING str, INT maxLen)[INT] {
 // NUMERIC RANGE VALIDATION
 // ============================================================================
 
-FUNCTION VALIDATE_RANGE(INT value, INT min, INT max)[INT] {
+FUNCTION VALIDATE_RANGE(INT value, INT min, INT max) {
     RETURN IN_RANGE(value, min, max)
 }
 
-FUNCTION VALIDATE_MIN(INT value, INT min)[INT] {
+FUNCTION VALIDATE_MIN(INT value, INT min) {
     FLEX result = 0
     IF (value >= min) {
         result = 1
@@ -195,7 +195,7 @@ FUNCTION VALIDATE_MIN(INT value, INT min)[INT] {
     RETURN result
 }
 
-FUNCTION VALIDATE_MAX(INT value, INT max)[INT] {
+FUNCTION VALIDATE_MAX(INT value, INT max) {
     FLEX result = 0
     IF (value <= max) {
         result = 1
@@ -209,15 +209,15 @@ FUNCTION VALIDATE_MAX(INT value, INT max)[INT] {
 
 // TODO: ISINT and ISSTRING require method chaining support (#value->GetType()->ToString())
 // For now, these return placeholder values
-FUNCTION ISINT(FLEX value)[INT] {
+FUNCTION ISINT(FLEX value) {
     RETURN 0
 }
 
-FUNCTION ISSTRING(FLEX value)[INT] {
+FUNCTION ISSTRING(FLEX value) {
     RETURN 1
 }
 
-FUNCTION ISEMPTY(STRING str)[INT] {
+FUNCTION ISEMPTY(STRING str) {
     FLEX len = #str->Length
     IF (len == 0) {
         RETURN 1

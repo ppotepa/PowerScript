@@ -1,0 +1,21 @@
+// Example 4: String Pattern Syntax
+// Demonstrates natural language patterns for strings
+
+LINK "String.ps"
+LINK "ArrayLib.ps"
+
+FUNCTION DEMO_STRING_PATTERNS()[INT] {
+    // Test data
+    FLEX words = ["Hello", "World", "PowerScript"]
+    FLEX text = "Hi"
+    
+    // Using pattern-based syntax
+    FLEX joined = JOIN words WITH ", "
+    FLEX repeated = REPEAT text TIMES 3
+    
+    // Verify results
+    IF (joined != "Hello, World, PowerScript") { RETURN 0 }
+    IF (repeated != "HiHiHi") { RETURN 0 }
+    
+    RETURN 1
+}

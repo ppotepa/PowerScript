@@ -1,0 +1,25 @@
+// Example 2: Array Pattern Syntax
+// Demonstrates natural language patterns for arrays
+
+LINK "ArrayLib.ps"
+
+FUNCTION DEMO_ARRAY_PATTERNS()[INT] {
+    // Test data
+    FLEX numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    
+    // Using pattern-based syntax
+    FLEX filtered = FILTER numbers WHERE > 5
+    FLEX doubled = MAP numbers WITH (n) => n * 2
+    FLEX first3 = TAKE 3 FROM numbers
+    FLEX skip2 = SKIP 2 IN numbers
+    FLEX summed = REDUCE numbers WITH (acc, n) => acc + n FROM 0
+    
+    // Verify results
+    IF (ARRAY_LENGTH(filtered) != 5) { RETURN 0 }
+    IF (doubled[0] != 2) { RETURN 0 }
+    IF (first3[2] != 3) { RETURN 0 }
+    IF (skip2[0] != 3) { RETURN 0 }
+    IF (summed != 55) { RETURN 0 }
+    
+    RETURN 1
+}
