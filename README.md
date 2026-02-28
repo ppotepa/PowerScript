@@ -1,6 +1,6 @@
 # PowerScript
 
-so this is powerscript, basically a wrapper around .NET that lets you write scripts without all the ceremony. its got a nice interactive shell (repl) and can also run script files. think of it like if powershell and python had a baby but simpler.
+so this is powerscript, basically a wrapper around .NET that lets you write scripts without all the ceremony. its got a nice interactive shell (repl) and can also run script files. think of it like if powershell and python had a baby but retarded.
 
 ## whats inside
 
